@@ -1,0 +1,15 @@
+# CodeGraph local index
+.codegraph/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local caches / model + concept downloads
+.conceptdrill_cache/
