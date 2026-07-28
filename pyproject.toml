@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conceptdrill"
+version = "0.1.0"
+description = "Document-tailored concept projection — CES over a document's own structure"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+# Real embedding models. Without these only the `hash` backend is available,
+# which is deterministic and offline but lexical rather than semantic.
+models = [
+    "torch>=2.0",
+    "transformers>=4.30",
+]
+# Noun-phrase and NER quality. Absent, `nlp.py` falls back to a regex tier that
+# finds title-case runs and acronyms only.
+nlp = [
+    "stanza>=1.10",
+]
+spacy = [
+    "spacy>=3.7",
+]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+conceptdrill = "conceptdrill.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
