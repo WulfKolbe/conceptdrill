@@ -141,7 +141,8 @@ def request_storage(input_path: str | Path, *,
             top_k=top_k, store_embedding=store_embeddings)
 
         payload = build_payload(
-            source_path=str(input_path), space=drill.space,
+            source_path=str(input_path),
+            spaces={drill.embedder.name: drill.space},
             projections=projections, skipped=skipped,
             meta=drill.get_concept_space_info(),
             store_embeddings=store_embeddings,

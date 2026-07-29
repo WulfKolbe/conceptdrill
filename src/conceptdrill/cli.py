@@ -186,7 +186,7 @@ def cmd_project(args: argparse.Namespace) -> int:
     all_projections = []
     all_skipped = []
     infos: dict[str, dict] = {}
-    space = None
+    spaces: dict = {}
 
     for model in models:
         drill = ConceptDrill.from_path(src, embedding_model_name=model, **kwargs)
@@ -200,16 +200,16 @@ def cmd_project(args: argparse.Namespace) -> int:
         if not all_skipped:
             all_skipped = skipped
         infos[model] = drill.get_concept_space_info()
-        space = drill.space
+        spaces[drill.embedder.name] = drill.space
         print(f"  {model:14s} {len(drill.space):4d} concepts  "
               f"{len(projections):4d} projections", file=sys.stderr)
 
-    if space is None:
+    if not spaces:
         print("conceptdrill: nothing to project", file=sys.stderr)
         return 1
 
     payload = build_payload(
-        source_path=str(src), space=space, projections=all_projections,
+        source_path=str(src), spaces=spaces, projections=all_projections,
         skipped=all_skipped,
         meta={"models": models, "projection_type": args.projection,
               "created_at": created_at, "per_model": infos},
@@ -221,7 +221,7 @@ def cmd_project(args: argparse.Namespace) -> int:
             "would_write": str(sidecar_path(src, args.output)),
             "projections": len(all_projections),
             "skipped": len(all_skipped),
-            "concepts": len(space),
+            "concepts": sum(len(s) for s in spaces.values()),
             "content_hash": payload["content_hash"],
         }, indent=2))
         return 0

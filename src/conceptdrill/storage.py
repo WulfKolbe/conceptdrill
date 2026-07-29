@@ -14,7 +14,7 @@ import hashlib
 import json
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Iterable, Mapping, Optional, Sequence
 
 from .space import ConceptSpace
 from .types import Concept, Projection, SkippedObject
@@ -55,21 +55,30 @@ def content_hash(payload: dict[str, Any]) -> str:
 
 
 def build_payload(*, source_path: Optional[str],
-                  space: ConceptSpace,
+                  spaces: Mapping[str, ConceptSpace],
                   projections: Sequence[Projection],
                   skipped: Sequence[SkippedObject] = (),
                   meta: Optional[dict[str, Any]] = None,
                   store_embeddings: bool = True,
                   ) -> dict[str, Any]:
-    """Assemble the sidecar document."""
+    """Assemble the sidecar document.
+
+    `spaces` is keyed by embedding model. Each model builds its **own**
+    vocabulary — it scores and selects with its own embeddings, so two models
+    rarely agree on the same concept set. Storing one space alongside every
+    model's projections would leave concept ids that resolve to nothing, so each
+    space is stored under its model and a projection is always resolvable
+    against `concept_spaces[projection.embedding_model]`.
+    """
     payload: dict[str, Any] = {
         "format": "conceptdrill",
         "format_version": FORMAT_VERSION,
         "source": source_path,
         "meta": dict(meta or {}),
-        "concept_space": {
-            **space.info(),
-            "concepts": [asdict(c) for c in space.concepts],
+        "concept_spaces": {
+            model: {**space.info(),
+                    "concepts": [asdict(c) for c in space.concepts]}
+            for model, space in sorted(spaces.items())
         },
         "projections": [p.to_dict(include_embedding=store_embeddings)
                         for p in projections],
@@ -77,6 +86,17 @@ def build_payload(*, source_path: Optional[str],
     }
     payload["content_hash"] = content_hash(payload)
     return payload
+
+
+def resolve_concept(payload: Mapping[str, Any], projection: Mapping[str, Any],
+                    concept_id: str) -> Optional[dict[str, Any]]:
+    """Look a projection's concept up in the space its model actually built."""
+    space = (payload.get("concept_spaces") or {}).get(
+        projection.get("embedding_model", ""))
+    for concept in (space or {}).get("concepts", ()):
+        if concept.get("id") == concept_id:
+            return concept
+    return None
 
 
 def write_sidecar(payload: dict[str, Any], path: str | Path) -> Path:

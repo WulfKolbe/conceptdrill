@@ -275,7 +275,7 @@ def test_cli_project_writes_a_sidecar(mock_document_path, tmp_path, capsys):
     payload = read_sidecar(out)
     assert payload["format"] == "conceptdrill"
     assert payload["projections"]
-    assert payload["concept_space"]["concepts"]
+    assert payload["concept_spaces"]["hash"]["concepts"]
 
 
 def test_cli_project_dry_run_writes_nothing(mock_document_path, tmp_path, capsys):
@@ -294,8 +294,42 @@ def test_cli_multiple_models_produce_independent_projections(
     assert main(["project", str(mock_document_path), "--output", str(out),
                  "--model", "hash", "--model", "hash"]) == 0
     # Deduplicated: the same model twice is one projection set.
-    models = {p["embedding_model"] for p in read_sidecar(out)["projections"]}
+    payload = read_sidecar(out)
+    models = {p["embedding_model"] for p in payload["projections"]}
     assert models == {"hash"}
+    assert set(payload["concept_spaces"]) == {"hash"}
+
+
+def test_every_projection_resolves_against_its_own_model_space(mock_document,
+                                                              embedder):
+    """Each model builds its own vocabulary, so a sidecar holding two models'
+    projections must store both spaces — otherwise concept ids dangle."""
+    from conceptdrill.embeddings import get_embedder
+    from conceptdrill.storage import build_payload, resolve_concept
+
+    # Two genuinely different spaces: different dims mine different vocabularies.
+    a = ConceptDrill(mock_document, embedder=embedder, max_concepts=8)
+    b = ConceptDrill(mock_document,
+                     embedder=get_embedder("hash", cache=False, dim=64),
+                     max_concepts=20)
+    b.embedder.name = "other"          # distinct key in the payload
+
+    pa, _ = a.project_document(top_k=5)
+    pb, _ = b.project_document(top_k=5)
+    assert {c.id for c in a.space.concepts} != {c.id for c in b.space.concepts}
+
+    payload = build_payload(
+        source_path="x.json",
+        spaces={"hash": a.space, "other": b.space},
+        projections=[*pa, *pb], store_embeddings=False)
+
+    assert set(payload["concept_spaces"]) == {"hash", "other"}
+    for projection in payload["projections"]:
+        space = payload["concept_spaces"][projection["embedding_model"]]
+        ids = {c["id"] for c in space["concepts"]}
+        for hit in projection["concepts"]:
+            assert hit["concept_id"] in ids, "concept id must resolve"
+            assert resolve_concept(payload, projection, hit["concept_id"])
 
 
 def test_cli_explain_flat_form(mock_document_path, capsys):

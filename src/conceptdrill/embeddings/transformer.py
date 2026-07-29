@@ -28,6 +28,37 @@ from .base import BaseEmbedder
 #: Opt into an accelerator explicitly. Values are passed straight to torch.
 DEVICE_ENV = "CONCEPTDRILL_DEVICE"
 
+#: Torch CPU thread count. See `_configure_threads`.
+THREADS_ENV = "CONCEPTDRILL_TORCH_THREADS"
+
+
+def _configure_threads() -> int:
+    """Pin torch to one CPU thread unless told otherwise.
+
+    Multi-threaded CPU inference is **not** bit-reproducible: the reduction
+    order inside a matmul depends on thread scheduling, and repeated encodes of
+    the same text drift by ~6e-4. That is far coarser than the 6-decimal
+    precision stored in a projection, so with 16 threads two identical runs
+    produce different `content_hash` values and the reproducibility guarantee is
+    simply false.
+
+    Single-threaded inference is bit-identical across repeats, fresh model
+    instances, and processes. Embedding a document is a small-batch workload, so
+    the throughput cost is modest and worth paying for a guarantee the tool
+    actually advertises. Set `CONCEPTDRILL_TORCH_THREADS=0` to restore torch's
+    default and trade reproducibility for speed.
+    """
+    import torch
+
+    raw = (os.environ.get(THREADS_ENV) or "1").strip()
+    try:
+        requested = int(raw)
+    except ValueError:
+        requested = 1
+    if requested > 0:
+        torch.set_num_threads(requested)
+    return torch.get_num_threads()
+
 
 @dataclass(frozen=True)
 class ModelSpec:
@@ -62,8 +93,10 @@ class TransformerEmbedder(BaseEmbedder):
     """
 
     def __init__(self, spec: ModelSpec, *, device: Optional[str] = None,
-                 batch_size: int = 16, cache_dir: Optional[str] = None) -> None:
+                 batch_size: int = 16, cache_dir: Optional[str] = None,
+                 attn_implementation: str = "eager") -> None:
         self.spec = spec
+        self.attn_implementation = attn_implementation
         self.name = spec.key
         self.revision = spec.revision or "unresolved"
         self.batch_size = batch_size
@@ -72,6 +105,7 @@ class TransformerEmbedder(BaseEmbedder):
         self._model = None
         self._tokenizer = None
         self.dim = 0
+        self.torch_threads = 0
 
     # ---- lazy load ------------------------------------------------------
 
@@ -88,6 +122,8 @@ class TransformerEmbedder(BaseEmbedder):
                 f"offline deterministic backend)"
             ) from exc
 
+        self.torch_threads = _configure_threads()
+
         kwargs = {}
         if self.spec.revision:
             kwargs["revision"] = self.spec.revision
@@ -95,7 +131,19 @@ class TransformerEmbedder(BaseEmbedder):
             kwargs["cache_dir"] = self.cache_dir
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.spec.checkpoint, **kwargs)
-        model = AutoModel.from_pretrained(self.spec.checkpoint, **kwargs)
+
+        # Force the eager attention path. Transformers defaults to SDPA, which
+        # picks a kernel at runtime; the choice varies between processes and the
+        # same text then embeds ~7e-4 apart, enough to reorder near-tied
+        # concepts. Eager brings cross-process drift down to float32 epsilon
+        # (~7e-7). Override with attn_implementation= if you need the speed.
+        attn = self.attn_implementation
+        try:
+            model = AutoModel.from_pretrained(
+                self.spec.checkpoint, attn_implementation=attn, **kwargs)
+        except (TypeError, ValueError):
+            # Older transformers, or an architecture with no eager path.
+            model = AutoModel.from_pretrained(self.spec.checkpoint, **kwargs)
         model.eval()
 
         if self._device is None:

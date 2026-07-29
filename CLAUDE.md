@@ -65,6 +65,9 @@ Things that are not obvious from any single file:
   only cosine similarity because of this.
 - **Timestamps stay out of ids and `content_hash`.** `storage.VOLATILE_KEYS`
   lists what is excluded.
+- **A sidecar stores one concept space per model** under `concept_spaces`.
+  Each model selects its own vocabulary, so resolving a projection against
+  another model's space would dangle. `storage.resolve_concept` does it right.
 
 ## Environment notes
 
@@ -75,6 +78,20 @@ Things that are not obvious from any single file:
   stanza is installed here and would otherwise change the mined vocabulary.
 - `np.savez` appends `.npz` to a path that lacks it — `cache.flush()` writes
   through a file object to keep the atomic rename working.
+- **This host's BLAS is broken; float32 matmul is non-deterministic and wrong.**
+  Repeating `a @ b` on identical tensors, single-threaded, differs in up to
+  100% of trials with deviations up to 4.25. float64, `sum()`, elementwise ops
+  and memory readback are all clean. numpy and torch both link OpenBLAS 0.3.26
+  built for `CORE2` with an empty `DYNAMIC_ARCH`. Verify before trusting ANY
+  float32 numerical result measured here:
+      python3 -c "import torch;a=torch.randn(512,768);w=torch.randn(768,768);\
+      r=(a@w).clone();print(sum(1 for _ in range(100) if not torch.equal(a@w,r)))"
+- **Only the `hash` backend is bit-reproducible here.** That is a consequence of
+  the BLAS fault above, not of the pipeline. `torch.set_num_threads(1)` and
+  `attn_implementation="eager"` are set by default because they reduce variance
+  cheaply — they do NOT fix it, and earlier notes claiming thread scheduling and
+  SDPA as the cause were wrong. Re-measure on a host with a correct BLAS before
+  drawing conclusions about ConceptDrill's reproducibility.
 
 ## Related
 

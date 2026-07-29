@@ -1,0 +1,70 @@
+{
+  "meta": {
+    "title": "Semantic Projection for Document Models",
+    "bibkey": "example2026",
+    "note": "A small self-contained document in ConceptDrill's generic input format. Every README example runs against this file."
+  },
+  "sections": [
+    {"id": "s1", "title": "1 Introduction", "level": 1},
+    {"id": "s2", "title": "2 Method", "level": 1},
+    {"id": "s2a", "title": "2.1 Semantic Projection", "level": 2, "parent": "s2"},
+    {"id": "s2b", "title": "2.2 Concept Scoring", "level": 2, "parent": "s2"},
+    {"id": "s2c", "title": "2.3 Vocabulary Selection", "level": 2, "parent": "s2"},
+    {"id": "s3", "title": "3 Evaluation", "level": 1},
+    {"id": "s4", "title": "Glossary", "level": 1}
+  ],
+  "blocks": [
+    {"id": "b1", "type": "abstract", "section": "s1",
+     "text": "We present a method for semantic projection that builds a concept space from a document's own structure. Existing concept extraction relies on an external ontology such as Wikipedia. Our semantic projection method mines the concept vocabulary from the document itself, so the concept space is tailored to the document under analysis."},
+
+    {"id": "b2", "type": "paragraph", "section": "s1",
+     "text": "A concept space is a set of concepts together with an embedding for each concept. Projection into a concept space turns an opaque latent vector into an interpretable concept vector. The concept vector is readable because every coordinate names a concept."},
+
+    {"id": "b3", "type": "paragraph", "section": "s1",
+     "text": "A Convolutional Neural Network (CNN) is a common encoder for this task. The CNN produces a latent vector for each input. Our semantic projection method is encoder agnostic and works with any embedding model."},
+
+    {"id": "b4", "type": "paragraph", "section": "s2a",
+     "text": "The semantic projection operator computes cosine similarity between a latent vector and every concept vector. Concept vectors are precomputed once and stored as a matrix. Semantic projection is therefore a single matrix multiplication, which keeps the concept space cheap to query."},
+
+    {"id": "b5", "type": "definition", "section": "s2a", "name": "Concept Projection",
+     "text": "Definition 1 (Concept Projection). The concept projection of a text span is the vector of similarities between the embedding of that span and the embedding of every concept in the concept space."},
+
+    {"id": "b6", "type": "equation", "section": "s2a",
+     "text": "\\mathrm{proj}(s) = M \\cdot f(s), \\quad M \\in \\mathbb{R}^{k \\times d}"},
+
+    {"id": "b7", "type": "paragraph", "section": "s2b",
+     "text": "Concept scoring combines structural importance, coverage, and purity into a single quality score. Concept scoring rejects a concept that matches every paragraph, because such a concept draws no distinction. Concept scoring also rejects a concept that matches almost nothing."},
+
+    {"id": "b8", "type": "equation", "section": "s2b",
+     "text": "Q(c) = \\sum_{m} w_m \\, \\mathrm{metric}_m(c)"},
+
+    {"id": "b9", "type": "equation", "section": "s2b",
+     "text": "\\mathcal{L}_{c} = \\sum_{i=1}^{K} y_i \\log p_i"},
+
+    {"id": "b10", "type": "paragraph", "section": "s2c",
+     "text": "Vocabulary selection is greedy. We walk the scored candidates best first and reject any candidate whose embedding is too close to a candidate already selected. This diversity constraint stops paraphrases from consuming the vocabulary budget."},
+
+    {"id": "b11", "type": "paragraph", "section": "s2c",
+     "text": "The selected vocabulary inherits the section hierarchy of the document. A heading concept becomes the parent of the concepts mined inside its section, which gives the concept space a hierarchy at no extra cost."},
+
+    {"id": "b12", "type": "paragraph", "section": "s3",
+     "text": "We evaluate the concept space on a corpus of scientific documents. The evaluation shows that concept scoring improves the precision of the selected vocabulary. Evaluation used a held out split of the corpus."},
+
+    {"id": "b13", "type": "table", "section": "s3",
+     "text": "Precision of the selected vocabulary at k for each candidate source",
+     "caption": "Precision at k by candidate source"},
+
+    {"id": "b14", "type": "paragraph", "section": "s3",
+     "text": "The strongest candidate source is the glossary, followed by section headings. Frequent noun phrases contribute breadth but lower precision. Bibliography titles contribute concepts the document never states outright."},
+
+    {"id": "b15", "type": "paragraph", "section": "s4",
+     "text": "Concept space — the set of concepts used for projection.\nLatent vector — the embedding produced by the encoder.\nStructural weight — the prior assigned to a candidate by its provenance.\nDiversity constraint — the rule that rejects near duplicate concepts."}
+  ],
+  "bibliography": [
+    {"id": "r1", "title": "Attention Is All You Need", "year": 2017, "citations": 100000, "label": "vaswani2017"},
+    {"id": "r2", "title": "Deep Residual Learning for Image Recognition", "year": 2016, "citations": 200000, "label": "he2016"},
+    {"id": "r3", "title": "Conceptualizing Embedding Spaces for Large Language Model Interpretability: A Framework for Concept Extraction", "year": 2022, "citations": 40, "label": "ces2022"},
+    {"id": "r4", "title": "Support Vector Networks", "year": 1995, "citations": 60000, "label": "cortes1995"},
+    {"id": "r5", "title": "Distributed Representations of Words and Phrases and their Compositionality", "year": 2013, "citations": 40000, "label": "mikolov2013"}
+  ]
+}

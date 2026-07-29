@@ -13,3 +13,14 @@ venv/
 
 # Local caches / model + concept downloads
 .conceptdrill_cache/
+
+# embrun.py working data — model weights (~1.8 GB) and HF download cache
+models/
+hf-cache/
+
+# Generated outputs. `result.json` IS committed: it is the reference baseline
+# from a machine with correct arithmetic. The per-model reports are regenerated
+# by `embrun.py` and, on this host, currently contain numerically wrong values
+# (see the CHANGE 3 note in embrun.py), so they are deliberately not tracked.
+report_*.json
+*.conceptdrill.json
