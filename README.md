@@ -20,9 +20,8 @@ There are two pipelines:
 | **single-document** | one document | its own headings, definitions, bibliography, noun phrases, entities, equations | `<input>.conceptdrill.json` |
 | **hierarchical CES** | a corpus | LLM summaries of each section, merged into a shared basis | `model.ces.json` in the drill folder |
 
-The single-document pipeline is complete. The hierarchical one has steps 1, 1A,
-1B and 2 built (section tree, summarisation, adaptive basis); projection,
-storage of the corpus basis, and inference are not yet written.
+Both pipelines are complete end to end: section tree, summarisation, adaptive
+basis, sentence projection, 2-D layout, corpus storage, query and query log.
 
 [ces]: https://arxiv.org/abs/2209.00445
 
@@ -186,12 +185,15 @@ then segfault. Opt in with `CONCEPTDRILL_DEVICE=cuda`.
 
 A second pipeline builds a **shared basis across a corpus** from the section
 hierarchy of drilled documents, rather than mining one document's own text.
-Steps 1-2 are built; projection and inference are not.
 
 ```
 drilled docs → section tree → LLM summaries → basis vectors
                                                     │
                               adaptive integration ─┴→ matrix M
+                                                          │
+              sentences → BERT → l → M·l → CES vectors ───┤
+                                                          ├→ corpus store
+                                        query → CES → ────┘   + query log
 ```
 
 ```python
@@ -295,6 +297,8 @@ merged, unrecoverably.
 | `sentences.py` | Sentence splitting, the projection unit |
 | `project.py` | `CES(s) = M @ f(s)`, with basis-version provenance |
 | `layout2d.py` | 2-D layout for inspection (PCA / UMAP / t-SNE) |
+| `corpus.py` | Corpus-level basis + sentence index on disk |
+| `inference.py` | Query to concepts and neighbours; the query log |
 
 ### Sentences, projection and layout
 
@@ -332,6 +336,52 @@ PCA carried **68% of variance in two dimensions** (57.1% + 10.9%).
 
 Eigenvector signs are pinned, because SVD may return `v` or `-v` and two runs
 would otherwise produce mirrored plots.
+
+### Corpus store and querying
+
+The corpus basis is the one artefact that deliberately does **not** live in a
+drill folder — a shared basis belongs to the corpus, and writing it beside one
+document would make that document silently authoritative for the rest.
+
+```
+<corpus_dir>/
+    ces-basis.json     rows, document order, tau, basis_version
+    ces-basis.npz      the matrix M, float64
+    ces-index.json     one record per stored sentence
+    ces-vectors.npz    sentence CES vectors, float64
+    queries.jsonl      append-only query log
+```
+
+`basis_version` is written into every file and checked on load, so vectors left
+behind by an earlier basis are **refused rather than silently misread**. That is
+the entire reason the version exists.
+
+```python
+from conceptdrill.hierarchy.corpus import CorpusStore
+from conceptdrill.hierarchy.inference import QueryEngine, QueryLog
+
+store = CorpusStore("~/ces-corpus")
+basis = store.load_basis()
+records, vectors = store.load_index(basis_version=basis.basis_version())
+
+engine = QueryEngine(basis, embedder, records=records, vectors=vectors)
+result = engine.query("how are latent embeddings made interpretable")
+
+result.annotated      # the query with its concepts injected
+result.categories     # what it is about
+result.neighbours     # where the corpus discusses it, with shared_concepts
+QueryLog("~/ces-corpus/queries.jsonl").append(result, answer=result.annotated)
+```
+
+Search happens **in CES space, not embedding space**, which is the point: the
+match is explainable, because the coordinates are named concepts and
+`shared_concepts` says which ones the query and the sentence agree on. It uses
+cosine rather than dot product, so a sentence matching every concept weakly
+cannot outrank one matching a single concept strongly on magnitude alone.
+
+On the three-paper corpus (38 rows, 1489 sentences) retrieval routes correctly:
+*"how are latent embeddings made interpretable"* returns sentences from the CES
+paper, *"estimating the completeness of a knowledge base"* from 2305.05403.
 
 ### Where output goes
 

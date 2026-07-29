@@ -23,8 +23,8 @@ standing in for the external ontology. **Two pipelines:**
 - `conceptdrill/` — single-document. Mines a vocabulary from one document's own
   structure. Complete.
 - `conceptdrill/hierarchy/` — multi-document. Builds a shared basis from LLM
-  summaries of section hierarchies across a corpus. Steps 1, 1A, 1B and 2 are
-  built; projection, corpus-basis storage and inference are not.
+  summaries of section hierarchies across a corpus, projects sentences into it,
+  stores both, and answers queries. Complete end to end.
 
 See `README.md` for usage and the two specs under
 `docs/superpowers/specs/` for design rationale.
@@ -92,6 +92,13 @@ into the drill folder. Things not obvious from any single file:
 - **`replyparse.control_corruption` runs BEFORE sanitising.** Sanitising strips
   the control characters that evidence a LaTeX command eaten by a legal JSON
   escape (`\t`, `\b`, `\f`, `\r`).
+
+- **`basis_version` is checked on every load.** `corpus.py` refuses vectors
+  belonging to a different basis rather than misreading them; a CES coordinate
+  means whatever row it indexed at projection time.
+
+- **Search is in CES space, by cosine.** Dot product would let a sentence
+  matching everything weakly outrank one matching one concept strongly.
 
 - **`basis.py` is float64 throughout.** A merge decision is one comparison
   against TAU; a wrong cosine adds a row that should have merged. `DEFAULT_TAU`
