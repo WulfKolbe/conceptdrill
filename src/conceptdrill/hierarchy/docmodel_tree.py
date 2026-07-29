@@ -17,7 +17,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence
 
-from .captions import clean_caption, lost_macros
+from .captions import clean_body_text, clean_caption, lost_macros
 
 SECTION_TYPES = frozenset({"section", "heading"})
 
@@ -184,8 +184,13 @@ def read_paragraphs(objects: Sequence[dict[str, Any]]) -> list[Paragraph]:
         props = obj.get("props") or {}
         if not isinstance(props, dict):
             continue
-        text = str(props.get("text") or props.get("content") or "").strip()
-        if not text or is_latex_artifact(text):
+        raw_text = str(props.get("text") or props.get("content") or "").strip()
+        if not raw_text or is_latex_artifact(raw_text):
+            continue
+        # Strip DocModel placeholders before the text reaches a summariser or
+        # an embedder; 55% of paragraphs in the reference document carry them.
+        text = clean_body_text(raw_text)
+        if not text:
             continue
         parent = props.get("parent_section")
         try:

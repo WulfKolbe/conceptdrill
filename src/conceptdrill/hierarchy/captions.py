@@ -92,6 +92,43 @@ def clean_caption(raw: str) -> str:
     return text if text else _fallback_clean(raw)
 
 
+#: A DocModel inline placeholder: `{{<bibkey>_<rest>||<KIND>}}`.
+#: 186 of these appear across 47 of the reference paper's 85 paragraphs — 55%.
+#: Left in place they would be tokenized as noise by every embedding model.
+_PLACEHOLDER = re.compile(r"\{\{\s*([^{}|]*?)\s*\|\|\s*([A-Z]+)\s*\}\}")
+
+#: What each placeholder kind becomes. `FO` marks a formula slot: naming it
+#: keeps the sentence grammatical where deleting it would leave "Let be a space
+#: of textual objects". `CIT` is different — the citekey is real signal, since a
+#: section citing roberta or glove is partly *about* those things.
+_PLACEHOLDER_WORDS = {"FO": "formula", "TAB": "table", "FIG": "figure",
+                      "ALG": "algorithm", "EQ": "equation"}
+
+
+def _placeholder_text(match: re.Match) -> str:
+    ident, kind = match.group(1), match.group(2)
+    if kind == "CIT":
+        # `2209.00445_REF_roberta` -> `roberta`
+        key = ident.split("_REF_")[-1] if "_REF_" in ident else ident.split("_")[-1]
+        key = re.sub(r"[^A-Za-z0-9]+", " ", key).strip()
+        return f" {key} " if key else " "
+    return f" {_PLACEHOLDER_WORDS.get(kind, kind.lower())} "
+
+
+def clean_body_text(text: str) -> str:
+    """Strip DocModel placeholders out of paragraph text.
+
+    Formula and float references become a neutral word; citation references
+    become their citekey, which carries meaning. Everything else in the text is
+    left alone — this is body prose, not a caption, and aggressive LaTeX
+    stripping here would do more harm than good.
+    """
+    if not text:
+        return ""
+    out = _PLACEHOLDER.sub(_placeholder_text, text)
+    return re.sub(r"[ \t]+", " ", out).strip()
+
+
 def lost_macros(raw: str, cleaned: str) -> tuple[str, ...]:
     """Macro names present in `raw` whose text is absent from `cleaned`.
 

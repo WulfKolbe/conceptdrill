@@ -153,3 +153,62 @@ def test_genuinely_deleted_symbol_is_still_reported():
     """The check must not become vacuous — a symbol that really vanished
     should still be flagged."""
     assert "tau" in lost_macros(REAL_TAU, "Testing the effect of the function")
+
+
+# --------------------------------------------------------------------------
+# clean_body_text — DocModel inline placeholders
+# --------------------------------------------------------------------------
+
+from conceptdrill.hierarchy.captions import clean_body_text        # noqa: E402
+
+REAL_FORMULA = "Let {{2209.00445_FO0001||FO}} be a space of textual objects"
+REAL_CITATION = "as shown by {{2209.00445_REF_roberta||CIT}} in prior work"
+
+
+def test_formula_placeholder_becomes_a_word():
+    """Deleting it outright would leave 'Let be a space of textual objects'."""
+    out = clean_body_text(REAL_FORMULA)
+    assert "{{" not in out and "||" not in out
+    assert "formula" in out
+    assert out.startswith("Let formula be a space")
+
+
+def test_citation_placeholder_becomes_its_citekey():
+    """The key is real signal: a section citing roberta is partly about it."""
+    out = clean_body_text(REAL_CITATION)
+    assert "roberta" in out
+    assert "{{" not in out and "REF" not in out
+
+
+def test_no_placeholder_syntax_survives():
+    for raw in (REAL_FORMULA, REAL_CITATION):
+        out = clean_body_text(raw)
+        assert "{{" not in out and "}}" not in out and "||" not in out
+
+
+def test_plain_prose_is_untouched():
+    text = "The concept space is built from the document's own structure."
+    assert clean_body_text(text) == text
+
+
+def test_whitespace_is_tidied_after_substitution():
+    out = clean_body_text("a {{x_FO0001||FO}} b")
+    assert "  " not in out
+
+
+def test_unknown_placeholder_kind_degrades_to_its_name():
+    assert "widget" in clean_body_text("see {{x_W1||WIDGET}} here")
+
+
+def test_multiple_placeholders_in_one_paragraph():
+    out = clean_body_text("{{a_FO1||FO}} and {{b_REF_lime||CIT}} and {{c_FO2||FO}}")
+    assert out.count("formula") == 2 and "lime" in out
+
+
+def test_empty_input_is_handled():
+    assert clean_body_text("") == "" and clean_body_text(None) == ""
+
+
+def test_newlines_are_preserved():
+    """Paragraph structure matters for sentence splitting later."""
+    assert "\n" in clean_body_text("line one\nline two")
