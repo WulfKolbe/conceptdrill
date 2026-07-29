@@ -168,15 +168,22 @@ def blas_sanity_check(n: int = 256, k: int = 768, tolerance: float = GEMM_TOLERA
     bad one reports 2.0-6.1. So a failure here is conclusive proof the machine
     is wrong; a pass is weak evidence it is right. Do not read a pass as a
     guarantee.
+
+    Checks **torch**, because that is the library that computes the embeddings.
+    numpy and torch can link different BLAS backends with different faults and
+    different workarounds, so testing numpy here would validate the wrong path.
     """
     import numpy as np
     rng = np.random.default_rng(0)
     a = rng.standard_normal((n, k), dtype=np.float32)
     b = rng.standard_normal((k, n), dtype=np.float32)
     truth = a.astype(np.float64) @ b.astype(np.float64)
+
+    ta, tb = torch.from_numpy(a), torch.from_numpy(b)
     worst = 0.0
     for _ in range(max(1, trials)):
-        worst = max(worst, float(np.abs((a @ b).astype(np.float64) - truth).max()))
+        got = (ta @ tb).numpy().astype(np.float64)
+        worst = max(worst, float(np.abs(got - truth).max()))
         if worst > tolerance:
             break
     return worst <= tolerance, worst
@@ -268,6 +275,56 @@ def inspect_model(name: str, spec: dict, chunks):
     return entry
 
 
+# CHANGE 5 — acceptance test for the setup script.
+# Cosine, not raw difference: mean-pooled embeddings from a correct machine
+# agree with the reference to ~1e-9 in cosine, while absolute differences move
+# with torch version. A cosine below this means the environment is wrong, not
+# merely different.
+SELFTEST_MIN_COSINE = 0.9999
+SELFTEST_MODEL = "mathbert"
+
+
+def selftest(chunks, reference_path: Path, model: str = SELFTEST_MODEL,
+             min_cosine: float = SELFTEST_MIN_COSINE) -> int:
+    """Run one model and check it against the reference. 0 = pass.
+
+    This is the setup script's acceptance criterion: it exercises the whole
+    chain — model download, local save, load, tokenize, forward, mean-pool —
+    and compares the result to a known-good baseline.
+    """
+    if not reference_path.exists():
+        print(f"selftest: no reference at {reference_path}", file=sys.stderr)
+        return 2
+    ref = json.loads(reference_path.read_text(encoding="utf-8"))
+    if model not in (ref.get("vectors") or {}):
+        print(f"selftest: reference has no vectors for {model!r}", file=sys.stderr)
+        return 2
+
+    entry = inspect_model(model, MODEL_SPECS[model], chunks)
+    stats = compare_vectors(entry["vectors"], ref["vectors"][model])
+    ref_meta = ref["models"][model]
+
+    shape_ok = entry["embedding_shape"] == ref_meta["embedding_shape"]
+    param_ok = entry["parameter_count"] == ref_meta["parameter_count"]
+    cos = stats["min_cosine"]
+    cos_ok = cos is not None and cos >= min_cosine
+
+    print(f"  shape        {entry['embedding_shape']} vs {ref_meta['embedding_shape']}"
+          f"   {'ok' if shape_ok else 'MISMATCH'}")
+    print(f"  parameters   {entry['parameter_count']:,}"
+          f"   {'ok' if param_ok else 'MISMATCH'}")
+    print(f"  chunks       {stats['n_compared']} compared, {stats['n_missing']} missing")
+    print(f"  min cosine   {cos:.9f} (need >= {min_cosine})"
+          f"   {'ok' if cos_ok else 'TOO LOW'}")
+    print(f"  max abs diff {stats['max_abs_diff']:.3e}")
+
+    if shape_ok and param_ok and cos_ok:
+        print("selftest PASSED")
+        return 0
+    print("selftest FAILED", file=sys.stderr)
+    return 1
+
+
 def main():
     ensure_dirs()
 
@@ -289,7 +346,17 @@ def main():
             return 3
 
     chunks = json.load(open(BASE_DIR / "chunks.json", encoding="utf-8"))
-    which = sys.argv[1:] or list(MODEL_SPECS)
+    args = sys.argv[1:]
+
+    if "--selftest" in args:
+        return selftest(chunks, BASE_DIR / "result.json")
+
+    which = [a for a in args if not a.startswith("-")] or list(MODEL_SPECS)
+    unknown = [w for w in which if w not in MODEL_SPECS]
+    if unknown:
+        print(f"embrun: unknown model(s) {', '.join(unknown)}; "
+              f"expected {', '.join(MODEL_SPECS)}", file=sys.stderr)
+        return 2
 
     for name in which:
         entry = inspect_model(name, MODEL_SPECS[name], chunks)

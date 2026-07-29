@@ -215,3 +215,42 @@ def test_sanity_check_stops_early_once_it_has_failed():
     """Must not burn 16 products proving what the first one already showed."""
     ok, err = embrun.blas_sanity_check(n=64, k=128, tolerance=0.0, trials=99)
     assert not ok and err > 0.0
+
+
+# --------------------------------------------------------------------------
+# Unit: gemm_check (shared by setup.sh and the suite)
+# Contract: library name -> worst float32 GEMM error vs a float64 reference.
+# --------------------------------------------------------------------------
+
+def _load_gemm_check():
+    spec = importlib.util.spec_from_file_location("gemm_check", REPO / "gemm_check.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+gemm_check = _load_gemm_check()
+
+
+def test_gemm_check_rejects_unknown_library():
+    with pytest.raises(ValueError, match="unknown library"):
+        gemm_check.worst_error("blas-o-matic")
+
+
+def test_gemm_check_returns_a_nonnegative_error():
+    assert gemm_check.worst_error("numpy", n=64, k=128, trials=2) >= 0.0
+
+
+def test_gemm_check_agrees_between_libraries_on_a_sound_path():
+    """numpy and torch may link different BLAS, but both must land near the
+    float64 answer. If they disagree by orders of magnitude, one is broken."""
+    n = gemm_check.worst_error("numpy", n=64, k=128, trials=2)
+    t = gemm_check.worst_error("torch", n=64, k=128, trials=2)
+    assert max(n, t) < gemm_check.TOLERANCE, (
+        f"float32 GEMM error numpy={n:.3e} torch={t:.3e} exceeds "
+        f"{gemm_check.TOLERANCE}; this machine computes wrong results")
+
+
+def test_gemm_check_cli_prints_a_parsable_number(capsys):
+    assert gemm_check.main(["gemm_check.py", "numpy"]) == 0
+    float(capsys.readouterr().out.strip())
