@@ -17,8 +17,23 @@ import shutil
 import sys
 from pathlib import Path
 
-import torch
-from transformers import AutoTokenizer, AutoModel
+# CHANGE 6 — self-healing numerics. MUST come before numpy/torch are imported:
+# the mitigations it applies (MKL_CBWR, and a re-exec with LD_PRELOAD) only take
+# effect while the BLAS is still unloaded. On a healthy machine this costs one
+# small matmul and does nothing else. It never exits and never raises, so the
+# script runs everywhere -- see the CHANGE 3/4 notes for what it is guarding.
+# Split deliberately. The env mitigations MUST run before torch is imported, but
+# the repair must NOT run at import time: `ensure_sane_blas` may re-exec the
+# process, and importing this module from a test runner would then re-exec
+# pytest itself. (It did. The suite died with no output.) The re-exec therefore
+# happens in main(), where re-entering the process is safe and expected.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import blasfix                                                     # noqa: E402
+
+blasfix.apply_env_mitigations()
+
+import torch                                                       # noqa: E402
+from transformers import AutoTokenizer, AutoModel                  # noqa: E402
 
 # CHANGE 3 — pins threads, but READ THIS: it does not make the run reproducible.
 #
@@ -328,22 +343,15 @@ def selftest(chunks, reference_path: Path, model: str = SELFTEST_MODEL,
 def main():
     ensure_dirs()
 
-    ok, err = blas_sanity_check()
-    if not ok:
-        print(f"WARNING: float32 matmul on this machine is off by {err:.3e} "
-              f"versus a float64 reference (correct is ~1e-4).", file=sys.stderr)
-        print("         Embeddings produced now are numerically WRONG.",
+    # Repair the numerics here rather than at import time -- this may re-exec
+    # the process, which is safe from main() and catastrophic from an import.
+    # It never exits: an unrepairable machine still runs, with a warning.
+    # `--selftest` is the gate that actually decides pass/fail.
+    report = blasfix.ensure_sane_blas()
+    if report.get("status") == "fixed":
+        print(f"note: float32 arithmetic repaired "
+              f"({', '.join(report['applied']) or 'LD_PRELOAD fallback'})",
               file=sys.stderr)
-        print("         Workarounds that restore correct GEMM here:",
-              file=sys.stderr)
-        print("           LD_PRELOAD=/usr/lib64/libopenblas_core2p-r0.3.26.so  "
-              "(system OpenBLAS torch)", file=sys.stderr)
-        print("           MKL_CBWR=COMPATIBLE                                   "
-              "(MKL torch from pypi)", file=sys.stderr)
-        print("         Set EMBRUN_IGNORE_BLAS=1 to proceed anyway.\n",
-              file=sys.stderr)
-        if not os.environ.get("EMBRUN_IGNORE_BLAS"):
-            return 3
 
     chunks = json.load(open(BASE_DIR / "chunks.json", encoding="utf-8"))
     args = sys.argv[1:]

@@ -254,3 +254,21 @@ def test_gemm_check_agrees_between_libraries_on_a_sound_path():
 def test_gemm_check_cli_prints_a_parsable_number(capsys):
     assert gemm_check.main(["gemm_check.py", "numpy"]) == 0
     float(capsys.readouterr().out.strip())
+
+
+def test_importing_embrun_does_not_reexec_the_process():
+    """embrun must be importable from a test runner. An earlier version called
+    ensure_sane_blas() at module level, which re-execs -- importing it under
+    pytest re-executed pytest and killed the suite with no output."""
+    import os
+    before = os.getpid()
+    _load_embrun()
+    assert os.getpid() == before
+
+
+def test_import_applies_env_mitigations_before_torch():
+    """The mitigations only bite while the BLAS is unloaded, so they must run
+    at import time even though the repair does not."""
+    import os
+    _load_embrun()
+    assert os.environ.get("MKL_CBWR")

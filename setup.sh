@@ -64,11 +64,12 @@ echo "== 3. float32 arithmetic =="
 # every downstream number is quietly wrong. The fault is decided per process,
 # so this check catches roughly a third of bad processes -- a failure is proof,
 # a pass is not a guarantee.
-# numpy and torch may link DIFFERENT BLAS backends, with different faults and
-# different workarounds. Here numpy uses the system OpenBLAS while a pypi torch
-# uses Intel MKL, so `MKL_CBWR=COMPATIBLE` fixes one and not the other. Each is
-# therefore checked against the path it actually uses: embrun computes with
-# torch, conceptdrill's matrix operations use numpy.
+# numpy and torch may link DIFFERENT BLAS backends with different faults, so
+# each is checked against the path it actually uses. This is now advisory: the
+# programs repair themselves at startup via blasfix.py (env mitigations, then a
+# one-time re-exec with a non-AVX2 BLAS), so a fault here is reported but does
+# not block. Refusing to start is not an option for a program that runs
+# everywhere -- the acceptance test in step 7 is what actually gates.
 for LIB in numpy torch; do
   ERR=$(python3 gemm_check.py "$LIB" 2>/dev/null)
   if [ -z "$ERR" ]; then
@@ -76,18 +77,27 @@ for LIB in numpy torch; do
   elif python3 -c "import sys;sys.exit(0 if float('$ERR')<=1e-2 else 1)"; then
     ok "$LIB float32 matmul error $ERR (correct is ~1e-4)"
   else
-    bad "$LIB float32 matmul error $ERR -- computes WRONG results"
-    if [ "$LIB" = "numpy" ]; then
-      hint "numpy here links the system OpenBLAS:"
-      hint "  export LD_PRELOAD=/usr/lib64/libopenblas_core2p-r0.3.26.so"
-    else
-      hint "pypi torch links Intel MKL:   export MKL_CBWR=COMPATIBLE"
-      hint "distro torch links OpenBLAS:  export LD_PRELOAD=.../libopenblas_core2p-*.so"
-    fi
-    hint "root cause looks like hardware under sustained AVX2/FMA load;"
+    warn "$LIB float32 matmul error $ERR -- raw arithmetic is WRONG here"
+    hint "blasfix repairs this automatically at program startup;"
+    hint "check with:  python3 blasfix.py"
+    hint "underlying cause looks like a CPU fault under sustained AVX2/FMA load;"
     hint "check BIOS defaults (PBO/undervolt off), cooling, memtest86+, mprime"
   fi
 done
+
+# What blasfix can actually do about it, which is the question that matters.
+FIXSTATUS=$(python3 -c "
+import blasfix
+r = blasfix.ensure_sane_blas(allow_reexec=False, verbose=False)
+print(r['status'] if r['status'] != 'unfixable' or blasfix.find_fallback_blas() is None
+      else 'repairable')" 2>/dev/null)
+case "$FIXSTATUS" in
+  ok|fixed)   ok "blasfix: arithmetic is sound in-process" ;;
+  repairable) ok "blasfix: fault detected, repairable by re-exec with a fallback BLAS" ;;
+  unfixable)  bad "blasfix: fault detected and NO fallback BLAS found on this system"
+              hint "results will be numerically wrong; fix the hardware/BLAS first" ;;
+  *)          warn "blasfix status unknown" ;;
+esac
 
 echo "== 4. compute device =="
 # WHAT CAN GO WRONG: torch.cuda.is_available() returns True on this ROCm stack
