@@ -130,17 +130,53 @@ Order-dependent by construction. Documents are therefore processed in a
 **deterministic order** (sorted bibkey), and that order is recorded in the store
 so a rebuild reproduces the same basis.
 
-### 5. Matrix M (row order — OPEN)
-Row order determines what each CES coordinate *means*, so it must be stable
-across corpus growth or stored CES vectors silently change meaning.
+### 5. Matrix M — row order
 
-Proposed default until specified: **level-major (L2, L3, L4), then support count
-descending, then label alphabetically**, with an explicit `row_id` per basis
-vector so consumers key on identity rather than position. Appending a document
-may add rows; existing rows keep their `row_id`.
+**Decided: level-major, then support count descending, then label
+alphabetically.** As a sort key:
 
-*You said row order would be explained later — this is a placeholder, not a
-decision.*
+```python
+sort_key = (level, -support_count, label)   # level ascending: L2, L3, L4
+```
+
+The label tie-break is what makes it total: two rows at the same level with
+equal support would otherwise be ordered by dict insertion, which varies.
+
+#### The consequence this creates, and how it is handled
+
+Support counts change as the corpus grows, so **row positions move**. A document
+added today can push a basis row from index 4 to index 2. Any CES vector stored
+before that reads its coordinates against the wrong concepts — and nothing about
+the vector itself reveals the mismatch. Concretely:
+
+```
+build 1:  rows [A(support 5), B(support 3)]   CES = [sim_A, sim_B]
+add doc:  B merges, support 6
+build 2:  rows [B(support 6), A(support 5)]   CES = [sim_B, sim_A]
+          -> the stored build-1 vector is now silently transposed
+```
+
+Three mechanisms keep the ordering as specified while making this detectable
+rather than silent:
+
+1. **`row_id` is content-addressed, not positional.**
+   `row_id = sha256(level | canonical_label)[:12]`. It survives reordering,
+   merges and corpus growth. Consumers that need to name a coordinate use
+   `row_id`; position is only ever a rendering detail.
+
+2. **`basis_version` = `sha256` over the ordered `row_id` list.** It changes
+   whenever rows are added, merged, or reordered.
+
+3. **Every stored CES vector records the `basis_version` it was computed
+   against.** Comparing two CES vectors, or a query against a stored corpus,
+   must check the versions match; on mismatch the correct action is to
+   re-project, not to compare. This turns a silent wrong answer into a loud
+   refusal.
+
+Merging updates a row's *support count and vector* but never its `row_id`,
+because the canonical label is what identifies the concept. A merge that would
+change the label (it does not, in the running-average rule) would create a new
+identity, and that is the correct semantics.
 
 ### 6. Sentence CES vectors (steps 3–4)
 Sentence-split paragraphs, embed, `CES = M @ l`. This is conceptdrill's existing
@@ -187,11 +223,12 @@ Two non-deterministic stages, both must be pinned and recorded:
 
 ## Open questions
 
-1. Row order of M (§5) — awaiting your specification.
-2. `TAU` = 0.85 is a guess. Needs calibration against a labelled pair of
+1. `TAU` = 0.85 is a guess. Needs calibration against a labelled pair of
    documents known to share concepts.
-3. Do L3/L4 basis vectors live in one matrix with L2, or one matrix per level
+2. Do L3/L4 basis vectors live in one matrix with L2, or one matrix per level
    with the CES vector being the concatenation? Affects M's shape and the
-   meaning of a CES coordinate.
-4. Sentence splitter: stanza is available but slow; a regex splitter is faster
+   meaning of a CES coordinate. Note the decided row order is level-major, which
+   groups levels contiguously either way — so a per-level split is a slicing
+   decision, not a reordering one.
+3. Sentence splitter: stanza is available but slow; a regex splitter is faster
    and deterministic. Which, given sentences are the projection unit?
