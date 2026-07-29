@@ -1,0 +1,67 @@
+[
+  {
+    "id": "introduction",
+    "section": "Introduction",
+    "text": "This section motivates the need for interpretable representations of large language model embedding spaces. It explains the limitations of opaque latent dimensions, argues that embedding coordinates lack semantic meaning for humans, and introduces conceptual embeddings as a representation that maps latent vectors into explicit human-understandable concepts while preserving semantic information."
+  },
+  {
+    "id": "conceptualization_algorithm",
+    "section": "The Conceptualization Algorithm",
+    "text": "This section defines the mathematical framework for transforming latent embedding vectors into conceptual embedding vectors. It introduces the mapping from text to latent space, the selection of concept prototypes, similarity computation, and the construction of a Concept Embedding Space whose dimensions correspond to explicit semantic concepts rather than anonymous latent coordinates."
+  },
+  {
+    "id": "generating_conceptual_spaces",
+    "section": "Generating Conceptual Spaces",
+    "text": "This section describes how a hierarchical ontology is converted into conceptual embedding spaces of different semantic granularity. Concepts are selected from ontology levels, enabling embeddings that represent increasingly specific semantic abstractions while remaining compatible with the same latent representation."
+  },
+  {
+    "id": "selectively_refined_spaces",
+    "section": "Selectively Refined Conceptual Spaces",
+    "text": "This section explains adaptive refinement of conceptual spaces. Instead of selecting concepts solely by ontology depth, branches of the hierarchy are refined only where additional semantic resolution is beneficial, producing compact concept spaces with higher descriptive power in important subject areas."
+  },
+  {
+    "id": "mapping_concepts_to_text",
+    "section": "Mapping Concepts to Text",
+    "text": "This section explains how ontology concepts are transformed into textual descriptions that can be embedded by the language model. It discusses generating representative textual labels and enriched descriptions so that concept embeddings accurately reflect the intended semantic meaning of ontology nodes."
+  },
+  {
+    "id": "empirical_evaluation",
+    "section": "Empirical Evaluation",
+    "text": "This section evaluates whether conceptual embeddings preserve the semantic information contained in latent embeddings. Multiple experiments compare conceptual and latent representations using qualitative inspection, classification performance, and human evaluation of interpretability."
+  },
+  {
+    "id": "qualitative_evaluation",
+    "section": "Qualitative Evaluation",
+    "text": "This section presents representative conceptual embeddings generated from example texts. It illustrates how important concepts receive high activation scores and demonstrates that conceptual embeddings provide an interpretable semantic explanation of document content."
+  },
+  {
+    "id": "classification_tasks",
+    "section": "Evaluation on Classification Tasks",
+    "text": "This section measures whether conceptual embeddings retain predictive information from the original latent embeddings. Classifiers trained on conceptual features are compared with classifiers trained on latent vectors to demonstrate semantic fidelity and minimal information loss."
+  },
+  {
+    "id": "evaluating_understandability",
+    "section": "Evaluating Understandability",
+    "text": "This section investigates whether conceptual embeddings are genuinely understandable to humans rather than merely preserving predictive performance. Human evaluation measures whether concept representations correspond to intuitive semantic interpretations of the original text."
+  },
+  {
+    "id": "application_comparing_models",
+    "section": "Application - Comparing Models",
+    "text": "This section demonstrates how conceptual embeddings enable semantic comparison between different language models. By expressing multiple models within the same conceptual space, similarities, differences, and knowledge gaps become directly observable through interpretable concept activations."
+  },
+  {
+    "id": "application_llm_tracing",
+    "section": "Application - LLM Tracing",
+    "text": "This section applies conceptual embeddings to analyze internal representations across transformer layers. Changes in concept activations reveal how semantic information evolves during forward propagation and provide an interpretable alternative to latent layer inspection."
+  },
+  {
+    "id": "related_work",
+    "section": "Related Work",
+    "text": "This section reviews previous research on explainable artificial intelligence, model interpretability, concept-based explanations, embedding analysis, and semantic representations, positioning conceptual embeddings relative to existing explanation methods."
+  },
+  {
+    "id": "conclusion",
+    "section": "Conclusion",
+    "text": "This section summarizes the contribution of conceptual embedding spaces as an interpretable projection of latent language model embeddings. It emphasizes preservation of semantic information, controllable concept granularity, and improved human understanding of model representations."
+  }
+]
