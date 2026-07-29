@@ -500,12 +500,40 @@ def test_real_tree_accounts_for_every_paragraph():
     """84 of 85 paragraphs carry parent_section; the 85th is front matter."""
     tree = load_tree(REAL_DOCMODEL)
     stats = tree.stats()
-    assert stats["paragraphs"] == 84
+    # 84 prose units + 60 math units rendered to text. The other 14 math
+    # objects are single symbols like T and k, dropped as signal-free.
+    assert stats["paragraphs"] == 144
+    assert stats["math_sources"] == {"fallback": 60, "none": 14}
     # One orphan remains: the Abstract, which legitimately precedes the first
     # section. The other candidate was a Paragraph whose entire text is
     # `\\maketitle`, dropped as a LaTeX artifact.
     assert stats["orphan_paragraphs"] == 1
     assert "computational interpretation" in tree.orphans[0].text
+
+
+@needs_real
+def test_real_math_reaches_the_sections_that_contain_it():
+    """74 math objects used to be excluded from every summary. Formula objects
+    carry no parent_section, so this only works via flow-index assignment."""
+    tree = load_tree(REAL_DOCMODEL)
+    by_title = {n.title: n for n in tree.nodes.values()}
+    algo = by_title["The Conceptualization Algorithm"]
+    assert any(p.id.startswith("obj_") and "sum" in p.text or "equals" in p.text
+               for p in algo.paragraphs)
+
+
+@needs_real
+def test_real_math_enlarges_the_body_it_belongs_to():
+    import json as _json
+    from conceptdrill.hierarchy.docmodel_tree import build_tree as _bt
+    raw = _json.loads(REAL_DOCMODEL.read_text())
+    with_math = load_tree(REAL_DOCMODEL)
+    without = _bt(raw, str(REAL_DOCMODEL), include_math=False)
+    a = [n for n in with_math.nodes.values()
+         if n.title == "The Conceptualization Algorithm"][0]
+    b = [n for n in without.nodes.values()
+         if n.title == "The Conceptualization Algorithm"][0]
+    assert len(a.body_text) > len(b.body_text)
 
 
 @needs_real
@@ -561,3 +589,96 @@ def test_artifact_paragraphs_never_reach_the_tree():
                            para("p1", "\\maketitle", 2, "s1"),
                            para("p2", "real content here", 3, "s1")))
     assert [p.id for p in tree.nodes["s1"].paragraphs] == ["p2"]
+
+
+# --------------------------------------------------------------------------
+# assign_by_flow — math has no parent_section
+# --------------------------------------------------------------------------
+
+from conceptdrill.hierarchy.docmodel_tree import assign_by_flow, read_math  # noqa: E402
+
+
+def _unit(uid, flow, parent=None):
+    return Paragraph(id=uid, text="t", section_id=parent, flow_index=flow)
+
+
+def _secs(*pairs):
+    return read_sections([section(sid, sid, 2, flow) for sid, flow in pairs])
+
+
+def test_unit_is_assigned_to_the_section_it_follows():
+    got = assign_by_flow([_unit("m1", 5)], _secs(("s1", 1), ("s2", 9)))
+    assert got[0].section_id == "s1"
+
+
+def test_unit_after_the_last_section_belongs_to_it():
+    got = assign_by_flow([_unit("m1", 99)], _secs(("s1", 1), ("s2", 9)))
+    assert got[0].section_id == "s2"
+
+
+def test_unit_before_the_first_section_stays_unowned():
+    """Front matter has no section, and inventing one would be wrong."""
+    got = assign_by_flow([_unit("m1", 0)], _secs(("s1", 5)))
+    assert got[0].section_id is None
+
+
+def test_an_explicit_parent_always_wins():
+    got = assign_by_flow([_unit("m1", 99, parent="s1")], _secs(("s1", 1), ("s2", 9)))
+    assert got[0].section_id == "s1"
+
+
+def test_exact_boundary_belongs_to_that_section():
+    got = assign_by_flow([_unit("m1", 9)], _secs(("s1", 1), ("s2", 9)))
+    assert got[0].section_id == "s2"
+
+
+def test_no_sections_leaves_units_untouched():
+    got = assign_by_flow([_unit("m1", 5)], [])
+    assert got[0].section_id is None
+
+
+# --------------------------------------------------------------------------
+# Math in the tree
+# --------------------------------------------------------------------------
+
+def _formula(fid, latex, flow):
+    return {"id": fid, "type": "Formula",
+            "props": {"latex": latex, "flow_index": flow}}
+
+
+def test_math_reaches_the_section_body():
+    tree = build_tree({"objects": [
+        section("s1", "Method", 2, 1),
+        para("p1", "prose here", 2, "s1"),
+        _formula("f1", r"L = \sum_i y_i \log p_i", 3)]})
+    assert "the sum of" in tree.nodes["s1"].body_text
+
+
+def test_math_can_be_excluded():
+    tree = build_tree({"objects": [
+        section("s1", "Method", 2, 1),
+        _formula("f1", r"L = \sum_i y_i", 2)]}, include_math=False)
+    assert tree.nodes["s1"].body_text == ""
+
+
+def test_trivial_formulas_do_not_reach_the_body():
+    tree = build_tree({"objects": [
+        section("s1", "Method", 2, 1), _formula("f1", "T", 2)]})
+    assert tree.nodes["s1"].body_text == ""
+
+
+def test_math_source_tally_is_recorded():
+    tree = build_tree({"objects": [
+        section("s1", "M", 2, 1), _formula("f1", r"a \subseteq b", 2)]})
+    assert tree.stats()["math_sources"].get("fallback") == 1
+
+
+def test_docmodel_spoken_field_is_preferred_when_present():
+    """The coming docmodel update will carry spoken math; it must win."""
+    tree = build_tree({"objects": [
+        section("s1", "M", 2, 1),
+        {"id": "f1", "type": "Formula",
+         "props": {"latex": r"a \subseteq b", "spoken": "a is contained in b",
+                   "flow_index": 2}}]})
+    assert "a is contained in b" in tree.nodes["s1"].body_text
+    assert tree.stats()["math_sources"].get("docmodel") == 1

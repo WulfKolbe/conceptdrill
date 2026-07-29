@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence
 
 from .captions import clean_body_text, clean_caption, lost_macros
+from .mathtext import math_text
 
 SECTION_TYPES = frozenset({"section", "heading"})
 
@@ -135,6 +136,12 @@ def link_parents(sections: Sequence[RawSection]) -> dict[str, Optional[str]]:
 #: Object types whose text belongs to the owning section's body.
 BODY_TYPES = frozenset({"paragraph", "abstract", "listitem"})
 
+#: Math objects. Their only content is LaTeX, which embeds as noise, so they
+#: are rendered to prose by `mathtext` first. Excluding them entirely -- as this
+#: module originally did -- dropped 74 of the reference paper's objects, and
+#: with them the whole of its mathematics, from every summary.
+MATH_TYPES = frozenset({"formula", "equation", "displayequation", "inlinemath"})
+
 #: A paragraph that is nothing but LaTeX commands. The reference document has
 #: one: a Paragraph object whose entire text is `\maketitle`. It carries no
 #: content, and feeding it to a summariser or an embedder is pure noise.
@@ -165,6 +172,43 @@ class Paragraph:
     text: str
     section_id: Optional[str]
     flow_index: int
+
+
+def read_math(objects: Sequence[dict[str, Any]], *,
+              speaker=None, min_latex_chars: int = 3
+              ) -> tuple[list[Paragraph], dict[str, int]]:
+    """Math objects rendered to prose, plus a tally of where the text came from.
+
+    The tally matters: it says whether a run used the docmodel's own spoken
+    field, a speech engine, or the coarse fallback, so basis quality is never
+    a mystery after the fact.
+    """
+    out: list[Paragraph] = []
+    sources: dict[str, int] = {}
+    for position, obj in enumerate(objects):
+        if not isinstance(obj, dict):
+            continue
+        if str(obj.get("type") or "").lower() not in MATH_TYPES:
+            continue
+        props = obj.get("props") or {}
+        if not isinstance(props, dict):
+            continue
+        text, source = math_text(props, speaker=speaker,
+                                 min_latex_chars=min_latex_chars)
+        sources[source] = sources.get(source, 0) + 1
+        if not text:
+            continue
+        parent = props.get("parent_section")
+        try:
+            flow = int(props.get("flow_index", position))
+        except (TypeError, ValueError):
+            flow = position
+        out.append(Paragraph(id=str(obj.get("id") or f"math_{position}"),
+                             text=text,
+                             section_id=str(parent) if parent else None,
+                             flow_index=flow))
+    out.sort(key=lambda p: (p.flow_index, p.id))
+    return out, sources
 
 
 def read_paragraphs(objects: Sequence[dict[str, Any]]) -> list[Paragraph]:
@@ -204,6 +248,37 @@ def read_paragraphs(objects: Sequence[dict[str, Any]]) -> list[Paragraph]:
             flow_index=flow,
         ))
     out.sort(key=lambda p: (p.flow_index, p.id))
+    return out
+
+
+def assign_by_flow(units: Sequence[Paragraph],
+                   sections: Sequence[RawSection]) -> list[Paragraph]:
+    """Give units without an explicit owner the section they fall under.
+
+    `Formula` and `Equation` objects carry NO `parent_section` -- zero of the
+    reference paper's 74 do -- but all carry `flow_index`. Position is the
+    relationship: a formula belongs to the section it is printed under, which is
+    the last section whose `flow_index` precedes it.
+
+    Units that already name a parent keep it: an explicit link always beats an
+    inferred one. Units appearing before the first section stay unowned, which
+    is correct -- they are front matter.
+    """
+    ordered = sorted(sections, key=lambda s: (s.flow_index, s.id))
+    if not ordered:
+        return list(units)
+
+    boundaries = [s.flow_index for s in ordered]
+    out: list[Paragraph] = []
+    for unit in units:
+        if unit.section_id:
+            out.append(unit)
+            continue
+        import bisect
+        idx = bisect.bisect_right(boundaries, unit.flow_index) - 1
+        owner = ordered[idx].id if idx >= 0 else None
+        out.append(Paragraph(id=unit.id, text=unit.text,
+                             section_id=owner, flow_index=unit.flow_index))
     return out
 
 
@@ -280,6 +355,8 @@ class SectionTree:
     orphans: tuple[Paragraph, ...] = ()
     bibkey: str = ""
     source_path: Optional[str] = None
+    #: How each math object's text was obtained: docmodel | speech | fallback | none.
+    math_sources: dict[str, int] = field(default_factory=dict)
 
     def __len__(self) -> int:
         return len(self.nodes)
@@ -347,11 +424,14 @@ class SectionTree:
             "orphan_paragraphs": len(self.orphans),
             "degraded_titles": sum(1 for n in self.nodes.values()
                                    if n.title_is_degraded),
+            "math_sources": dict(sorted(self.math_sources.items())),
         }
 
 
 def build_tree(docmodel: dict[str, Any],
-               source_path: Optional[str] = None) -> SectionTree:
+               source_path: Optional[str] = None, *,
+               include_math: bool = True,
+               speaker=None) -> SectionTree:
     """Assemble a `SectionTree` from a parsed `model.docmodel.json`.
 
     Composes the four verified units: read sections, link parents, read
@@ -365,6 +445,16 @@ def build_tree(docmodel: dict[str, Any],
     sections = read_sections(objects)
     parents = link_parents(sections)
     paragraphs = read_paragraphs(objects)
+
+    math_sources: dict[str, int] = {}
+    if include_math:
+        math_units, math_sources = read_math(objects, speaker=speaker)
+        # Math objects carry no parent_section, so their owner is inferred from
+        # position. Done before attaching, or every formula becomes an orphan.
+        math_units = assign_by_flow(math_units, sections)
+        paragraphs = sorted(paragraphs + math_units,
+                            key=lambda p: (p.flow_index, p.id))
+
     by_section, orphans = attach_paragraphs(paragraphs, [s.id for s in sections])
 
     # Children are the inverse of the parent map, kept in document order.
@@ -393,6 +483,7 @@ def build_tree(docmodel: dict[str, Any],
         orphans=tuple(orphans),
         bibkey=str(meta.get("bibkey") or "") if isinstance(meta, dict) else "",
         source_path=source_path,
+        math_sources=math_sources,
     )
 
 
