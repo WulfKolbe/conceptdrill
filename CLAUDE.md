@@ -17,11 +17,17 @@ There is no linter or type-checker configured.
 
 ## What this is
 
-A concept-projection tool: it mines a concept vocabulary from a document's own
-structure and projects text into it (CES, arXiv 2209.00445, with the document
-standing in for the external ontology). See `README.md` for usage and
-`docs/superpowers/specs/2026-07-28-conceptdrill-design.md` for the design
-rationale.
+A concept-projection tool implementing CES (arXiv 2209.00445) with the document
+standing in for the external ontology. **Two pipelines:**
+
+- `conceptdrill/` — single-document. Mines a vocabulary from one document's own
+  structure. Complete.
+- `conceptdrill/hierarchy/` — multi-document. Builds a shared basis from LLM
+  summaries of section hierarchies across a corpus. Steps 1, 1A, 1B and 2 are
+  built; projection, corpus-basis storage and inference are not.
+
+See `README.md` for usage and the two specs under
+`docs/superpowers/specs/` for design rationale.
 
 ## Architecture
 
@@ -54,6 +60,55 @@ Things that are not obvious from any single file:
 - **`bibitem` is excluded from `PROSE_TYPES` deliberately.** Reference lists are
   projectable but mining them for noun phrases yields author surnames, which
   then outrank real concepts.
+
+## Hierarchy package
+
+`hierarchy/` reads drilled documents from `~/pdfdrill-library/` and writes back
+into the drill folder. Things not obvious from any single file:
+
+- **`model.docmodel.json` is the only reliable input.** The `.md` retains 2
+  headers and `.llm.txt` none. Three traps: titles live under `props.caption`,
+  `parent` is null on every Section (rebuild from `level` + `flow_index`), and
+  captions carry unresolved LaTeX macros.
+
+- **Levels do not start at 1.** Across 334 library documents, 89 start at level
+  1 and 103 at level 2. Nothing may assume a root level.
+
+- **`Formula`/`Equation` carry no `parent_section`** — zero of 74 in the
+  reference paper — so `assign_by_flow` infers the owner from `flow_index`.
+  Without it every formula becomes an orphan.
+
+- **`summarize_tree` feeds `subtree_text`, not `body_text`.** Summarising a
+  level-2 section from its own paragraphs while ignoring its subsections
+  describes almost nothing (1350 vs 11141 characters for one real section).
+
+- **Only the `label` tier fits the BERT window.** Measured 1.604 tokens/word:
+  `label` 30-42 words lands at 48-67 tokens; the other two overshoot.
+
+- **All LLM output goes through `sanitize.py`.** Models emit invisible and
+  lookalike characters that change tokenisation. It preserves Greek, accents
+  and CJK — those are content.
+
+- **`replyparse.control_corruption` runs BEFORE sanitising.** Sanitising strips
+  the control characters that evidence a LaTeX command eaten by a legal JSON
+  escape (`\t`, `\b`, `\f`, `\r`).
+
+- **`basis.py` is float64 throughout.** A merge decision is one comparison
+  against TAU; a wrong cosine adds a row that should have merged. `DEFAULT_TAU`
+  is 0.65, measured — 0.85 produced zero merges across three related papers.
+
+## Integration with pdfdrill
+
+`~/MX/PDFDRILL` is where projections are collected. Follow its conventions
+rather than inventing parallel ones:
+
+- Output goes in the **drill folder** as `model.ces.json`, joining the
+  `model.<stage>.json` family.
+- Register `CES_BUILT` in the sidecar via `hierarchy/sidecar.py`, which
+  reproduces pdfdrill's proof format byte-compatibly **without importing it**.
+  `capability_valid()` re-hashes inputs — do not reinvent staleness.
+- Sidecar writes are additive; preserve keys you do not understand.
+- The corpus basis is **not** per-document and must not live in a drill folder.
 
 ## Constraints that must hold
 
@@ -95,6 +150,16 @@ Things that are not obvious from any single file:
 
 ## Related
 
-The Semantic Compiler that produces `model.docmodel.json` lives at
-`~/drillspace` (package `pdfdrill`). ConceptDrill has no import dependency on
-it and must not acquire one.
+| path | what it is |
+|---|---|
+| `~/MX/PDFDRILL` | current pdfdrill; sidecar/proofs/repo conventions; where projections are collected |
+| `~/pdfdrill-library/` | 3300 drilled documents, 334 with a docmodel, 251 usable |
+| `~/la2speech/` | LaTeX to spoken text (SRE); source of formula prose |
+| `~/Gemma4/` | the original `section_concepts.py` and prompt this package adapts |
+| `~/drillspace` | older Semantic Compiler checkout |
+
+ConceptDrill has **no import dependency** on any of them and must not acquire
+one. Formats are reproduced, not imported.
+
+Credentials live in a gitignored `.env` (see `.env.example`), read only from
+this project. Never read a neighbouring project's key file.

@@ -1,6 +1,8 @@
-# ConceptDrill — Design
+# ConceptDrill — Design (single-document pipeline)
 
 Date: 2026-07-28
+Status: **implemented.** The multi-document pipeline is specified
+separately in `2026-07-29-hierarchical-ces-design.md`.
 
 ## Purpose
 
@@ -96,7 +98,9 @@ DocModel emits them. No speculative extraction is performed.
 One protocol, two implementations:
 
 - **`hash`** — signed hashing trick over word and character n-grams. Fully
-  deterministic, no network, no model download. Because it is lexical rather
+  deterministic, no network, no model download. NOTE: on the development host
+  this is the *only* bit-reproducible backend, because its float32 GEMM is
+  faulty — see the Reproducibility section of README.md. Because it is lexical rather
   than random-per-text, similar texts receive similar vectors, so the coverage,
   purity, and variance metrics produce meaningful numbers offline. This is the
   backend the test suite uses.

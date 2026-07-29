@@ -27,8 +27,25 @@ nlp = [
 spacy = [
     "spacy>=3.7",
 ]
+# The hierarchical-CES summariser: an OpenAI-compatible chat client (Novita by
+# default). Absent, `ExtractiveSummarizer` still runs the whole pipeline offline.
+llm = [
+    "openai>=1.0",
+]
+# Better LaTeX-to-text for section captions. Absent, `captions` falls back to a
+# regex cleaner, so this changes quality rather than capability.
+latex = [
+    "pylatexenc>=2.10",
+]
 dev = [
     "pytest>=7.0",
+]
+# Everything the hierarchical-CES pipeline can use.
+hierarchy = [
+    "torch>=2.0",
+    "transformers>=4.30",
+    "openai>=1.0",
+    "pylatexenc>=2.10",
 ]
 
 [project.scripts]

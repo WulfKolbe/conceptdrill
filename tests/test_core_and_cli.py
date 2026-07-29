@@ -15,6 +15,7 @@ from conceptdrill.cli import main
 from conceptdrill.routing import DORMANT_TYPES, model_for_type, routing_table
 from conceptdrill.storage import (content_hash, read_sidecar, sidecar_path,
                                   verify_sidecar)
+from conftest import needs_sound_blas
 
 
 @pytest.fixture
@@ -89,6 +90,7 @@ def test_refine_stops_when_the_pool_is_exhausted(drill):
 # Determinism — the headline requirement
 # --------------------------------------------------------------------------
 
+@needs_sound_blas
 def test_two_builds_agree(mock_document, embedder):
     from conceptdrill.embeddings import get_embedder
     a = ConceptDrill(mock_document, embedder=get_embedder("hash", cache=False, dim=128))
@@ -97,6 +99,7 @@ def test_two_builds_agree(mock_document, embedder):
     assert [c.score for c in a.space.concepts] == [c.score for c in b.space.concepts]
 
 
+@needs_sound_blas
 def test_content_hash_is_reproducible(mock_document_path, tmp_path):
     out = tmp_path / "one.json"
     other = tmp_path / "two.json"
@@ -241,6 +244,7 @@ def test_request_projection_for_a_span(mock_document_path):
     assert len(result["concepts"]) == 3
 
 
+@needs_sound_blas
 def test_request_storage_reports_completed_then_updated(mock_document_path, tmp_path):
     out = tmp_path / "sidecar.json"
     first = request_storage(mock_document_path, output=out, model="hash")

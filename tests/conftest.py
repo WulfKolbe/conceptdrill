@@ -24,6 +24,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 # Must be set before conceptdrill.nlp resolves and caches the backend.
 os.environ.setdefault("CONCEPTDRILL_NLP_BACKEND", "regex")
 
+# Numerics, before numpy is imported. This host computes float32 GEMM wrongly in
+# roughly one process in three, which reaches even the `hash` backend because
+# projection is a numpy matmul. Without this the determinism tests flake.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import blasfix                                                    # noqa: E402
+
+blasfix.apply_env_mitigations()
+
+#: True when this process cannot be trusted with float32 linear algebra.
+BLAS_FAULTY = (blasfix.gemm_error("numpy") or 0.0) > blasfix.TOLERANCE
+
+needs_sound_blas = pytest.mark.skipif(
+    BLAS_FAULTY,
+    reason="this process's float32 GEMM is faulty; see setup.sh / blasfix.py")
+
 from conceptdrill.document import Document          # noqa: E402
 from conceptdrill.embeddings import get_embedder    # noqa: E402
 

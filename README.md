@@ -13,19 +13,38 @@ ConceptDrill is a **projection** tool. It never reconstructs, rewrites, or
 mutates the source document. Output is always an additional view stored beside
 the input.
 
+There are two pipelines:
+
+| | scope | concepts mined from | output |
+|---|---|---|---|
+| **single-document** | one document | its own headings, definitions, bibliography, noun phrases, entities, equations | `<input>.conceptdrill.json` |
+| **hierarchical CES** | a corpus | LLM summaries of each section, merged into a shared basis | `model.ces.json` in the drill folder |
+
+The single-document pipeline is complete. The hierarchical one has steps 1, 1A,
+1B and 2 built (section tree, summarisation, adaptive basis); projection,
+storage of the corpus basis, and inference are not yet written.
+
 [ces]: https://arxiv.org/abs/2209.00445
 
 ## Install
 
 ```bash
-pip install -e .              # core: numpy only
-pip install -e '.[models]'    # + torch/transformers for real embeddings
-pip install -e '.[nlp]'       # + stanza for better noun phrases and NER
+pip install -e .                # core: numpy only
+pip install -e '.[models]'      # + torch/transformers for real embeddings
+pip install -e '.[nlp]'         # + stanza for better noun phrases and NER
+pip install -e '.[llm]'         # + openai client for the section summariser
+pip install -e '.[latex]'       # + pylatexenc for better caption cleaning
+pip install -e '.[hierarchy]'   # everything the hierarchical pipeline can use
+pip install -e '.[spacy]'       # + spaCy as an alternative NLP tier
+pip install -e '.[dev]'         # + pytest
 ```
 
-Without `[models]` only the `hash` embedding backend is available. It is
-deterministic and offline but lexical rather than semantic — good for tests and
-reproducibility work, not for quality.
+Every extra degrades rather than fails. Without `[llm]` the summariser falls
+back to a deterministic extractive floor; without `[latex]` caption cleaning
+falls back to a regex; without `[models]` only the `hash` embedder exists.
+
+The `hash` backend is deterministic and offline but lexical rather than
+semantic — good for tests and reproducibility work, not for quality.
 
 ## Use
 
@@ -162,6 +181,137 @@ Device defaults to **CPU**. `torch.cuda.is_available()` returning True does not
 mean the device survives a forward pass — on ROCm it can report a device and
 then segfault. Opt in with `CONCEPTDRILL_DEVICE=cuda`.
 
+## Hierarchical CES (multi-document)
+
+A second pipeline builds a **shared basis across a corpus** from the section
+hierarchy of drilled documents, rather than mining one document's own text.
+Steps 1-2 are built; projection and inference are not.
+
+```
+drilled docs → section tree → LLM summaries → basis vectors
+                                                    │
+                              adaptive integration ─┴→ matrix M
+```
+
+```python
+from conceptdrill.hierarchy.docmodel_tree import load_tree
+from conceptdrill.hierarchy.summarize import ExtractiveSummarizer, summarize_tree
+from conceptdrill.hierarchy import store
+
+tree = load_tree("~/pdfdrill-library/2209.00445/model.docmodel.json")
+run  = summarize_tree(tree, ExtractiveSummarizer())
+store.save(tree, run.summaries, summary_stats=run.stats())
+```
+
+### Section tree
+
+`model.docmodel.json` is the only reliable input. Verified across all 334
+drilled documents in the library — 334 parsed, 0 failures:
+
+| source | hierarchy | verdict |
+|---|---|---|
+| `.md` | 2 headers total | destroyed |
+| `.llm.txt` | 0 markers | destroyed |
+| `texsrc/*.tex` | present, but `.sty` noise and competing `.tex` files | awkward |
+| **`model.docmodel.json`** | levels, `is_appendix`, `flow_index`, paragraph links | **use this** |
+
+Three properties of the DocModel drive `docmodel_tree.py`:
+
+- Section titles are under **`props.caption`**, not `props.title`.
+- **`parent` is `null` on every Section** — the tree is rebuilt from `level` +
+  `flow_index`. 89 of 251 usable documents start at level 1 and 103 at level 2,
+  so nothing may assume a root level.
+- Captions carry unresolved LaTeX macros (`\ALG\ Application`), cleaned by
+  `captions.py`, which records what it had to drop.
+
+**Formula and Equation objects carry no `parent_section`** — zero of the
+reference paper's 74 — so their owning section is inferred from `flow_index`.
+
+### Summaries
+
+Each section yields three tiers (`prompts/section-concept.md`). Measured at
+1.604 BERT tokens/word on real prose:
+
+| tier | words | tokens | role |
+|---|---|---|---|
+| `summary` | 80-150 | 128-241 | document-faithful |
+| `abstraction` | ~70 | 96-128 | document-independent |
+| **`label`** | **30-42** | **48-67** | **the basis tier** |
+
+Only `label` fits a 50-70 token window. Two summarisers: `ExtractiveSummarizer`
+(deterministic, offline, a genuine floor — it cannot abstract) and
+`NovitaSummarizer` (`hierarchy/novita.py`, an OpenAI-compatible chat model;
+the network call is injected, so it tests offline). All LLM output is passed
+through `sanitize.py`, which folds invisible and lookalike characters to ASCII
+while preserving Greek, accents and CJK.
+
+### Spoken math
+
+Formulas contribute nothing as raw LaTeX, so `mathtext.py` renders them to
+prose, preferring a spoken field on the object once the DocModel carries one,
+then a speech backend ([la2speech](https://github.com/WulfKolbe)), then a
+deterministic operator-naming fallback. The source of every rendering is
+tallied in `tree.stats()`.
+
+Speech text is not automatically embedding text: SRE spells multi-letter
+identifiers letter by letter, so `protect_identifiers` wraps them first.
+`AVERAGE_{s \in siblings(c,p)}` reads as *"A V E R A G of E sub s ..."* raw and
+*"AVERAGE sub s is a member of the siblings of"* protected.
+
+### Adaptive basis
+
+Per level, a candidate merges into its nearest row when cosine >= `TAU`, else
+becomes a new row. Row order is `(level, -support, label)`; `row_id` is
+content-addressed so identity survives reordering, and `basis_version` hashes
+the ordered ids so a stored CES vector detects that positions moved.
+
+**`TAU` defaults to 0.65, measured rather than guessed.** The design spec
+proposed 0.85; across three topically related papers that produced *zero*
+merges, because the highest cross-document similarity observed was **0.647** —
+and that pair was genuinely related. 0.85 is a near-paraphrase threshold and
+the wrong scale. Use `basis.calibrate()` on your own corpus; it reports
+within- and cross-document distributions separately, because they answer
+different questions.
+
+The basis arithmetic is **float64** throughout: a merge decision is one
+comparison against `TAU`, and a wrong cosine adds a row that should have
+merged, unrecoverably.
+
+### Modules
+
+| module | responsibility |
+|---|---|
+| `docmodel_tree.py` | Sections, hierarchy, paragraphs, math attachment |
+| `captions.py` | LaTeX caption cleaning, DocModel placeholder removal |
+| `mathtext.py` | Formula to embeddable prose |
+| `summarize.py` | Tiers, `ExtractiveSummarizer`, cache, `summarize_tree` |
+| `novita.py` | Chat-backed summariser, throttle, credentials |
+| `replyparse.py` | Tolerant JSON recovery from model replies |
+| `sanitize.py` | Invisible/lookalike character folding |
+| `basis.py` | Adaptive integration, row order, `calibrate` |
+| `store.py` | `model.ces.json` in the drill folder |
+| `sidecar.py` | `CES_BUILT` capability + content-hash proof |
+
+### Where output goes
+
+Artefacts land in the **drilled document's own folder**, joining pdfdrill's
+`model.<stage>.json` family, and register as a normal pdfdrill capability:
+
+```
+~/pdfdrill-library/2209.00445/
+    model.docmodel.json      input, read-only, never modified
+    model.ces.json           written here
+    2209.00445.drill.json    gains fact CES_BUILT + a content-hash proof
+```
+
+`sidecar.capability_valid()` re-hashes the recorded inputs, so re-drilling a
+document invalidates its CES output automatically. Writes are additive and
+preserve every sidecar key they do not understand.
+
+The **corpus basis is not per-document** and deliberately does not live in a
+drill folder: writing it into one would make that folder silently authoritative
+for every other document.
+
 ## Reproducibility
 
 The pipeline is deterministic. The **transformer backends are not bit-exact**,
@@ -260,5 +410,10 @@ request_verification(sidecar)
 python -m pytest
 ```
 
-191 tests, offline, ~9s. The suite pins the `hash` embedder and the `regex` NLP
+634 tests, offline, ~9s. The suite pins the `hash` embedder and the `regex` NLP
 tier so results do not depend on which optional models happen to be installed.
+Tests touching `~/pdfdrill-library` skip when it is absent.
+
+Numerics are repaired automatically at startup by `blasfix.py` — see
+[Reproducibility](#reproducibility). `./setup.sh` checks the environment and
+runs `embrun.py --selftest` as its acceptance test.

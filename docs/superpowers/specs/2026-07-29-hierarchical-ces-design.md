@@ -1,7 +1,10 @@
 # CES Hierarchical Self-Adapting Embedding Structure — Design
 
 Date: 2026-07-29
-Status: **definition — not implemented**
+Status: **steps 1, 1A, 1B and 2 implemented.** Projection (3-5),
+corpus-basis storage (6) and inference (7-8) are not.
+Amendments below are marked MEASURED where a decision was revised
+against real data rather than reasoning.
 
 ## Purpose
 
@@ -123,8 +126,15 @@ for each candidate vector v at level L:
     else:                          M_L[j] = normalise((M_L[j]*n + v) / (n+1)); n += 1
 ```
 
-`TAU` default 0.85, configurable. Each row records support count, contributing
-documents, and the labels merged into it, so a basis row is explainable.
+**MEASURED — `TAU` default is 0.65, not 0.85.** Across three topically related
+papers embedded with all-MiniLM-L6-v2, 0.85 produced zero merges of any kind:
+the highest cross-document similarity observed anywhere was 0.647, and that
+pair was genuinely related. 0.85 is a near-paraphrase threshold, the wrong
+scale for concept sharing. `basis.calibrate()` derives a threshold from a
+corpus and reports the within- and cross-document distributions it used.
+
+Each row records support count, contributing documents, and the labels merged
+into it, so a basis row is explainable.
 
 Order-dependent by construction. Documents are therefore processed in a
 **deterministic order** (sorted bibkey), and that order is recorded in the store
@@ -223,8 +233,13 @@ Two non-deterministic stages, both must be pinned and recorded:
 
 ## Open questions
 
-1. `TAU` = 0.85 is a guess. Needs calibration against a labelled pair of
-   documents known to share concepts.
+1. **RESOLVED (partly).** `TAU` is 0.65, measured. But at 0.65 three related
+   papers still share zero rows; sharing only begins near 0.50, where
+   within-document merging becomes aggressive (58 candidates to 22 rows). One
+   threshold may not serve both jobs. Needs a larger corpus, and a label tier
+   more canonical than the current prompt produces — 13 of 65 sections failed
+   to parse and most labels came in under the 30-42 word budget, both of which
+   suppress similarity.
 2. Do L3/L4 basis vectors live in one matrix with L2, or one matrix per level
    with the CES vector being the concatenation? Affects M's shape and the
    meaning of a CES coordinate. Note the decided row order is level-major, which
@@ -232,3 +247,19 @@ Two non-deterministic stages, both must be pinned and recorded:
    decision, not a reordering one.
 3. Sentence splitter: stanza is available but slow; a regex splitter is faster
    and deterministic. Which, given sentences are the projection unit?
+
+## Amendments since the definition
+
+- **MEASURED: formulas are now included.** The definition treated math as out
+  of scope. 74 objects in the reference paper carried the document's entire
+  mathematics and reached no summary. `mathtext.py` renders them to prose,
+  preferring a docmodel spoken field, then a speech backend, then a fallback.
+- **MEASURED: `Formula` carries no `parent_section`** — zero of 74 — so
+  ownership is inferred from `flow_index` by `assign_by_flow`.
+- **All LLM output is sanitised** (`sanitize.py`). Not in the definition; added
+  after invisible U+2011 and U+2013 characters were found in LLM-authored text
+  supplied to this project.
+- **Storage follows pdfdrill.** `model.ces.json` in the drill folder, plus a
+  `CES_BUILT` capability with a content-hash proof in the sidecar. The
+  definition proposed a bespoke sidecar and its own staleness check; pdfdrill
+  already had both, and reinventing them was the wrong call.
