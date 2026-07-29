@@ -250,6 +250,13 @@ Two non-deterministic stages, both must be pinned and recorded:
 
 ## Amendments since the definition
 
+- **The paper's Algorithm 2 is now implemented** (`refine.py`). It was missing:
+  `basis.py` merges across a corpus, which is this project's own design, not
+  the paper's hierarchical refinement. Measured on three nested documents it
+  does **not** beat taking sections in document order, which is an honest
+  negative result rather than a defect — see README. The siblings score is
+  degenerate on a section tree (0 of 8695 sections have >1 parent).
+
 - **MEASURED: formulas are now included.** The definition treated math as out
   of scope. 74 objects in the reference paper carried the document's entire
   mathematics and reached no summary. `mathtext.py` renders them to prose,

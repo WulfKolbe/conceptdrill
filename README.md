@@ -363,7 +363,38 @@ expand Application                      w= 5.88  + Using CES for Comparing Model
 ```
 
 The expansion order is the document's own emphasis, recovered from the text
-rather than the outline.
+rather than the outline. On `2105.00377` (MathBERT, 5 roots, three levels) it
+descends two levels — MathBERT → Pre-Training Tasks → the three masked-modelling
+tasks — and expands `Experiment` **last** (w=5.48) despite it being the fourth
+section, because the context sentences do not project onto it.
+
+#### Measured: it does not beat document order on this corpus
+
+Honest negative result. Building the space from 70% of a document's sentences
+and evaluating mean top-1 similarity on a random held-out 30%:
+
+| document | size | refined | doc-order | random |
+|---|---|---|---|---|
+| 2105.00377 | 12 | 0.3485 | **0.4194** | 0.4353 |
+| 2110.11150 | 13 | 0.3657 | **0.3784** | 0.3464 |
+| 2509.04603v3 | 14 | 0.3114 | **0.3608** | 0.2963 |
+
+It does not win *inside* the expanded subtrees either, where it should be
+strongest — 0.3551 vs 0.4381 on 2105.00377.
+
+The reason looks structural rather than a defect: document order in a nested
+document **is** a depth-first traversal, so its first N sections already form a
+mixed-granularity prefix, while refinement deliberately concentrates the space
+on one topic and pays for it elsewhere. The paper worked against Wikipedia — a
+vast, deep, multi-parent ontology — where selecting *which* branch to open
+matters enormously. Here the hierarchies are at most three levels and 19–30
+sections, so there is little for selection to win.
+
+Two caveats before reading this as a verdict on the algorithm: the concepts
+here are **section titles**, which are short and generic ("Introduction",
+"Experiment"), and refinement over richer LLM `label` summaries was not
+measured. Mean top-1 similarity also rewards coverage, which is not what the
+algorithm optimises.
 
 **The siblings score is degenerate on a section tree.** The paper defines
 

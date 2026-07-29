@@ -265,3 +265,63 @@ def test_labels_are_accepted_without_error():
                  concept_vectors=lambda ids: vectors_for(ids, VECS),
                  target_size=3, labels=["x", "y"], blend=0.5)
     assert len(res) >= 3
+
+
+# --------------------------------------------------------------------------
+# Against a genuinely nested real document
+# --------------------------------------------------------------------------
+
+from pathlib import Path                                          # noqa: E402
+
+DEEP_DOC = Path("/home/wkolbe/pdfdrill-library/2105.00377/model.docmodel.json")
+needs_deep = pytest.mark.skipif(not DEEP_DOC.exists(),
+                                reason="drilled library not present")
+
+
+@needs_deep
+def test_a_real_nested_document_has_room_to_refine():
+    """2105.00377 (MathBERT): 5 roots, 19 sections, three levels."""
+    from conceptdrill.hierarchy.docmodel_tree import load_tree
+    g = ConceptGraph.from_section_tree(load_tree(DEEP_DOC))
+    assert len(g.top_level()) == 5
+    assert len(g.children) == 19
+    assert g.is_tree()
+
+
+@needs_deep
+def test_refinement_descends_two_levels_on_a_real_document():
+    """MathBERT -> Pre-Training Tasks -> the three masked-modelling tasks."""
+    from conceptdrill.hierarchy.docmodel_tree import load_tree
+    tree = load_tree(DEEP_DOC)
+    g = ConceptGraph.from_section_tree(tree)
+    # A context that leans on the pre-training material.
+    ids = list(g.children)
+    fake = {c: np.zeros(4) for c in ids}
+    for c in ids:
+        label = g.labels[c].lower()
+        fake[c] = np.array([1.0 if "pre-train" in label else 0.0,
+                            1.0 if "mathbert" in label else 0.0,
+                            1.0 if "mask" in label else 0.0, 0.1])
+    ctx = np.array([[0.5, 0.5, 0.5, 0.1]])
+    res = refine(g, context_vectors=ctx,
+                 concept_vectors=lambda i: np.vstack([fake[x] for x in i]),
+                 target_size=12, child_fraction=1.0)
+    depths = {tree.depth(c) for c in res.concepts}
+    assert max(depths) >= 2, "refinement must reach the third level"
+
+
+@needs_deep
+def test_expansion_order_is_not_document_order():
+    """The point of the algorithm: emphasis comes from the text, not the
+    outline. On 2105.00377 'Experiment' expands last despite being the fourth
+    section, because the context does not project onto it."""
+    from conceptdrill.hierarchy.docmodel_tree import load_tree
+    tree = load_tree(DEEP_DOC)
+    g = ConceptGraph.from_section_tree(tree)
+    ids = list(g.children)
+    vec = {c: np.array([1.0 if "mathbert" in g.labels[c].lower() else 0.05, 0.1])
+           for c in ids}
+    res = refine(g, context_vectors=np.array([[1.0, 0.0]]),
+                 concept_vectors=lambda i: np.vstack([vec[x] for x in i]),
+                 target_size=9, child_fraction=1.0)
+    assert res.steps and "MathBERT" in res.steps[0].expanded_label
