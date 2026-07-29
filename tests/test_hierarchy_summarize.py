@@ -33,13 +33,44 @@ def summarizer():
 
 def test_prompt_is_packaged_and_readable():
     """Nothing may depend on ~/Gemma4 at runtime."""
-    assert "BASIS VECTOR" in load_prompt()
+    assert "basis vectors" in load_prompt()
+
+
+def test_prompt_ends_with_the_json_shape():
+    """Format-final. Measured: a prompt ending in prose made the model reason
+    aloud and emit no JSON at all -- 2/6 parsed versus 6/6 when the last thing
+    it sees is the object it must produce."""
+    assert load_prompt().strip().endswith("}")
+
+
+def test_prompt_forbids_thinking_aloud():
+    """The model literally wrote 'That's about 35 words. Good.' instead of JSON."""
+    assert "explain your reasoning" in load_prompt()
+
+
+def test_prompt_contains_no_markdown_fence():
+    """Showing a fenced example while forbidding fences is a mixed signal, and
+    models mirror the format they are shown."""
+    assert "```" not in load_prompt()
+
+
+def test_prompt_is_pure_ascii():
+    """LLM-authored prose carries non-breaking hyphens and en dashes that are
+    invisible on screen and tokenize differently."""
+    assert all(ord(c) < 128 for c in load_prompt())
+
+
+def test_prompt_states_budgets_inside_the_json_shape():
+    """Budget placement is load-bearing: stated only in a distant description
+    block, labels degraded to 8-word noun phrases."""
+    tail = load_prompt().strip().rsplit("{", 1)[-1]
+    assert "30-42 words" in tail
 
 
 def test_prompt_asks_for_all_three_tiers():
     prompt = load_prompt()
     for tier in ("summary", "abstraction", "label"):
-        assert f'"{tier}"' in prompt
+        assert f'"{tier}"' in prompt or f"{tier} " in prompt
 
 
 def test_prompt_states_the_measured_label_budget():

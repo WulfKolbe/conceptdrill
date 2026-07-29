@@ -31,6 +31,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Optional, Protocol, runtime_checkable
 
+from .sanitize import sanitize_text
+
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "section-concept.md"
 
 #: Word budgets per tier, from the prompt.
@@ -137,8 +139,10 @@ class ExtractiveSummarizer:
     deterministic = True
 
     def summarize(self, section_id: str, title: str, body: str) -> SectionSummary:
-        text = re.sub(r"\s+", " ", (body or "").strip())
-        clean_title = re.sub(r"\s+", " ", (title or "").strip())
+        # Sanitised even though the source is the document rather than a
+        # model: drilled text carries OCR and LLM-authored characters too.
+        text = re.sub(r"\s+", " ", sanitize_text(body or ""))
+        clean_title = re.sub(r"\s+", " ", sanitize_text(title or ""))
 
         if not text:
             # A section with no body still has a title, which is a weak but

@@ -19,6 +19,7 @@ import time
 from typing import Callable, Optional
 
 from .replyparse import control_corruption, parse_reply
+from .sanitize import sanitize_summary_fields
 from .summarize import SectionSummary, load_prompt
 
 DEFAULT_MODEL = "inclusionai/ling-3.0-flash"
@@ -39,10 +40,41 @@ TIERS = ("summary", "abstraction", "label")
 ChatFn = Callable[[str, str], str]
 
 
+def load_dotenv(path: Optional[str] = None) -> dict[str, str]:
+    """Load `KEY=value` pairs from the project's own `.env` into os.environ.
+
+    Only ever this project's `.env`, which is gitignored. Existing environment
+    variables win, so an explicit export always overrides the file. This is not
+    the same as harvesting credentials from a neighbouring directory: a `.env`
+    beside the code is the conventional place for a developer to put their own
+    keys, and it is opt-in by existing.
+    """
+    from pathlib import Path as _Path
+    target = _Path(path) if path else _Path.cwd() / ".env"
+    loaded: dict[str, str] = {}
+    if not target.exists():
+        return loaded
+    try:
+        for line in target.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key, value = key.strip(), value.strip().strip('"').strip("'")
+            if key and not os.environ.get(key):
+                os.environ[key] = value
+                loaded[key] = value
+    except Exception:
+        pass
+    return loaded
+
+
 def resolve_api_key(explicit: Optional[str] = None) -> Optional[str]:
-    """API key from the argument or the environment. Never from a dotfile."""
+    """API key from the argument, the environment, or the project's .env."""
     if explicit:
         return explicit
+    if not any(os.environ.get(n) for n in ("NOVITA_API_KEY", "OPENAI_API_KEY")):
+        load_dotenv()
     for name in ("NOVITA_API_KEY", "OPENAI_API_KEY"):
         value = os.environ.get(name)
         if value:
@@ -160,14 +192,24 @@ class NovitaSummarizer:
                 error="reply was not JSON",
                 warnings=(f"raw reply: {(reply or '')[:200]}",))
 
-        values = {tier: str(parsed.get(tier) or "").strip() for tier in TIERS}
+        raw_values = {tier: str(parsed.get(tier) or "").strip() for tier in TIERS}
 
         warnings: list[str] = []
-        for tier, text in values.items():
+        # Detect the eaten-escape damage BEFORE sanitising, because sanitising
+        # strips the very control characters that evidence it.
+        for tier, text in raw_values.items():
             for offender in control_corruption(text):
                 warnings.append(
                     f"{tier}: a LaTeX command was eaten by the legal JSON "
                     f"escape {offender}")
+
+        # Every model-produced string is sanitised. Models emit characters that
+        # are invisible or indistinguishable from ASCII -- non-breaking hyphens,
+        # zero-width joiners, curly quotes -- and each one changes how the text
+        # tokenizes, so a basis vector built from unsanitised text is not the
+        # vector it appears to be.
+        values, sanitize_warnings = sanitize_summary_fields(raw_values)
+        warnings.extend(sanitize_warnings)
         if not any(values.values()):
             return SectionSummary(
                 section_id=section_id, title=title, model=self.model,

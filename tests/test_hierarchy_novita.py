@@ -39,19 +39,23 @@ def test_key_read_from_the_environment(monkeypatch):
     assert resolve_api_key() == "sk-test"
 
 
-def test_missing_key_returns_none(monkeypatch):
+def test_missing_key_returns_none(monkeypatch, tmp_path):
+    """Isolated to an empty directory on purpose. Run from the repo root this
+    finds the developer's real .env -- which is the intended behaviour, but
+    would make the assertion leak a live key into the test output."""
     monkeypatch.delenv("NOVITA_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.chdir(tmp_path)
     assert resolve_api_key() is None
 
 
-def test_no_credentials_are_read_from_any_file(monkeypatch, tmp_path):
-    """A library that harvests keys from a neighbouring dotfile is a liability.
-    ~/Gemma4/env.txt holds live keys for five services and must stay untouched."""
+def test_only_dotenv_is_read_never_an_arbitrary_env_file(monkeypatch, tmp_path):
+    """The project's own `.env` is conventional and opt-in. Any *other* file --
+    `env.txt` beside it, or one in a neighbouring project -- must be ignored.
+    ~/Gemma4/env.txt holds live keys for five services and stays untouched."""
     monkeypatch.delenv("NOVITA_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    env_file = tmp_path / "env.txt"
-    env_file.write_text("NOVITA_API_KEY=sk-should-not-be-read\n")
+    (tmp_path / "env.txt").write_text("NOVITA_API_KEY=sk-should-not-be-read\n")
     monkeypatch.chdir(tmp_path)
     assert resolve_api_key() is None
 
@@ -108,7 +112,7 @@ def test_system_prompt_is_the_packaged_one():
         return GOOD_REPLY
 
     NovitaSummarizer(chat, throttle=Throttle(0)).summarize("s1", "T", "b")
-    assert "BASIS VECTOR" in captured["system"]
+    assert "basis vectors" in captured["system"]
 
 
 # --------------------------------------------------------------------------
@@ -188,3 +192,82 @@ def test_zero_interval_disables_throttling():
     t.wait()
     t.wait()
     assert slept == []
+
+
+# --------------------------------------------------------------------------
+# Sanitisation of model output
+# --------------------------------------------------------------------------
+
+def test_model_output_is_sanitised():
+    """A non-breaking hyphen must never reach an embedder: it tokenizes
+    differently from '-', so the basis vector would not be the intended one."""
+    reply = '{"label": "cross‑document linking key", "summary": "s", "abstraction": "a"}'
+    got = summarizer(reply).summarize("s1", "T", "b")
+    assert got.label == "cross-document linking key"
+    assert "‑" not in got.label
+
+
+def test_sanitisation_is_reported():
+    reply = '{"label": "a‑b", "summary": "s", "abstraction": "a"}'
+    got = summarizer(reply).summarize("s1", "T", "b")
+    assert any("normalised" in w and "U+2011" in w for w in got.warnings)
+
+
+def test_zero_width_characters_are_stripped_from_output():
+    reply = '{"label": "con​cept space", "summary": "s", "abstraction": "a"}'
+    assert summarizer(reply).summarize("s1", "T", "b").label == "concept space"
+
+
+def test_curly_quotes_are_normalised_in_output():
+    reply = '{"label": "the “concept” space", "summary": "s", "abstraction": "a"}'
+    assert '"concept"' in summarizer(reply).summarize("s1", "T", "b").label
+
+
+def test_real_content_survives_sanitisation():
+    reply = '{"label": "Müller studied τ decay", "summary": "s", "abstraction": "a"}'
+    got = summarizer(reply).summarize("s1", "T", "b")
+    assert got.label == "Müller studied τ decay"
+
+
+def test_eaten_escape_is_still_detected_despite_sanitising():
+    """Sanitising strips the tab that evidences the damage, so detection must
+    run first or the warning is lost."""
+    got = summarizer(r'{"label": "the \tau function"}').summarize("s1", "T", "b")
+    assert any("eaten" in w for w in got.warnings)
+    assert "\t" not in got.label
+
+
+# --------------------------------------------------------------------------
+# .env loading — this project's file only
+# --------------------------------------------------------------------------
+
+def test_dotenv_is_loaded_from_the_project(monkeypatch, tmp_path):
+    from conceptdrill.hierarchy.novita import load_dotenv
+    monkeypatch.delenv("NOVITA_API_KEY", raising=False)
+    (tmp_path / ".env").write_text("NOVITA_API_KEY=sk-from-dotenv\n")
+    monkeypatch.chdir(tmp_path)
+    load_dotenv()
+    assert resolve_api_key() == "sk-from-dotenv"
+
+
+def test_existing_environment_beats_the_dotenv_file(monkeypatch, tmp_path):
+    from conceptdrill.hierarchy.novita import load_dotenv
+    monkeypatch.setenv("NOVITA_API_KEY", "sk-from-env")
+    (tmp_path / ".env").write_text("NOVITA_API_KEY=sk-from-file\n")
+    monkeypatch.chdir(tmp_path)
+    load_dotenv()
+    assert resolve_api_key() == "sk-from-env"
+
+
+def test_dotenv_comments_and_blanks_are_skipped(monkeypatch, tmp_path):
+    from conceptdrill.hierarchy.novita import load_dotenv
+    monkeypatch.delenv("NOVITA_MODEL", raising=False)
+    (tmp_path / ".env").write_text("# a comment\n\nNOVITA_MODEL=some/model\n")
+    monkeypatch.chdir(tmp_path)
+    assert load_dotenv()["NOVITA_MODEL"] == "some/model"
+
+
+def test_missing_dotenv_is_not_an_error(monkeypatch, tmp_path):
+    from conceptdrill.hierarchy.novita import load_dotenv
+    monkeypatch.chdir(tmp_path)
+    assert load_dotenv() == {}
