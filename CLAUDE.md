@@ -93,6 +93,15 @@ into the drill folder. Things not obvious from any single file:
   the control characters that evidence a LaTeX command eaten by a legal JSON
   escape (`\t`, `\b`, `\f`, `\r`).
 
+- **`refine.py` is the paper's Algorithm 2; `basis.py` is not.** Refinement
+  grows one space *down* a hierarchy (from the paper); merging fuses spaces
+  *sideways* across a corpus (this project's design). Do not conflate them.
+
+- **The paper's siblings score is degenerate here.** It ranks children by
+  shared-parent overlap, which needs a DAG. 0 of 8695 sections have more than
+  one parent, so it is always 1.0 and `children_ranked` falls back to document
+  order. `sibscore_informative` reports which happened.
+
 - **`basis_version` is checked on every load.** `corpus.py` refuses vectors
   belonging to a different basis rather than misreading them; a CES coordinate
   means whatever row it indexed at projection time.

@@ -299,6 +299,7 @@ merged, unrecoverably.
 | `layout2d.py` | 2-D layout for inspection (PCA / UMAP / t-SNE) |
 | `corpus.py` | Corpus-level basis + sentence index on disk |
 | `inference.py` | Query to concepts and neighbours; the query log |
+| `refine.py` | The paper's Algorithm 2: hierarchical on-demand refinement |
 
 ### Sentences, projection and layout
 
@@ -336,6 +337,56 @@ PCA carried **68% of variance in two dimensions** (57.1% + 10.9%).
 
 Eigenvector signs are pinned, because SVD may return `v` or `-v` and two runs
 would otherwise produce mirrored plots.
+
+### Two different ways to change the concept space
+
+The paper and this project grow a space in different directions, and both are
+implemented:
+
+| | direction | module | from |
+|---|---|---|---|
+| **refinement** | down a hierarchy, one document | `refine.py` | **the paper, Algorithm 2** |
+| **merging** | sideways across a corpus | `basis.py` | this project's own design |
+
+`refine` implements the paper directly: start at the top level, project the
+contextual texts into the current space, expand the highest-weighted concept
+into its best children, repeat until the target size. `removeP` chooses whether
+the expanded parent is replaced by its children or kept alongside them.
+
+On `2209.00445`, growing from its 14 top-level sections to 24:
+
+```
+expand The Conceptualization Algorithm  w=22.97  + Generating Conceptual Spaces, ...
+expand Empirical Evaluation             w=13.44  + Qualitative Evaluation, ...
+expand Evaluating Understandability     w=12.62  + Evaluation By Humans, ...
+expand Application                      w= 5.88  + Using CES for Comparing Models, ...
+```
+
+The expansion order is the document's own emphasis, recovered from the text
+rather than the outline.
+
+**The siblings score is degenerate on a section tree.** The paper defines
+
+```
+sibscore(p, c) = mean over s in siblings(c,p) of |parents(c) ∩ parents(s)| / |parents(c)|
+```
+
+which measures how tightly a child is bound to its sibling group in a
+**multi-parent** graph — Wikipedia categories, where the paper's edges are
+unlabelled. Measured across the drilled library: **0 of 8695 sections have more
+than one parent.** In a tree every sibling shares the single parent, so every
+term is `|{p}|/|{p}| = 1` and the score is always exactly 1 — it cannot rank
+anything.
+
+It is implemented faithfully for the DAG case and verified against one, but on
+a tree `children_ranked` falls back to **document order**, and
+`RefinementResult.sibscore_informative` says so. Ordering children by where the
+author put them is a real signal; presenting a constant as a ranking is not.
+
+Two other places the paper leaves things implicit, handled explicitly here:
+termination (a leaf cannot be expanded, so the loop stops when every member is
+a leaf and reports why), and `C^1` (taken as the shallowest depth *present*,
+because a third of the corpus starts at level 1 and the rest at level 2).
 
 ### Corpus store and querying
 
