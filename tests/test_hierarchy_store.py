@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from conceptdrill.hierarchy.docmodel_tree import build_tree
-from conceptdrill.hierarchy.store import (CES_FILENAME, build_payload,
+from conceptdrill.hierarchy.store import (CES_FILENAME, build_payload, save,
                                           ces_path, content_hash, drill_dir,
                                           is_stale, read, source_fingerprint,
                                           verify, write)
@@ -208,3 +208,36 @@ def test_no_temporary_file_is_left_behind(drill, tree):
     write(build_payload(tree), drill)
     leftovers = list(drill.parent.glob("*.tmp"))
     assert leftovers == []
+
+
+# --------------------------------------------------------------------------
+# save() — artefact and sidecar together
+# --------------------------------------------------------------------------
+
+def test_save_writes_the_artefact_and_registers_the_fact(drill, tree):
+    from conceptdrill.hierarchy import sidecar
+    result = save(tree)
+    assert result["path"].exists()
+    assert sidecar.has_fact(drill)
+    assert sidecar.capability_valid(drill)
+
+
+def test_save_records_counts_as_evidence(drill, tree):
+    from conceptdrill.hierarchy import sidecar
+    save(tree)
+    ev = sidecar.read_sidecar(sidecar.find_sidecar(drill))["evidence"]
+    assert ev["ces_sections"] == 2
+    assert ev["ces_path"].endswith("model.ces.json")
+
+
+def test_save_can_skip_registration(drill, tree):
+    from conceptdrill.hierarchy import sidecar
+    save(tree, register_capability=False)
+    assert not sidecar.has_fact(drill)
+
+
+def test_save_capability_invalidates_on_redrill(drill, tree):
+    from conceptdrill.hierarchy import sidecar
+    save(tree)
+    drill.write_text(json.dumps({"meta": {}, "objects": []}), encoding="utf-8")
+    assert not sidecar.capability_valid(drill)

@@ -168,8 +168,12 @@ def is_stale(docmodel_path: str | Path,
              output: Optional[str | Path] = None) -> Optional[bool]:
     """Has the docmodel changed since the artefact was written?
 
-    Returns None when there is no artefact to judge. True means the document
-    was re-drilled and the CES output no longer describes it.
+    Returns None when there is no artefact to judge.
+
+    **Prefer `sidecar.capability_valid`.** pdfdrill already answers this through
+    facts and content-hash proofs, and that is the answer other tools consult.
+    This remains for the case where an artefact exists but no sidecar does, and
+    it deliberately agrees with the sidecar rather than competing with it.
     """
     payload = read(docmodel_path, output)
     if payload is None:
@@ -178,6 +182,39 @@ def is_stale(docmodel_path: str | Path,
     if not stored:
         return True
     return stored != source_fingerprint(docmodel_path).get("sha256", "")
+
+
+def save(tree, summaries=None, *, summary_stats=None, created_at: str = "",
+         output: Optional[str | Path] = None,
+         register_capability: bool = True,
+         params: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
+    """Write the artefact into the drill folder AND register it in the sidecar.
+
+    One call so the two never drift apart: an artefact on disk that no sidecar
+    knows about is invisible to every other pdfdrill stage, and a fact without
+    an artefact is a lie.
+    """
+    from . import sidecar as _sidecar
+
+    docmodel_path = tree.source_path
+    payload = build_payload(tree, summaries, summary_stats=summary_stats,
+                            created_at=created_at)
+    target = write(payload, docmodel_path, output)
+
+    registered = None
+    if register_capability and docmodel_path:
+        stats = payload.get("section_tree", {}).get("stats", {})
+        registered = _sidecar.register(
+            docmodel_path, ces_path=target,
+            params=dict(params or {}),
+            evidence={
+                "sections": stats.get("sections"),
+                "paragraphs": stats.get("paragraphs"),
+                "summaries": len(payload.get("summaries") or {}),
+                "content_hash": payload.get("content_hash"),
+            })
+    return {"path": target, "sidecar": registered,
+            "content_hash": payload.get("content_hash")}
 
 
 def verify(docmodel_path: str | Path,
