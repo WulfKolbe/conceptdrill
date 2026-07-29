@@ -36,6 +36,7 @@ pip install -e '.[llm]'         # + openai client for the section summariser
 pip install -e '.[latex]'       # + pylatexenc for better caption cleaning
 pip install -e '.[hierarchy]'   # everything the hierarchical pipeline can use
 pip install -e '.[spacy]'       # + spaCy as an alternative NLP tier
+pip install -e '.[viz]'         # + umap-learn/scikit-learn for 2-D layout
 pip install -e '.[dev]'         # + pytest
 ```
 
@@ -291,6 +292,46 @@ merged, unrecoverably.
 | `basis.py` | Adaptive integration, row order, `calibrate` |
 | `store.py` | `model.ces.json` in the drill folder |
 | `sidecar.py` | `CES_BUILT` capability + content-hash proof |
+| `sentences.py` | Sentence splitting, the projection unit |
+| `project.py` | `CES(s) = M @ f(s)`, with basis-version provenance |
+| `layout2d.py` | 2-D layout for inspection (PCA / UMAP / t-SNE) |
+
+### Sentences, projection and layout
+
+Sentences are the projection unit. The splitter is **rule-based, not stanza**:
+stanza costs ~7s of model load per process and is neural, so its output moves
+with the model version. Abbreviations are split into those that never end a
+sentence (`e.g.`, `Fig.`) and those that can (`et al.`, `etc.`) — in "Vaswani
+et al. The result holds" the period does both jobs and punctuation cannot
+resolve it.
+
+Every CES vector records its `basis_version` and embedding model, because a
+bare vector is not safely interpretable: coordinate 4 means whatever row 4 was,
+and rows reorder as support changes. `margin` (top-1 minus top-2) is stored
+beside the top similarity, since a high top-1 with a near-zero margin is
+ambiguity rather than confidence.
+
+Measured on 1489 sentences from three papers against a 38-row basis:
+
+| | p10 | median | p90 |
+|---|---|---|---|
+| top-1 similarity | 0.239 | 0.438 | 0.647 |
+| margin | 0.0056 | 0.0369 | 0.1339 |
+
+**For 60% of sentences the margin is below 0.05** — the best concept is barely
+distinguishable from the second. The machinery is sound (all 38 rows win at
+least once, the most frequent takes 12%), but a 38-row basis from three
+documents, 30 rows of them singletons, is too thin to discriminate. Basis
+quality is the limit, not projection.
+
+`layout2d` reduces CES vectors to two dimensions. **PCA is the default, not a
+fallback**: a CES coordinate already means something — the cosine to one named
+concept — so a linear projection keeps the axes interpretable and the loadings
+name the concept driving each axis. UMAP's axes mean nothing. On the run above
+PCA carried **68% of variance in two dimensions** (57.1% + 10.9%).
+
+Eigenvector signs are pinned, because SVD may return `v` or `-v` and two runs
+would otherwise produce mirrored plots.
 
 ### Where output goes
 

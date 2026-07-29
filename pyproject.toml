@@ -37,6 +37,12 @@ llm = [
 latex = [
     "pylatexenc>=2.10",
 ]
+# Optional 2-D layout backends. PCA is built in and needs neither; these only
+# add alternatives, and their absence changes quality, not capability.
+viz = [
+    "umap-learn>=0.5",
+    "scikit-learn>=1.3",
+]
 dev = [
     "pytest>=7.0",
 ]
