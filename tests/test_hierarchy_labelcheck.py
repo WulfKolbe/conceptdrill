@@ -162,3 +162,39 @@ def test_check_tiers_reports_an_absent_tier_rather_than_passing_it():
     out = check_tiers(None, "an abstraction", "a summary")
     assert out["label"] == ["label is absent"]
     assert out["abstraction"] == [] and out["summary"] == []
+
+
+# --------------------------------------------------------------------------
+# The document-subject anchor
+# --------------------------------------------------------------------------
+
+def test_the_reported_defect_is_caught():
+    """The exact phrase reported from the corpus."""
+    hits = banned_constructions(
+        "The section introduces Temporal Query Intent Classification (TQIC).")
+    assert "the section" in hits and "introduces" in hits
+
+
+@pytest.mark.parametrize("text", [
+    "The chapter revisits the reachability index.",
+    "Our paper motivates a new bound.",
+    "The present study evaluates three baselines.",
+    "This subsection formalises the notation.",
+    "The manuscript reports two experiments.",
+])
+def test_a_document_subject_is_caught_even_with_an_unenumerated_verb(text):
+    """Anchoring on the subject catches verbs the list does not enumerate."""
+    assert banned_constructions(text)
+
+
+def test_a_subject_already_enumerated_is_not_reported_twice():
+    hits = banned_constructions("The section outlines the approach")
+    assert hits.count("the section") == 1
+    assert not any(h.startswith("document subject") for h in hits)
+
+
+def test_content_subjects_are_left_alone():
+    assert banned_constructions(
+        "The reachability index answers queries in constant time.") == []
+    assert banned_constructions(
+        "The algorithm presents no additional storage overhead.") == ["presents"]

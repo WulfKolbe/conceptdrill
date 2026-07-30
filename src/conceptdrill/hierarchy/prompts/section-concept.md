@@ -34,10 +34,16 @@ are banned in all three fields; the reader already knows this is a section of a
 paper, so every one of them is wasted signal:
 
     this section, the section, this chapter, the chapter, this paper,
-    the paper, this article, this work, the present work, the authors,
+    the paper, this article, this work, the present work, this study,
+    the study, the current work, the following section, the authors,
     we describe, we present, we propose, we introduce, we show, here we,
     is described, is presented, is discussed, is introduced,
-    outlines, discusses, describes, presents
+    outlines, discusses, describes, presents, introduces, explains,
+    summarises, summarizes, reviews
+
+Never make the document the subject of a sentence. Not "the section", not
+"the paper", not "this work", not "the study" - in any field, including
+summary. Name the thing itself and say what it does.
 
 Write "Temporal expressions are resolved to calendar intervals by ..." and not
 "This section describes how temporal expressions are resolved."

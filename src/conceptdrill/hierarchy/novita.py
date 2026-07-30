@@ -33,6 +33,17 @@ DEFAULT_MIN_INTERVAL = 2.2
 #: enough to stay cheap; the model is asked for the concept, not a précis.
 DEFAULT_MAX_BODY = 6000
 
+#: Completion-token ceiling.
+#:
+#: MEASURED, not guessed. `inclusionai/ling-3.0-flash` reasons at length before
+#: emitting JSON, and it counts label words aloud because the prompt asks for a
+#: 30-42 word budget. At 900 and at 2000 every probed section hit the cap and
+#: returned reasoning with no JSON at all; at 4000 two of three completed, and
+#: their labels came in at 32 and 30 words -- inside the target band. The
+#: counting works; it needs room. 8000 leaves headroom above the longest
+#: completion observed (3987).
+DEFAULT_MAX_TOKENS = 8000
+
 #: Fields the prompt asks for.
 TIERS = ("summary", "abstraction", "label")
 
@@ -86,7 +97,7 @@ def make_openai_chat(*, api_key: Optional[str] = None,
                      base_url: Optional[str] = None,
                      model: str = DEFAULT_MODEL,
                      temperature: float = 0.2,
-                     max_tokens: int = 900,
+                     max_tokens: int = DEFAULT_MAX_TOKENS,
                      max_retries: int = 4) -> ChatFn:
     """Build a chat callable backed by the `openai` client.
 
@@ -116,9 +127,30 @@ def make_openai_chat(*, api_key: Optional[str] = None,
             model=model, temperature=temperature, max_tokens=max_tokens,
             messages=[{"role": "system", "content": system},
                       {"role": "user", "content": user}])
-        return reply.choices[0].message.content or ""
+        choice = reply.choices[0]
+        if choice.finish_reason == "length":
+            # A truncated reply is a budget failure, not a malformed one.
+            # Reporting it as "reply was not JSON" sent an entire diagnosis
+            # down the wrong path: the model had not misunderstood the format,
+            # it had never reached it.
+            used = getattr(reply, "usage", None)
+            raise TruncatedReply(
+                f"reply truncated at max_tokens={max_tokens} "
+                f"(completion_tokens="
+                f"{getattr(used, 'completion_tokens', '?')}); no JSON emitted")
+        return choice.message.content or ""
 
+    # The cache key must cover everything that changes the output. max_tokens
+    # does: at 900 this model returned truncated reasoning, at 8000 it returns
+    # JSON with correctly-sized labels. Without this the cache served the
+    # truncated generation's answers into a run that had already fixed it.
+    chat.params = {"model": model, "temperature": temperature,
+                   "max_tokens": max_tokens}
     return chat
+
+
+class TruncatedReply(RuntimeError):
+    """The model ran out of completion budget before finishing its reply."""
 
 
 class Throttle:
@@ -168,6 +200,19 @@ class NovitaSummarizer:
         self.prompt = prompt if prompt is not None else load_prompt()
         self.max_body = max_body
         self.throttle = throttle if throttle is not None else Throttle()
+
+    @property
+    def cache_signature(self) -> str:
+        """Identity of the generator for cache purposes: model AND parameters.
+
+        A summary is a function of the prompt, the text, the model and the
+        decoding parameters. Keying on the first three alone let a cache built
+        under `max_tokens=900` answer a run made under 8000.
+        """
+        params = getattr(self._chat, "params", None)
+        if not params:
+            return self.model
+        return "|".join(f"{k}={params[k]}" for k in sorted(params))
 
     def build_user_prompt(self, title: str, body: str) -> str:
         return f"TITLE: {title}\n\nBODY:\n{(body or '')[:self.max_body]}"

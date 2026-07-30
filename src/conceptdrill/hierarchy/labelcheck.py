@@ -34,7 +34,23 @@ BANNED_CONSTRUCTIONS: tuple[str, ...] = (
     "we describe", "we present", "we propose", "we introduce", "we show",
     "here we", "is described", "is presented", "is discussed",
     "is introduced", "outlines", "discusses", "describes", "presents",
+    # Measured: `introduces` appeared in 33 of 173 summaries under the previous
+    # prompt -- "The section introduces Temporal Query Intent Classification"
+    # -- and was the single most common document-referential verb after the
+    # four above. The rest are the same family, added together because leaving
+    # any one out just moves the model to it.
+    "introduces", "explains", "summarises", "summarizes", "reviews",
+    "this study", "the study", "the current work", "the following section",
 )
+
+#: The subject that makes any verb document-referential. Anchoring on the
+#: subject catches constructions the verb list does not enumerate — "the
+#: chapter revisits", "our paper motivates" — without banning verbs that are
+#: perfectly good when their subject is the subject matter.
+DOCUMENT_SUBJECT = re.compile(
+    r"\b(?:this|the|our|these|present|current)\s+"
+    r"(?:sub)?(?:section|chapter|paper|article|work|study|report|manuscript|"
+    r"document|thesis)\b", re.IGNORECASE)
 
 _BANNED = tuple(
     (phrase, re.compile(r"\b" + r"\s+".join(map(re.escape, phrase.split())) + r"\b",
@@ -69,8 +85,22 @@ LABEL_WORDS = (30, 42)
 
 
 def banned_constructions(text: str) -> list[str]:
-    """Every banned phrase present, in the order declared."""
-    return [phrase for phrase, pattern in _BANNED if pattern.search(text or "")]
+    """Every banned phrase present, in the order declared.
+
+    The enumerated list first, then any document subject the list did not
+    already cover — reported as `document subject '...'` so the two kinds of
+    hit stay distinguishable in a report.
+    """
+    hits = [phrase for phrase, pattern in _BANNED if pattern.search(text or "")]
+    for match in DOCUMENT_SUBJECT.finditer(text or ""):
+        phrase = " ".join(match.group(0).lower().split())
+        # Overlap, not equality: "the present work" is enumerated, and the
+        # subject pattern matches the "present work" inside it. Reporting both
+        # would double-count one construction.
+        if any(phrase in hit or hit in phrase for hit in hits):
+            continue
+        hits.append(f"document subject {phrase!r}")
+    return hits
 
 
 def word_count(text: str) -> int:

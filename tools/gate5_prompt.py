@@ -83,7 +83,9 @@ def main() -> int:
         title = node.summarizer_title
         body = tree.subtree_text(node.id)
 
-        key = summary_key(title, body, summarizer.name, prompt)
+        key = summary_key(title, body,
+                          getattr(summarizer, "cache_signature", summarizer.name),
+                          prompt)
         summary = cache.get(key) if cache else None
         served_from_cache = summary is not None
         if summary is None:

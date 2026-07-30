@@ -294,8 +294,13 @@ class TitleOnlySummarizer:
 def summary_key(title: str, body: str, model: str, prompt: str) -> str:
     """Content address for one summarisation request.
 
+    `model` is the generator's full identity, not just its name — pass
+    `summarizer.cache_signature` where one exists, so decoding parameters are
+    part of the address.
+
     Includes the prompt: changing the instructions changes the output, so a
-    cached summary from an older prompt must not be served.
+    cached summary from an older prompt must not be served. The same argument
+    applies to `max_tokens`, which is why the signature exists.
     """
     payload = "\x1f".join([model, prompt, title or "", body or ""])
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -418,6 +423,8 @@ def summarize_tree(tree, summarizer: Summarizer, *,
     prompt_text = prompt if prompt is not None else load_prompt()
     run = SummaryRun(model=getattr(summarizer, "name", "?"),
                      deterministic=bool(getattr(summarizer, "deterministic", False)))
+    # Decoding parameters belong in the cache address, not just the model name.
+    signature = getattr(summarizer, "cache_signature", None) or run.model
     failed: list[str] = []
 
     for node in tree.iter_document_order():
@@ -426,7 +433,7 @@ def summarize_tree(tree, summarizer: Summarizer, *,
 
         title = node.summarizer_title
         body = tree.subtree_text(node.id)
-        key = summary_key(title, body, run.model, prompt_text)
+        key = summary_key(title, body, signature, prompt_text)
 
         summary = cache.get(key) if cache else None
         if summary is not None:
