@@ -682,3 +682,145 @@ def test_docmodel_spoken_field_is_preferred_when_present():
                    "flow_index": 2}}]})
     assert "a is contained in b" in tree.nodes["s1"].body_text
     assert tree.stats()["math_sources"].get("docmodel") == 1
+
+
+# --------------------------------------------------------------------------
+# Content-type routing and the skip ledger
+# --------------------------------------------------------------------------
+
+from conceptdrill.hierarchy.docmodel_tree import (BODY_PROPS,  # noqa: E402
+                                                  SKIPPED_TYPES, SkippedObject,
+                                                  read_content, reference_tail)
+
+
+def obj(oid, otype, flow=1, **props):
+    return {"id": oid, "type": otype, "props": {"flow_index": flow, **props}}
+
+
+@pytest.mark.parametrize("otype,prop", [
+    ("Paragraph", "text"), ("Abstract", "text"), ("ListItem", "content"),
+    ("Sidenote", "content"), ("Footnote", "content"),
+    ("Picture", "caption"), ("Diagram", "caption"),
+])
+def test_every_prose_type_is_read(otype, prop):
+    """Five of these were consulted by nothing at all, discarding 148,772
+    characters of Sidenote text across the 10-document set."""
+    units, skips = read_content([obj("o1", otype, **{prop: "real prose here"})])
+    assert [u.id for u in units] == ["o1"], (otype, skips)
+
+
+def test_a_picture_url_is_never_read_as_text():
+    """`url` and `cdn_url` hold mathpix links, longer than the caption."""
+    units, skips = read_content([
+        obj("o1", "Picture", url="https://cdn.mathpix.com/cropped/x.jpg")])
+    assert units == []
+    assert skips[0].reason.startswith("no text under")
+
+
+def test_a_caption_that_is_only_a_url_is_skipped_with_a_reason():
+    units, skips = read_content([
+        obj("o1", "Diagram", caption="https://cdn.mathpix.com/cropped/x.jpg")])
+    assert units == []
+    assert skips[0].reason == "caption is only a URL"
+
+
+@pytest.mark.parametrize("otype", sorted(SKIPPED_TYPES))
+def test_every_skipped_type_names_its_reason(otype):
+    units, skips = read_content([obj("o1", otype, text="anything", raw_text="x")])
+    assert units == []
+    assert skips[0].object_id == "o1" and skips[0].reason == SKIPPED_TYPES[otype]
+
+
+def test_an_unknown_type_is_recorded_rather_than_ignored():
+    """This is how LtxCommand was found: 40 objects, previously invisible."""
+    units, skips = read_content([obj("o1", "SomethingNew", text="hello")])
+    assert units == []
+    assert "unhandled object type" in skips[0].reason
+
+
+def test_a_table_is_skipped_because_it_is_numbers():
+    units, skips = read_content([
+        obj("o1", "Table", raw_text="NaiveBayes\nJ48\n56.30\n42.20")])
+    assert units == []
+    assert "numeric results" in skips[0].reason
+
+
+def test_sections_and_math_are_not_reported_as_skips():
+    """A section is accounted for as a section; math goes through read_math."""
+    _, skips = read_content([obj("s1", "Section", caption="Method", level=1),
+                             obj("f1", "Formula", latex="x = y")])
+    assert skips == []
+
+
+# ---- reference tails ------------------------------------------------------
+
+def test_prose_citing_works_is_not_a_reference_list():
+    """`model [7, 10, 16, 18] or inform` is prose. Marker density does not
+    separate these: real prose reaches 8.6 markers per 1000 characters."""
+    text = ("We select a temporal retrieval model [7, 10, 16, 18] or inform it "
+            "about the period of interest [3] and then rank [9] accordingly.")
+    assert reference_tail(text) == len(text)
+
+
+def test_a_reference_list_is_found_from_its_start():
+    text = ("[Allen et al., 2000] Allen, J., Byron, D. Toward conversational "
+            "agents. Cognitive Science. "
+            "[Fensel et al., 2003] Fensel, D., Hendler, J. Spinning the web. "
+            "[Martin et al., 1999] Martin, D., Cheyer, A. The open agent.")
+    assert reference_tail(text) == 0
+
+
+def test_a_mixed_object_keeps_its_prose_and_loses_the_entries():
+    """One Sidenote holds a paper's conclusion followed by eight references.
+    Dropping it loses the conclusion; keeping it puts surnames in a label."""
+    prose = ("In this work we laid out an approach to temporal query intent "
+             "classification and found simple n-gram features effective. ")
+    tail = ("[1] Stanford CoreNLP. Toolkit. "
+            "[2] O. Alonso, M. Gertz. Value of temporal information. "
+            "[3] K. Berberich, S. Bedathur. A language modeling approach. ")
+    cut = reference_tail(prose + tail)
+    assert 0 < cut <= len(prose) + 2
+    assert "n-gram features" in (prose + tail)[:cut]
+
+
+def test_two_entries_are_not_enough_to_be_a_list():
+    text = "Prose here. [A] Author, B. Title. [C] Another, D. Title."
+    assert reference_tail(text) == len(text)
+
+
+def test_an_object_that_is_entirely_references_is_skipped_with_a_reason():
+    text = ("[Alcala-Fdez et al., 2011] Jesus Alcala-Fdez, Alberto Fernandez. "
+            "[Brown et al., 2012] Gavin Brown, Adam Pocock. "
+            "[Reimherr and Nicolae, 2013] Matthew Reimherr, Dan Nicolae. ")
+    units, skips = read_content([obj("o1", "Sidenote", content=text)])
+    assert units == []
+    assert skips[0].reason == "reference list: no prose before the entries"
+
+
+# ---- conservation ---------------------------------------------------------
+
+def test_the_tree_accounts_for_every_object():
+    """GATE 5a.2 in miniature: nothing unaccounted, nothing counted twice."""
+    objects = [obj("s1", "Section", flow=1, caption="Method", level=1),
+               obj("p1", "Paragraph", flow=2, text="Real prose about a method."),
+               obj("t1", "Table", flow=3, raw_text="1\n2\n3"),
+               obj("x1", "MysteryType", flow=4, text="who knows"),
+               obj("f1", "Formula", flow=5, latex="x = y + z")]
+    tree = build_tree({"objects": objects})
+    account = tree.accounting(objects)
+    assert account["unaccounted"] == []
+    assert account["double_counted"] == []
+    assert account["accounted_for"] == len(objects)
+
+
+def test_a_skipped_object_reaches_the_tree_with_its_reason():
+    tree = build_tree({"objects": [
+        obj("s1", "Section", flow=1, caption="Method", level=1),
+        obj("t1", "Table", flow=2, raw_text="1\n2")]})
+    assert any(s.object_id == "t1" and "numeric" in s.reason for s in tree.skipped)
+
+
+def test_skipped_objects_serialise():
+    s = SkippedObject("o1", "Table", "because")
+    assert s.to_dict() == {"object_id": "o1", "object_type": "Table",
+                           "reason": "because"}

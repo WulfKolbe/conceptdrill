@@ -133,8 +133,95 @@ def link_parents(sections: Sequence[RawSection]) -> dict[str, Optional[str]]:
     return parents
 
 
+#: Object type -> the props that may carry its prose, in preference order.
+#:
+#: MEASURED. `BODY_TYPES` was `{paragraph, abstract, listitem}`, and five types
+#: carrying text under the DocModel mapping were consulted by nothing at all.
+#: Across the 10-document set that silently discarded 80 Sidenotes holding
+#: 148,772 characters, 61 Diagrams, 33 Tables, 15 Footnotes and 7 Pictures. In
+#: `0864` alone, 34 of 208 content objects and 25,156 characters never reached
+#: any summariser -- one section, `6 Conclusion`, lost 83% of its text to a
+#: single unread Sidenote.
+#:
+#: `Picture` and `Diagram` read `caption` ONLY. Their `url`, `cdn_url` and
+#: `image_id` props hold mathpix CDN links, which are longer than the caption
+#: and are pure noise in an embedding.
+BODY_PROPS: dict[str, tuple[str, ...]] = {
+    "paragraph": ("text", "content"),
+    "abstract": ("text", "content"),
+    "listitem": ("content", "text"),
+    "sidenote": ("content",),
+    "footnote": ("content",),
+    "picture": ("caption",),
+    "diagram": ("caption",),
+}
+
 #: Object types whose text belongs to the owning section's body.
-BODY_TYPES = frozenset({"paragraph", "abstract", "listitem"})
+BODY_TYPES = frozenset(BODY_PROPS)
+
+#: Types deliberately not read, each with the reason. Recorded per object, not
+#: dropped: a run must be able to account for every object in its input.
+#:
+#: `Table` is the interesting one. Its `raw_text` is tab-separated numbers --
+#: "NaiveBayes\nJ48\nsurface (baseline)\n56.30\n42.20" -- and the summariser
+#: prompt explicitly excludes numerical results. Feeding it in would add digits
+#: to concept labels, not concepts.
+SKIPPED_TYPES: dict[str, str] = {
+    "table": "tabular data: numeric results, which the concept prompt excludes",
+    "tablecell": "fragment of a Table, not an independent content object",
+    "tablerow": "fragment of a Table, not an independent content object",
+    "citation": "reference marker; the citekey is already inlined by clean_body_text",
+    "reference": "bibliography entry: author surnames outrank concepts",
+    "page": "page image, no text",
+    "document": "the document object itself carries no body text",
+    # Surfaced by the skip ledger itself: 40 objects across two documents,
+    # every one a spacing or layout command (\smallskip, \noindent). They
+    # were invisible before, which is the point of recording unknowns.
+    "ltxcommand": "a LaTeX spacing or layout command, not content",
+}
+
+#: A reference-list entry opener: a citation marker followed immediately by a
+#: capitalised author name. `[Alcala-Fdez et al., 2011] Jesus Alcala-Fdez` is an
+#: entry; `model [7, 10, 16, 18] or inform` is prose that cites one. The capital
+#: is the whole discriminator, and it separates cleanly: across the 10-document
+#: set, marker *density* does not -- real prose reaches 8.6 markers per 1000
+#: characters, higher than some genuine reference lists.
+_REFERENCE_ENTRY = re.compile(r"\[[^\]\n]{1,80}\]\s+[A-Z]")
+
+#: Longest gap between consecutive entries still counted as one run. Reference
+#: entries are 100-300 characters; 600 tolerates a long one without swallowing
+#: a paragraph of prose that happens to sit between two citations.
+_REFERENCE_GAP = 600
+
+#: Entries needed before a run is called a reference list at all.
+_REFERENCE_MIN_ENTRIES = 3
+
+
+def reference_tail(text: str) -> int:
+    """Offset where a trailing reference list begins, or `len(text)`.
+
+    Drill output merges a section's closing prose with the bibliography that
+    follows it: one Sidenote in `03-NTCIR11` holds the paper's conclusion and
+    then eight numbered references. Dropping the object loses the conclusion;
+    keeping it puts author surnames into a concept label. Cutting at the start
+    of the trailing run keeps the prose and drops the list.
+    """
+    starts = [m.start() for m in _REFERENCE_ENTRY.finditer(text or "")]
+    if len(starts) < _REFERENCE_MIN_ENTRIES:
+        return len(text or "")
+    # Walk back from the end while entries stay closely spaced.
+    cut = starts[-1]
+    run = 1
+    for earlier, later in zip(reversed(starts[:-1]), reversed(starts[1:])):
+        if later - earlier > _REFERENCE_GAP:
+            break
+        cut, run = earlier, run + 1
+    return cut if run >= _REFERENCE_MIN_ENTRIES else len(text or "")
+
+
+#: A caption that is only a URL. `Picture.caption` sometimes holds the CDN link
+#: rather than a caption, and a URL embeds as noise.
+_URL_ONLY = re.compile(r"^\s*(?:!\[\]\()?https?://\S+\)?\s*$")
 
 #: Math objects. Their only content is LaTeX, which embeds as noise, so they
 #: are rendered to prose by `mathtext` first. Excluding them entirely -- as this
@@ -174,6 +261,24 @@ class Paragraph:
     flow_index: int
 
 
+@dataclass(frozen=True)
+class SkippedObject:
+    """An object the tree reader did not turn into body text, and why.
+
+    The single-document path has recorded skips since the beginning
+    (`docmodel.SkippedObject`, enforced by `test_every_object_is_accounted_for`).
+    The hierarchy path did not, which is how five content types went unread
+    through four steps without anything noticing.
+    """
+    object_id: str
+    object_type: str
+    reason: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {"object_id": self.object_id, "object_type": self.object_type,
+                "reason": self.reason}
+
+
 def read_math(objects: Sequence[dict[str, Any]], *,
               speaker=None, min_latex_chars: int = 3
               ) -> tuple[list[Paragraph], dict[str, int]]:
@@ -211,30 +316,84 @@ def read_math(objects: Sequence[dict[str, Any]], *,
     return out, sources
 
 
-def read_paragraphs(objects: Sequence[dict[str, Any]]) -> list[Paragraph]:
-    """Body text units in document order, each with its owning section.
+def read_content(objects: Sequence[dict[str, Any]]
+                 ) -> tuple[list[Paragraph], list[SkippedObject]]:
+    """Body text units in document order, plus a reason for everything else.
 
     `props.parent_section` holds the section id. In the reference document it
     is present on 84 of 85 paragraphs; the one without is `flow_index=1`,
     front matter that precedes the first section. That paragraph gets
     `section_id=None` rather than being dropped — see `attach_paragraphs`.
+
+    Every object that does not become a `Paragraph` is returned as a
+    `SkippedObject` with a reason. Math objects are not skipped here: they go
+    through `read_math`, which renders them to prose, and `build_tree` records
+    only the ones that produced nothing.
     """
     out: list[Paragraph] = []
+    skipped: list[SkippedObject] = []
+
+    def skip(obj: Any, position: int, reason: str) -> None:
+        source = obj if isinstance(obj, dict) else {}
+        skipped.append(SkippedObject(
+            str(source.get("id") or f"object_{position}"),
+            str(source.get("type") or ""), reason))
+
     for position, obj in enumerate(objects):
         if not isinstance(obj, dict):
+            skip(obj, position, "not an object")
             continue
-        if str(obj.get("type") or "").lower() not in BODY_TYPES:
+        otype = str(obj.get("type") or "").lower()
+
+        if otype in SECTION_TYPES:
+            continue                      # a marker, accounted for as a section
+        if otype in MATH_TYPES:
+            continue                      # handled by read_math
+        if otype in SKIPPED_TYPES:
+            skip(obj, position, SKIPPED_TYPES[otype])
             continue
+        if otype not in BODY_PROPS:
+            # An unknown type is a reason to look, not a reason to be silent.
+            skip(obj, position, f"unhandled object type {otype!r}")
+            continue
+
         props = obj.get("props") or {}
         if not isinstance(props, dict):
+            skip(obj, position, "props is not an object")
             continue
-        raw_text = str(props.get("text") or props.get("content") or "").strip()
-        if not raw_text or is_latex_artifact(raw_text):
+
+        raw_text = ""
+        for prop in BODY_PROPS[otype]:
+            value = str(props.get(prop) or "").strip()
+            if value:
+                raw_text = value
+                break
+        if not raw_text:
+            skip(obj, position, f"no text under {'/'.join(BODY_PROPS[otype])}")
             continue
+        if _URL_ONLY.match(raw_text):
+            skip(obj, position, "caption is only a URL")
+            continue
+
+        # Drill output merges a section's closing prose with the bibliography
+        # that follows it. Cut the trailing entry run, keep the prose.
+        cut = reference_tail(raw_text)
+        if cut < len(raw_text):
+            raw_text = raw_text[:cut].strip()
+            if not raw_text:
+                skip(obj, position,
+                     "reference list: no prose before the entries")
+                continue
+
+        if is_latex_artifact(raw_text):
+            skip(obj, position, "text is only LaTeX markup")
+            continue
+
         # Strip DocModel placeholders before the text reaches a summariser or
         # an embedder; 55% of paragraphs in the reference document carry them.
         text = clean_body_text(raw_text)
         if not text:
+            skip(obj, position, "placeholder cleaning left no text")
             continue
         parent = props.get("parent_section")
         try:
@@ -248,7 +407,12 @@ def read_paragraphs(objects: Sequence[dict[str, Any]]) -> list[Paragraph]:
             flow_index=flow,
         ))
     out.sort(key=lambda p: (p.flow_index, p.id))
-    return out
+    return out, skipped
+
+
+def read_paragraphs(objects: Sequence[dict[str, Any]]) -> list[Paragraph]:
+    """`read_content` without the skip ledger. See it for the contract."""
+    return read_content(objects)[0]
 
 
 def assign_by_flow(units: Sequence[Paragraph],
@@ -357,9 +521,41 @@ class SectionTree:
     source_path: Optional[str] = None
     #: How each math object's text was obtained: docmodel | speech | fallback | none.
     math_sources: dict[str, int] = field(default_factory=dict)
+    #: Every object that did not become body text, with a reason. A run must be
+    #: able to account for its whole input; see `accounting`.
+    skipped: tuple[SkippedObject, ...] = ()
 
     def __len__(self) -> int:
         return len(self.nodes)
+
+    def accounting(self, objects: Sequence[dict[str, Any]]) -> dict[str, Any]:
+        """Does this tree account for every object in the docmodel?
+
+        The conservation law, computed rather than asserted: sections, attached
+        body units, orphans and recorded skips should partition the input with
+        no object counted twice and none counted zero times.
+        """
+        all_ids = [str(o.get("id") or "") for o in objects if isinstance(o, dict)]
+        sections = {n.id for n in self.nodes.values()}
+        attached = {p.id for n in self.nodes.values() for p in n.paragraphs}
+        orphans = {p.id for p in self.orphans}
+        skipped = {s.object_id for s in self.skipped}
+
+        seen: dict[str, int] = {}
+        for group in (sections, attached, orphans, skipped):
+            for oid in group:
+                seen[oid] = seen.get(oid, 0) + 1
+
+        return {
+            "objects": len(all_ids),
+            "sections": len(sections),
+            "attached": len(attached),
+            "orphans": len(orphans),
+            "skipped": len(skipped),
+            "unaccounted": sorted(set(all_ids) - set(seen)),
+            "double_counted": sorted(k for k, n in seen.items() if n > 1),
+            "accounted_for": len(set(all_ids) & set(seen)),
+        }
 
     def by_level(self, level: int) -> list[SectionNode]:
         """Nodes at one level, in document order."""
@@ -444,16 +640,31 @@ def build_tree(docmodel: dict[str, Any],
 
     sections = read_sections(objects)
     parents = link_parents(sections)
-    paragraphs = read_paragraphs(objects)
+    paragraphs, skipped = read_content(objects)
 
     math_sources: dict[str, int] = {}
     if include_math:
         math_units, math_sources = read_math(objects, speaker=speaker)
+        rendered = {u.id for u in math_units}
+        skipped.extend(
+            SkippedObject(str(o.get("id") or ""), str(o.get("type") or ""),
+                          "math object rendered to no prose")
+            for o in objects
+            if isinstance(o, dict)
+            and str(o.get("type") or "").lower() in MATH_TYPES
+            and str(o.get("id") or "") not in rendered)
         # Math objects carry no parent_section, so their owner is inferred from
         # position. Done before attaching, or every formula becomes an orphan.
         math_units = assign_by_flow(math_units, sections)
         paragraphs = sorted(paragraphs + math_units,
                             key=lambda p: (p.flow_index, p.id))
+    else:
+        skipped.extend(
+            SkippedObject(str(o.get("id") or ""), str(o.get("type") or ""),
+                          "math objects excluded from this build")
+            for o in objects
+            if isinstance(o, dict)
+            and str(o.get("type") or "").lower() in MATH_TYPES)
 
     by_section, orphans = attach_paragraphs(paragraphs, [s.id for s in sections])
 
@@ -484,6 +695,7 @@ def build_tree(docmodel: dict[str, Any],
         bibkey=str(meta.get("bibkey") or "") if isinstance(meta, dict) else "",
         source_path=source_path,
         math_sources=math_sources,
+        skipped=tuple(skipped),
     )
 
 
