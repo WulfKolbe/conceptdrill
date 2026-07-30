@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .runlog import MANIFEST_REQUIRED, SECTION_FIELDS
+from .runlog import CONCEPT_FIELDS, MANIFEST_REQUIRED, SECTION_FIELDS
 
 
 @dataclass
@@ -47,6 +47,27 @@ def read_run(run_dir: str | Path) -> tuple[dict[str, Any], list[dict[str, Any]],
                if line.strip()]
     basis = json.loads((root / "basis.json").read_text(encoding="utf-8"))
     return manifest, records, basis
+
+
+#: The section contract as it stood before the concept became the unit. A run
+#: is valid under the schema that wrote it, so gate 1 checks against whichever
+#: one a record follows rather than rejecting the older shape outright.
+LEGACY_SECTION_FIELDS: tuple[str, ...] = (
+    "doc_id", "section_id", "level", "flow_index", "is_appendix",
+    "title_raw", "title_cleaned", "cleaning_rules_fired",
+    "structural_class", "structural_rule_fired",
+    "tier_label", "tier_abstraction", "tier_summary", "basis_text",
+    "embedding_model", "embedding_revision",
+    "row_id_assigned", "merge_decision", "merge_cosine", "merge_target_row_id",
+    "warnings", "error",
+)
+
+
+def schema_of(record: dict[str, Any]) -> tuple[str, tuple[str, ...]]:
+    """`(name, expected fields)` for the schema this record follows."""
+    if "concepts" in record:
+        return "concept", SECTION_FIELDS
+    return "legacy-flat", LEGACY_SECTION_FIELDS
 
 
 #: Flat per-concept keys as they appeared before the concept became the unit.
@@ -128,18 +149,36 @@ def gate1_persistence(run_dir: str | Path) -> GateResult:
     if duplicated:
         result.failures.append(f"sections recorded more than once: {duplicated[:5]}")
 
-    # 3. every field on every record
+    # 3. every field on every record, against the schema that wrote it
     holes: dict[str, int] = {}
+    undeclared: dict[str, int] = {}
+    schemas: dict[str, int] = {}
     for rec in records:
-        for name in SECTION_FIELDS:
-            if name not in rec:
-                holes[name] = holes.get(name, 0) + 1
-        for name in set(rec) - set(SECTION_FIELDS):
-            result.failures.append(f"record carries an undeclared field {name!r}")
-            break
+        name, expected = schema_of(rec)
+        schemas[name] = schemas.get(name, 0) + 1
+        for field_name in expected:
+            if field_name not in rec:
+                holes[field_name] = holes.get(field_name, 0) + 1
+        for field_name in set(rec) - set(expected):
+            undeclared[field_name] = undeclared.get(field_name, 0) + 1
+    result.checks["schemas"] = dict(sorted(schemas.items()))
     result.checks["records_missing_a_field"] = sum(holes.values())
     if holes:
         result.failures.append(f"absent fields: {dict(sorted(holes.items()))}")
+    if undeclared:
+        result.failures.append(f"undeclared fields: {dict(sorted(undeclared.items()))}")
+
+    # Concept records answer to their own contract.
+    concept_holes: dict[str, int] = {}
+    for rec in records:
+        for concept in rec.get("concepts") or []:
+            for field_name in CONCEPT_FIELDS:
+                if field_name not in concept:
+                    concept_holes[field_name] = concept_holes.get(field_name, 0) + 1
+    result.checks["concept_records_missing_a_field"] = sum(concept_holes.values())
+    if concept_holes:
+        result.failures.append(
+            f"absent concept fields: {dict(sorted(concept_holes.items()))}")
 
     # 4. the manifest knows what produced it
     nulls = [k for k in MANIFEST_REQUIRED if manifest.get(k) is None]
