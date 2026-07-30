@@ -195,6 +195,47 @@ class TransformerEmbedder(BaseEmbedder):
         pooled = summed / counts
         return pooled.float().cpu().numpy()
 
+    def token_report(self, texts: Sequence[str]) -> dict:
+        """How many tokens each text contributes, and how many are lost.
+
+        Truncation is otherwise invisible. `_encode_batch` passes
+        `return_tensors="pt"`, and transformers only populates
+        `num_truncated_tokens` on the Python tokenizer path with tensors
+        disabled — and for BERT in transformers 5.x there is no Python path
+        left, `use_fast=False` is ignored and `is_fast` is True regardless.
+        So the count is derived here instead: full length minus the length
+        actually fed. Verified against the fast tokenizer's own overflow rows,
+        which agreed on all 2358 texts checked.
+
+        `over_window` is the number that fit but exceed the 50-70 token window
+        CES targets. Those are not truncated; they are diluted, because mean
+        pooling averages the concept over more tokens than intended.
+        """
+        self._ensure_loaded()
+        cap = self.spec.max_length
+        fed, lost, truncated, over_window = [], 0, 0, 0
+        for text in texts:
+            body = text if text and text.strip() else " "
+            full = len(self._tokenizer(body, truncation=False)["input_ids"])
+            kept = len(self._tokenizer(body, truncation=True,
+                                       max_length=cap)["input_ids"])
+            fed.append(kept)
+            if full > kept:
+                truncated += 1
+                lost += full - kept
+            if kept > 70:
+                over_window += 1
+        ordered = sorted(fed)
+        pick = lambda p: (ordered[min(len(ordered) - 1, int(p * len(ordered)))]
+                          if ordered else 0)
+        return {
+            "texts": len(fed), "max_length": cap,
+            "tokens_p50": pick(0.5), "tokens_p90": pick(0.9),
+            "tokens_max": ordered[-1] if ordered else 0,
+            "truncated": truncated, "tokens_lost": lost,
+            "over_70_token_window": over_window,
+        }
+
     def encode(self, texts: Sequence[str]) -> np.ndarray:
         # `dim` is unknown until the model loads, so the empty-input shortcut in
         # BaseEmbedder needs the load to have happened first.

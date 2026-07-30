@@ -360,3 +360,24 @@ def test_progress_callback_sees_every_section(tree, summarizer):
 def test_empty_tree_yields_an_empty_run(summarizer):
     run = summarize_tree(build_tree({"objects": []}), summarizer)
     assert run.summaries == {} and run.failed == ()
+
+
+# --------------------------------------------------------------------------
+# Truncation must never be invisible
+# --------------------------------------------------------------------------
+
+def test_the_hash_embedder_has_no_token_report():
+    """token_report belongs to the transformer path; the passthrough must not
+    invent one for a backend that does not tokenize."""
+    from conceptdrill.embeddings import get_embedder
+    e = get_embedder("hash", cache=False)
+    assert getattr(e, "token_report", None) is None or e.token_report([]) == {}
+
+
+def test_budgets_stay_inside_the_window():
+    """A future edit to TIER_WORDS that breaks the 70-token ceiling should
+    fail here rather than silently produce diluted vectors."""
+    for tier, (lo, hi) in TIER_WORDS.items():
+        assert lo < hi, tier
+        assert hi * TOKENS_PER_WORD <= EMBEDDING_TOKEN_WINDOW[1] + 1, (
+            f"{tier}: {hi} words is {hi * TOKENS_PER_WORD:.0f} tokens")

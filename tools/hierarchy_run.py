@@ -137,6 +137,7 @@ def main() -> int:
 
     used_paths: list[str] = []
     tier_violations = 0
+    token_stats: dict[str, int] = {}
     math_sources: dict[str, int] = {}
     docs_done = 0
 
@@ -187,6 +188,15 @@ def main() -> int:
                   and n.id in cleaned and cleaned[n.id].text]
         decisions: dict[str, object] = {}
         if usable:
+            report = getattr(embedder, "token_report", None)
+            if callable(report):
+                r = report([c.text for _, c in usable])
+                for k, v in r.items():
+                    if k in ("texts", "truncated", "tokens_lost",
+                             "over_70_token_window"):
+                        token_stats[k] = token_stats.get(k, 0) + v
+                    else:
+                        token_stats[k] = max(token_stats.get(k, 0), v)
             vectors = embedder.encode([c.text for _, c in usable])
             for (node, basis_text), vector in zip(usable, vectors):
                 if classes[node.id][0] is not None:
@@ -270,6 +280,7 @@ def main() -> int:
         extra={"summarizer_name": getattr(summarizer, "name", ""),
                "is_ablation": is_ablation,
                "tier_violations": tier_violations,
+               "basis_text_tokens": token_stats,
                "basis_version": basis.basis_version(),
                "basis_stats": basis.stats()})
 

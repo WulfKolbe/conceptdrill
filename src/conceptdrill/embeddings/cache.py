@@ -58,6 +58,11 @@ class CachedEmbedder:
     def dim(self) -> int:
         return self.inner.dim
 
+    def token_report(self, texts) -> dict:
+        """Passthrough. Caching changes nothing about tokenisation."""
+        report = getattr(self.inner, "token_report", None)
+        return report(texts) if callable(report) else {}
+
     # ---- disk layer -----------------------------------------------------
 
     def _shard_path(self) -> Path:
