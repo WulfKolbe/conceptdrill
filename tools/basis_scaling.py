@@ -45,12 +45,24 @@ from conceptdrill.hierarchy.summarize import (ExtractiveSummarizer,  # noqa: E40
 
 
 def candidates_for(tree, summarizer):
-    """(level, label) pairs for one document, or [] when it has no sections."""
+    """One record per usable section, or [] when the document has none.
+
+    Returns the summaries themselves rather than bare `(level, text)` pairs so
+    the caller can persist the basis input. An aggregate row count is not
+    inspectable; the labels that produced it are.
+    """
     if not len(tree):
         return []
     run = summarize_tree(tree, summarizer)
-    return [(tree.nodes[sid].level, s.basis_text)
-            for sid, s in run.usable().items() if sid in tree.nodes]
+    out = []
+    for sid, s in run.usable().items():
+        node = tree.nodes.get(sid)
+        if node is None:
+            continue
+        out.append({"section_id": sid, "level": node.level, "title": node.title,
+                    "basis_text": s.basis_text, "label": s.label,
+                    "abstraction": s.abstraction, "summary": s.summary})
+    return out
 
 
 def main() -> int:
@@ -62,6 +74,12 @@ def main() -> int:
                     help="override the merge threshold")
     ap.add_argument("--model", default="sentencebert")
     ap.add_argument("--out", default="", help="write the report as JSON")
+    ap.add_argument("--store", default="",
+                    help="write the built basis here as a CorpusStore "
+                         "(ces-basis.json + ces-basis.npz)")
+    ap.add_argument("--summaries", default="",
+                    help="write one <bibkey>.json of per-section summaries per "
+                         "document here -- the input the basis was built from")
     args = ap.parse_args()
 
     blas = blasfix.ensure_sane_blas(verbose=True)
@@ -84,6 +102,11 @@ def main() -> int:
     print(header)
     print("-" * len(header))
 
+    summaries_dir = None
+    if args.summaries:
+        summaries_dir = Path(args.summaries)
+        summaries_dir.mkdir(parents=True, exist_ok=True)
+
     report = []
     usable = total_cands = total_added = total_merged = 0
     started = time.monotonic()
@@ -94,6 +117,7 @@ def main() -> int:
         batch_cands = batch_added = batch_merged = 0
 
         for path in chunk:
+            bibkey = path.parent.name
             try:
                 tree = load_tree(path)
                 cands = candidates_for(tree, summarizer)
@@ -102,11 +126,17 @@ def main() -> int:
             if not cands:
                 continue
             usable += 1
-            texts = [t for _, t in cands]
+            texts = [c["basis_text"] for c in cands]
             vectors = embedder.encode(texts)
+            if summaries_dir is not None:
+                (summaries_dir / f"{bibkey}.json").write_text(json.dumps(
+                    {"document": bibkey, "summarizer": summarizer.name,
+                     "sections": cands}, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8")
             results = basis.integrate_document(
-                path.parent.name,
-                [(lvl, txt, vec) for (lvl, txt), vec in zip(cands, vectors)])
+                bibkey,
+                [(c["level"], c["basis_text"], vec)
+                 for c, vec in zip(cands, vectors)])
             batch_cands += len(results)
             batch_added += sum(1 for r in results if r.action == "added")
             batch_merged += sum(1 for r in results if r.action == "merged")
@@ -144,6 +174,15 @@ def main() -> int:
         flush()
 
     print(f"\ntotal {time.monotonic() - started:.0f}s | final basis: {basis.stats()}")
+    if args.store:
+        from conceptdrill.hierarchy.corpus import CorpusStore
+        store = CorpusStore(args.store)
+        store.save_basis(basis, embedding_model=args.model,
+                         summarizer=summarizer.name)
+        print(f"basis  -> {store.basis_json} (+ .npz)")
+    if summaries_dir is not None:
+        print(f"summaries -> {summaries_dir}/<bibkey>.json  "
+              f"({len(list(summaries_dir.glob('*.json')))} documents)")
     if args.out:
         Path(args.out).write_text(json.dumps({
             "tau": basis.tau, "model": args.model,
