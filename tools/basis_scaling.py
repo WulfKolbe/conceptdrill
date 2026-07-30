@@ -41,10 +41,21 @@ from conceptdrill.embeddings import get_embedder                  # noqa: E402
 from conceptdrill.hierarchy.basis import ConceptBasis             # noqa: E402
 from conceptdrill.hierarchy.docmodel_tree import load_tree        # noqa: E402
 from conceptdrill.hierarchy.summarize import (ExtractiveSummarizer,  # noqa: E402
-                                              summarize_tree)
+                                              SummaryCache, summarize_tree)
 
 
-def candidates_for(tree, summarizer):
+def make_summarizer(kind: str, llm_model: str):
+    """The summariser and a human name for it."""
+    if kind == "extractive":
+        return ExtractiveSummarizer()
+    from conceptdrill.hierarchy.novita import (DEFAULT_MODEL, NovitaSummarizer,
+                                               load_dotenv, make_openai_chat)
+    load_dotenv()                       # .env is gitignored; never a repo file
+    model = llm_model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
+    return NovitaSummarizer(make_openai_chat(model=model), model=model)
+
+
+def candidates_for(tree, summarizer, cache=None):
     """One record per usable section, or [] when the document has none.
 
     Returns the summaries themselves rather than bare `(level, text)` pairs so
@@ -52,8 +63,8 @@ def candidates_for(tree, summarizer):
     inspectable; the labels that produced it are.
     """
     if not len(tree):
-        return []
-    run = summarize_tree(tree, summarizer)
+        return [], None
+    run = summarize_tree(tree, summarizer, cache=cache)
     out = []
     for sid, s in run.usable().items():
         node = tree.nodes.get(sid)
@@ -61,8 +72,9 @@ def candidates_for(tree, summarizer):
             continue
         out.append({"section_id": sid, "level": node.level, "title": node.title,
                     "basis_text": s.basis_text, "label": s.label,
-                    "abstraction": s.abstraction, "summary": s.summary})
-    return out
+                    "abstraction": s.abstraction, "summary": s.summary,
+                    "warnings": list(s.warnings), "error": s.error})
+    return out, run
 
 
 def main() -> int:
@@ -73,6 +85,15 @@ def main() -> int:
     ap.add_argument("--tau", type=float, default=None,
                     help="override the merge threshold")
     ap.add_argument("--model", default="sentencebert")
+    ap.add_argument("--summarizer", default="extractive",
+                    choices=["extractive", "novita"],
+                    help="'extractive' is the offline floor (see the module "
+                         "docstring); 'novita' calls the chat model")
+    ap.add_argument("--llm-model", default="",
+                    help="chat model id; defaults to NOVITA_MODEL or the "
+                         "package default")
+    ap.add_argument("--summary-cache", default=".conceptdrill_cache/summaries.json",
+                    help="content-addressed summary cache; '' disables it")
     ap.add_argument("--out", default="", help="write the report as JSON")
     ap.add_argument("--store", default="",
                     help="write the built basis here as a CorpusStore "
@@ -91,11 +112,12 @@ def main() -> int:
         docs = docs[:args.limit]
 
     embedder = get_embedder(args.model, cache=True)
-    summarizer = ExtractiveSummarizer()
+    summarizer = make_summarizer(args.summarizer, args.llm_model)
+    cache = SummaryCache(args.summary_cache) if args.summary_cache else None
     basis = ConceptBasis() if args.tau is None else ConceptBasis(tau=args.tau)
 
-    print(f"{len(docs)} documents, batches of {args.batch}, "
-          f"tau={basis.tau}, model={args.model}\n")
+    print(f"{len(docs)} documents, batches of {args.batch}, tau={basis.tau}, "
+          f"embedder={args.model}, summarizer={summarizer.name}\n")
     header = (f"{'docs':>5s} {'usable':>6s} {'cands':>7s} {'rows':>6s} "
               f"{'added':>6s} {'merged':>6s} {'merge%':>7s} "
               f"{'rows/doc':>8s} {'shared':>7s} {'secs':>6s}")
@@ -108,6 +130,7 @@ def main() -> int:
         summaries_dir.mkdir(parents=True, exist_ok=True)
 
     report = []
+    failed = attempted = cached = generated = 0
     usable = total_cands = total_added = total_merged = 0
     started = time.monotonic()
 
@@ -120,18 +143,25 @@ def main() -> int:
             bibkey = path.parent.name
             try:
                 tree = load_tree(path)
-                cands = candidates_for(tree, summarizer)
+                cands, run = candidates_for(tree, summarizer, cache)
             except Exception:
                 continue
             if not cands:
                 continue
             usable += 1
+            failed += len(run.failed)
+            attempted += len(run.summaries) + len(run.failed)
+            cached += run.cached
+            generated += run.generated
             texts = [c["basis_text"] for c in cands]
             vectors = embedder.encode(texts)
             if summaries_dir is not None:
                 (summaries_dir / f"{bibkey}.json").write_text(json.dumps(
                     {"document": bibkey, "summarizer": summarizer.name,
-                     "sections": cands}, indent=2, ensure_ascii=False) + "\n",
+                     "sections": cands,
+                     "failed_sections": list(run.failed),
+                     "cached": run.cached, "generated": run.generated},
+                    indent=2, ensure_ascii=False) + "\n",
                     encoding="utf-8")
             results = basis.integrate_document(
                 bibkey,
@@ -169,6 +199,12 @@ def main() -> int:
               f"{stats['shared_across_documents']:>7d} {elapsed:>6.1f}")
         sys.stdout.flush()
 
+    if cache is not None:
+        cache.flush()
+    if attempted:
+        print(f"\nsummaries: {attempted - failed}/{attempted} usable, "
+              f"{failed} failed | {cached} from cache, {generated} generated")
+
     flush = getattr(embedder, "flush", None)
     if callable(flush):
         flush()
@@ -186,7 +222,9 @@ def main() -> int:
     if args.out:
         Path(args.out).write_text(json.dumps({
             "tau": basis.tau, "model": args.model,
-            "summarizer": "extractive (proxy -- see module docstring)",
+            "summarizer": summarizer.name,
+            "summaries_attempted": attempted, "summaries_failed": failed,
+            "summaries_cached": cached, "summaries_generated": generated,
             "batches": report, "final": basis.stats(),
         }, indent=2, default=str) + "\n", encoding="utf-8")
         print(f"report -> {args.out}")

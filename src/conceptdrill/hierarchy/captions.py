@@ -72,6 +72,38 @@ def _fallback_clean(raw: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def clean_caption_traced(raw: str) -> tuple[str, tuple[str, ...]]:
+    """`clean_caption`, plus the names of the rules that actually fired.
+
+    Which cleaner ran is provenance, not a detail. The pylatexenc path and the
+    regex fallback produce different text for the same input — `\\tau` becomes
+    `τ` or `tau` — so a run that cannot say which one ran cannot explain its own
+    basis vectors. The tier is decided per call because the fallback is reached
+    by an exception, not by a configuration flag.
+    """
+    if not raw or not raw.strip():
+        return "", ("empty",)
+
+    rules: list[str] = []
+    try:
+        from pylatexenc.latex2text import LatexNodes2Text
+        text = LatexNodes2Text().latex_to_text(raw)
+        rules.append("pylatexenc")
+    except Exception as exc:
+        text = _fallback_clean(raw)
+        rules.append(f"regex-fallback({type(exc).__name__})")
+
+    text = re.sub(r"\s+", " ", text).strip()
+    # A cleaner that eats everything is worse than one that does nothing.
+    if not text:
+        text = _fallback_clean(raw)
+        rules.append("regex-fallback(empty-result)")
+    if text != raw.strip():
+        rules.append("whitespace-collapsed" if text == re.sub(r"\s+", " ", raw).strip()
+                     else "macros-expanded")
+    return text, tuple(rules)
+
+
 def clean_caption(raw: str) -> str:
     """Plain-text form of a LaTeX-ish caption. Never returns None.
 
@@ -80,16 +112,20 @@ def clean_caption(raw: str) -> str:
     it. Both paths collapse whitespace, so a dropped macro cannot leave a
     ragged title like ' Application'.
     """
-    if not raw or not raw.strip():
-        return ""
+    return clean_caption_traced(raw)[0]
+
+
+def caption_cleaner_tier() -> str:
+    """Which cleaner this process will reach for: `pylatexenc` or `regex`.
+
+    A manifest-level answer. Individual captions can still fall back on a
+    parse error, which `clean_caption_traced` records per call.
+    """
     try:
-        from pylatexenc.latex2text import LatexNodes2Text
-        text = LatexNodes2Text().latex_to_text(raw)
+        import pylatexenc.latex2text  # noqa: F401
+        return "pylatexenc"
     except Exception:
-        text = _fallback_clean(raw)
-    text = re.sub(r"\s+", " ", text).strip()
-    # A cleaner that eats everything is worse than one that does nothing.
-    return text if text else _fallback_clean(raw)
+        return "regex"
 
 
 #: A DocModel inline placeholder: `{{<bibkey>_<rest>||<KIND>}}`.
