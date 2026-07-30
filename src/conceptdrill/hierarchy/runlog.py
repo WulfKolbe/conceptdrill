@@ -210,11 +210,19 @@ class RunLog:
 
     @classmethod
     def open(cls, parent: str | Path, *, timestamp: Optional[str] = None,
-             repo: Optional[str | Path] = None) -> "RunLog":
+             repo: Optional[str | Path] = None,
+             name: Optional[str] = None) -> "RunLog":
+        """Create the run directory.
+
+        `name` pins the directory to a fixed path so the current run is always
+        findable without knowing a timestamp. `run_id` inside `manifest.json`
+        still carries the stamp and sha, so provenance is not lost by giving
+        the directory a stable name.
+        """
         stamp = timestamp or time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
         sha, _ = git_state(repo)
         run_id = f"run-{stamp}-{sha}"
-        root = Path(parent) / run_id
+        root = Path(parent) / (name or run_id)
         root.mkdir(parents=True, exist_ok=True)
         return cls(root=root, run_id=run_id,
                    started_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))

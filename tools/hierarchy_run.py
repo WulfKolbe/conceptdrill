@@ -3,7 +3,7 @@
 
     python3 tools/hierarchy_run.py --limit 3
 
-Runs land in `~/conceptdrill-corpus-llm/runs/` by default. Not /tmp: a
+Runs land in `~/conceptdrill-corpus-llm/current/` by default. Not /tmp: a
 measurement that a reboot can delete is not a record of anything.
 
 Writes `run-<timestamp>-<git-sha>/` per `hierarchy/runlog.py`. Every section in
@@ -91,8 +91,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--library", default=str(Path.home() / "pdfdrill-library"))
     ap.add_argument("--out",
-                    default=str(Path.home() / "conceptdrill-corpus-llm"
-                                / "runs"),
+                    default=str(Path.home() / "conceptdrill-corpus-llm"),
                     help="run directories land here; keep them out of /tmp "
                          "so a measurement survives a reboot and is findable")
     ap.add_argument("--limit", type=int, default=3)
@@ -107,6 +106,10 @@ def main() -> int:
     ap.add_argument("--llm-model", default="")
     ap.add_argument("--tau", type=float, default=None)
     ap.add_argument("--summary-cache", default=".conceptdrill_cache/summaries.json")
+    ap.add_argument("--name", default="current",
+                    help="directory name under --out. Fixed by default so the "
+                         "current run is findable without knowing a timestamp; "
+                         "manifest.json still records the stamped run_id.")
     args = ap.parse_args()
 
     strict = os.environ.get("CONCEPTDRILL_STRICT", "") == "1"
@@ -126,7 +129,11 @@ def main() -> int:
     is_ablation = bool(getattr(summarizer, "is_ablation", False))
     cache = SummaryCache(args.summary_cache) if args.summary_cache else None
     basis = ConceptBasis() if args.tau is None else ConceptBasis(tau=args.tau)
-    log = RunLog.open(args.out)
+    root = Path(args.out) / args.name
+    if root.exists():
+        import shutil
+        shutil.rmtree(root)          # one run, one place, no stale mixtures
+    log = RunLog.open(args.out, name=args.name)
 
     used_paths: list[str] = []
     tier_violations = 0
