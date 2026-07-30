@@ -45,25 +45,23 @@ Never make the document the subject of a sentence. Not "the section", not
 "the paper", not "this work", not "the study" - in any field, including
 summary. Name the thing itself and say what it does.
 
-Write "Temporal expressions are resolved to calendar intervals by ..." and not
-"This section describes how temporal expressions are resolved."
+Instead of "the section describes how X is computed", state what X is and how
+it is computed, beginning from the thing itself.
 
 RULES FOR label. It is a noun phrase, so it has no finite main verb and no
 copula. It never begins "X is a Y". Participles are fine: "using", "derived
-from", "based on", "ranked by".
+from", "based on", "ranked by". Shapes that work, where each slot is filled
+from this section's own subject matter:
 
-    WRONG  Temporal Query Intent Classification (TQIC) is a supervised
-           learning task that uses feature engineering over query wording.
-    RIGHT  supervised classification of short keyword search requests by their
-           orientation in time, distinguishing past, recency, future and
-           atemporal intent using surface wording, lexical cues, corpus
-           timestamps and temporal expression resolution
+    <technique> of <object> using <method>, <qualifier>
+    <property> of <structure> under <condition>, measured by <criterion>
+    <procedure> for <goal>, combining <input> with <input>
 
 Also for label:
-- No acronym defined by this document. Expand it and use the expansion only.
-  Write "temporal query intent classification", never "TQIC" and never
-  "temporal query intent classification (TQIC)". A parenthesis containing
-  capital letters is always wrong here.
+- No acronym defined by this document. Write out what the letters stand for
+  and use that expansion only; never the letters, and never the expansion
+  followed by the letters in brackets. A parenthesis containing capital
+  letters is always wrong here.
 - No citation markers, no reference to a figure, table, equation, section or
   algorithm number, and no number that only means something inside this
   document.
