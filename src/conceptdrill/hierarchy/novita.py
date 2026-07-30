@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import os
 import time
+from dataclasses import replace
 from typing import Callable, Optional
 
 from .replyparse import control_corruption, parse_reply
@@ -233,6 +234,17 @@ class NovitaSummarizer:
                 error=f"{type(exc).__name__}: {exc}")
 
         parsed = parse_reply(reply)
+        if isinstance(parsed, dict) and isinstance(parsed.get("concepts"), list):
+            # One entry per concept. The first is the dominant one and becomes
+            # this SectionSummary; the rest travel in `siblings` so a caller
+            # that wants every concept gets them and one that does not is
+            # unaffected.
+            entries = [e for e in parsed["concepts"] if isinstance(e, dict)]
+            if entries:
+                built = [self._build(section_id, title, e) for e in entries]
+                head, rest = built[0], tuple(built[1:])
+                return replace(head, siblings=rest) if rest else head
+            parsed = None
         if not parsed:
             return SectionSummary(
                 section_id=section_id, title=title, model=self.model,
@@ -240,6 +252,10 @@ class NovitaSummarizer:
                 error="reply was not JSON",
                 warnings=(f"raw reply: {(reply or '')[:200]}",))
 
+        return self._build(section_id, title, parsed)
+
+    def _build(self, section_id: str, title: str, parsed: dict) -> SectionSummary:
+        """One concept entry to a `SectionSummary`, sanitised and checked."""
         raw_values = {tier: str(parsed.get(tier) or "").strip() for tier in TIERS}
 
         warnings: list[str] = []

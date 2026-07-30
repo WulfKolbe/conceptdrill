@@ -192,3 +192,95 @@ def test_no_credentials_raises_rather_than_falling_back(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)          # no .env to read
     with pytest.raises(RuntimeError, match="no API key"):
         runner.make_summarizer("novita", "")
+
+
+# --------------------------------------------------------------------------
+# One entry per concept
+# --------------------------------------------------------------------------
+
+import json  # noqa: E402
+
+from conceptdrill.hierarchy.novita import NovitaSummarizer  # noqa: E402
+
+
+def reply_with(*entries):
+    return json.dumps({"concepts": list(entries)})
+
+
+def entry(label, abstraction="an abstraction", summary="a summary"):
+    return {"label": label, "abstraction": abstraction, "summary": summary}
+
+
+def summarize(reply):
+    return NovitaSummarizer(lambda a, b: reply, model="stub").summarize(
+        "s1", "Title", "body")
+
+
+def test_a_single_concept_yields_no_siblings():
+    got = summarize(reply_with(entry("one canonical noun phrase")))
+    assert got.label == "one canonical noun phrase"
+    assert got.siblings == ()
+    assert len(got.concepts) == 1
+
+
+def test_several_concepts_become_several_summaries():
+    """A section defining three ideas used to yield one label -- a compromise
+    matching none of them, and one basis row where CES wants three."""
+    got = summarize(reply_with(entry("first phrase"), entry("second phrase"),
+                               entry("third phrase")))
+    assert [c.label for c in got.concepts] == ["first phrase", "second phrase",
+                                               "third phrase"]
+
+
+def test_the_dominant_concept_is_first():
+    got = summarize(reply_with(entry("dominant"), entry("secondary")))
+    assert got.label == "dominant"
+    assert got.siblings[0].label == "secondary"
+
+
+def test_siblings_never_nest():
+    """Otherwise `concepts` would need a recursive walk and a caller could
+    silently miss half of them."""
+    got = summarize(reply_with(entry("a"), entry("b"), entry("c")))
+    assert all(s.siblings == () for s in got.siblings)
+
+
+def test_every_concept_carries_its_own_tiers():
+    got = summarize(reply_with(
+        entry("first phrase", "first abstraction", "first summary"),
+        entry("second phrase", "second abstraction", "second summary")))
+    second = got.siblings[0]
+    assert second.abstraction == "second abstraction"
+    assert second.summary == "second summary"
+
+
+def test_every_concept_is_sanitised():
+    """Sanitising the dominant entry and not the rest would put invisible
+    characters into the basis through the side door."""
+    got = summarize(reply_with(entry("clean phrase"),
+                               entry("phrase with a‑non‑breaking hyphen")))
+    assert "‑" not in got.siblings[0].label
+
+
+def test_each_concept_is_independently_usable():
+    got = summarize(reply_with(entry("first phrase"), entry("second phrase")))
+    for c in got.concepts:
+        assert c.is_usable
+        assert c.section_id == "s1"
+
+
+def test_the_flat_single_object_reply_still_parses():
+    """Cached replies from the previous prompt must not become errors."""
+    got = summarize(json.dumps({"summary": "s", "abstraction": "a", "label": "l"}))
+    assert got.label == "l" and got.siblings == ()
+
+
+def test_an_empty_concepts_list_is_an_error_not_a_silent_pass():
+    got = summarize(json.dumps({"concepts": []}))
+    assert got.error
+
+
+def test_a_non_dict_entry_is_ignored_rather_than_crashing():
+    got = summarize(json.dumps({"concepts": ["not an object",
+                                             entry("real phrase")]}))
+    assert got.label == "real phrase"

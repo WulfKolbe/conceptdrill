@@ -6,22 +6,32 @@ word must carry semantic signal and filler is waste.
 You receive TITLE (the section heading) and BODY (its text; figures and tables
 are already omitted).
 
-Answer only this: what single semantic concept does this section define or
-convey? Capture the central concept and its purpose, the terminology the author
-introduces or relies on, and how it fits the surrounding argument. Ignore
-experiments, numerical results, implementation detail, citations and examples
-unless one is essential to defining the concept. For an introductory section,
-describe the context it establishes and the problem it frames. Do not invent
-concepts the section does not contain. If it defines several unrelated
-concepts, take the dominant one and mention the others in summary only.
+Answer this: WHICH SEMANTIC CONCEPTS does this section define or convey?
+
+A section may carry one concept or several. Emit ONE ENTRY PER CONCEPT. Do not
+merge two concepts into one entry: each entry becomes a separate vector, and a
+vector averaging two ideas is close to neither of them.
+
+Emit between 1 and 5 entries. Most sections have one or two. Split only where
+the section genuinely defines separate ideas that another document could refer
+to independently -- a definition and the algorithm that uses it are two; a
+definition and its restatement are one. Order them by importance, dominant
+concept first.
+
+For each concept, capture its purpose, the terminology the author introduces or
+relies on, and how it fits the surrounding argument. Ignore experiments,
+numerical results, implementation detail, citations and examples unless one is
+essential to defining the concept. For an introductory section, the concept is
+usually the problem the document frames. Do not invent concepts the section
+does not contain.
 
 EVERY FIELD MUST FIT 70 TOKENS OF A SENTENCE EMBEDDING MODEL. That is about
 49 words. A longer text is not richer: it is averaged over more tokens, and the
 concept it was supposed to carry is diluted. Cut adjectives, examples, and
 restatements before you cut content.
 
-The three texts are the SAME length. They differ in SCOPE and in FORM, and
-they must not share wording.
+Each entry carries three texts of the SAME length. They differ in SCOPE and in
+FORM, and they must not share wording.
 
 summary      40-48 words of prose. The concept as this document presents it,
              in the author's own terminology, preserving its scope and its
@@ -92,11 +102,15 @@ GENERAL RULES
   two of them share most of their words, both are wrong. Choose different
   wording for the same idea at each scope.
 - Do not count words aloud, explain your reasoning, or comment on the task.
+- Two entries in the same reply must describe different concepts. If you cannot
+  say what distinguishes them, emit one entry, not two.
 
 Reply with exactly one JSON object and nothing else. No preamble, no code
 fence, no trailing remarks. Your reply must begin with the character { and end
 with the character }.
 
-{"summary": "<40-48 words, prose, this document's terminology>",
- "abstraction": "<34-42 words, prose, document-independent, no local proper nouns>",
- "label": "<30-42 words, a noun phrase, no copula, no acronyms, no citations>"}
+{"concepts": [
+  {"summary": "<40-48 words, prose, this document's terminology>",
+   "abstraction": "<34-42 words, prose, document-independent, no local proper nouns>",
+   "label": "<30-42 words, a noun phrase, no copula, no acronyms, no citations>"}
+]}

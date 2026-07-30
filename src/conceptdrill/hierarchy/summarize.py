@@ -112,6 +112,19 @@ class SectionSummary:
     #: Populated when the reply looked damaged; see `replyparse.control_corruption`.
     warnings: tuple[str, ...] = ()
     error: str = ""
+    #: The section's OTHER concepts, if it defines more than one.
+    #:
+    #: A section covering three ideas used to yield one label -- a compromise
+    #: matching none of them, and one basis row where CES wants three. The
+    #: prompt now emits an entry per concept; this record is the dominant one
+    #: and the rest live here. Siblings never nest: a sibling's own `siblings`
+    #: is always empty.
+    siblings: tuple["SectionSummary", ...] = ()
+
+    @property
+    def concepts(self) -> tuple["SectionSummary", ...]:
+        """Every concept this section defines, dominant first."""
+        return (self,) + self.siblings
 
     @property
     def basis_text(self) -> str:
