@@ -1,0 +1,117 @@
+{
+  "tau": 0.65,
+  "model": "sentencebert",
+  "summarizer": "extractive (proxy -- see module docstring)",
+  "batches": [
+    {
+      "documents_seen": 100,
+      "documents_usable": 30,
+      "candidates": 412,
+      "rows": 312,
+      "added": 312,
+      "merged": 100,
+      "merge_rate": 0.2427,
+      "rows_per_document": 10.4,
+      "shared_across_documents": 14,
+      "levels": {
+        "1": 67,
+        "2": 133,
+        "3": 112
+      },
+      "support_max": 7,
+      "seconds": 39.9
+    },
+    {
+      "documents_seen": 200,
+      "documents_usable": 118,
+      "candidates": 1747,
+      "rows": 1365,
+      "added": 1365,
+      "merged": 382,
+      "merge_rate": 0.2187,
+      "rows_per_document": 11.568,
+      "shared_across_documents": 79,
+      "levels": {
+        "1": 194,
+        "2": 597,
+        "3": 569,
+        "4": 5
+      },
+      "support_max": 12,
+      "seconds": 127.9
+    },
+    {
+      "documents_seen": 300,
+      "documents_usable": 195,
+      "candidates": 6550,
+      "rows": 4495,
+      "added": 4495,
+      "merged": 2055,
+      "merge_rate": 0.3137,
+      "rows_per_document": 23.051,
+      "shared_across_documents": 176,
+      "levels": {
+        "1": 2380,
+        "2": 1162,
+        "3": 911,
+        "4": 42
+      },
+      "support_max": 104,
+      "seconds": 384.7
+    },
+    {
+      "documents_seen": 400,
+      "documents_usable": 270,
+      "candidates": 8580,
+      "rows": 5860,
+      "added": 5860,
+      "merged": 2720,
+      "merge_rate": 0.317,
+      "rows_per_document": 21.704,
+      "shared_across_documents": 271,
+      "levels": {
+        "1": 3216,
+        "2": 1691,
+        "3": 911,
+        "4": 42
+      },
+      "support_max": 104,
+      "seconds": 195.2
+    },
+    {
+      "documents_seen": 416,
+      "documents_usable": 278,
+      "candidates": 8694,
+      "rows": 5923,
+      "added": 5923,
+      "merged": 2771,
+      "merge_rate": 0.3187,
+      "rows_per_document": 21.306,
+      "shared_across_documents": 275,
+      "levels": {
+        "1": 3248,
+        "2": 1722,
+        "3": 911,
+        "4": 42
+      },
+      "support_max": 104,
+      "seconds": 10.5
+    }
+  ],
+  "final": {
+    "rows": 5923,
+    "levels": {
+      "1": 3248,
+      "2": 1722,
+      "3": 911,
+      "4": 42
+    },
+    "documents": 278,
+    "tau": 0.65,
+    "basis_version": "149e878147458886",
+    "support_max": 104,
+    "support_mean": 1.468,
+    "singletons": 4861,
+    "shared_across_documents": 275
+  }
+}

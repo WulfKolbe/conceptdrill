@@ -113,6 +113,16 @@ into the drill folder. Things not obvious from any single file:
   against TAU; a wrong cosine adds a row that should have merged. `DEFAULT_TAU`
   is 0.65, measured — 0.85 produced zero merges across three related papers.
 
+- **The basis grows linearly with the corpus — measured, not assumed.**
+  `tools/basis_scaling.py` over all 416 library docmodels (278 usable): 8694
+  candidates to 5923 rows, `rows/doc` rising not falling, 4861 singletons, and
+  only 275 rows spanning more than one document. Most merging is within one
+  document. CES therefore *expands* 384 dims to 5923 — it buys interpretable
+  axes, not compression. Do not describe the adaptive basis as bounding CES
+  dimensionality. That run uses `ExtractiveSummarizer` as a proxy, and the
+  proxy is optimistic: extractive labels are more cross-document similar than
+  LLM ones (0.723 vs 0.647).
+
 ## Integration with pdfdrill
 
 `~/MX/PDFDRILL` is where projections are collected. Follow its conventions

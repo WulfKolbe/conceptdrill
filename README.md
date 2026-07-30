@@ -280,6 +280,54 @@ The basis arithmetic is **float64** throughout: a merge decision is one
 comparison against `TAU`, and a wrong cosine adds a row that should have
 merged, unrecoverably.
 
+#### Measured: the basis does not stay small
+
+`tools/basis_scaling.py` builds one basis incrementally over the drilled
+library and reports after each batch. Over all 416 docmodels (278 with usable
+sections), at `TAU=0.65`, `all-MiniLM-L6-v2`:
+
+| docs seen | usable | candidates | rows | merge rate | rows/doc | rows shared |
+|---:|---:|---:|---:|---:|---:|---:|
+| 100 | 30 | 412 | 312 | 24.3% | 10.40 | 14 |
+| 200 | 118 | 1747 | 1365 | 21.9% | 11.57 | 79 |
+| 300 | 195 | 6550 | 4495 | 31.4% | 23.05 | 176 |
+| 400 | 270 | 8580 | 5860 | 31.7% | 21.70 | 271 |
+| 416 | 278 | 8694 | 5923 | 31.9% | 21.31 | 275 |
+
+**The curve does not flatten.** `rows/doc` rises rather than falls, and the
+marginal merge rate per batch (24.3, 21.1, 34.8, 32.8, 44.7 %) moves with how
+large the batch's documents happen to be, not with how much the corpus already
+knows. 8694 candidates compress to 5923 rows — a factor of **1.47**, where
+saturation would show as an unbounded one.
+
+Where that compression comes from matters more than its size. Of 5923 rows,
+**4861 are singletons**; 1062 absorbed at least one merge, but only **275 span
+more than one document**. So roughly three quarters of all merging is
+*within* a single document — two sections of the same paper with near-identical
+titles — and cross-document concept sharing touches **4.6% of the basis**. Mean
+support is 1.468.
+
+The consequence for CES is direct: `M` has 5923 rows, so `CES(s) = M @ f(s)`
+turns a 384-dimensional sentence embedding into a 5923-dimensional one. The
+projection currently *expands* dimensionality. It buys interpretable axes, not
+compression, and any claim that the adaptive basis bounds CES dimensionality is
+not supported on this corpus.
+
+Two honest caveats, in opposite directions:
+
+- The summariser in that run is `ExtractiveSummarizer`, not an LLM — running
+  Novita over 8694 sections is tens of thousands of calls. Extractive labels
+  are title-plus-opening-clause and so are document-faithful by construction,
+  which is exactly what the `label` tier exists to avoid.
+- But this makes the proxy **optimistic**, not pessimistic: measured on three
+  related papers, extractive labels are *more* cross-document similar than LLM
+  ones (max 0.723 vs 0.647). The real pipeline should merge less, not more.
+
+`TAU` is the obvious lever and it is not sufficient. On a fixed 120-document
+sample (47 usable, 537 candidates): 0.55 gives 291 rows (6.19/doc), 0.65 gives
+404 (8.60/doc), 0.75 gives 495 (10.53/doc). Lowering it scales the constant;
+the growth stays linear.
+
 ### Modules
 
 | module | responsibility |

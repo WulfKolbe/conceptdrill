@@ -1,8 +1,8 @@
 # CES Hierarchical Self-Adapting Embedding Structure — Design
 
 Date: 2026-07-29
-Status: **steps 1, 1A, 1B and 2 implemented.** Projection (3-5),
-corpus-basis storage (6) and inference (7-8) are not.
+Status: **all eight steps implemented**, plus the paper's Algorithm 2
+(`refine.py`), which the definition did not ask for.
 Amendments below are marked MEASURED where a decision was revised
 against real data rather than reasoning.
 
@@ -236,10 +236,11 @@ Two non-deterministic stages, both must be pinned and recorded:
 1. **RESOLVED (partly).** `TAU` is 0.65, measured. But at 0.65 three related
    papers still share zero rows; sharing only begins near 0.50, where
    within-document merging becomes aggressive (58 candidates to 22 rows). One
-   threshold may not serve both jobs. Needs a larger corpus, and a label tier
-   more canonical than the current prompt produces — 13 of 65 sections failed
-   to parse and most labels came in under the 30-42 word budget, both of which
-   suppress similarity.
+   threshold may not serve both jobs. **The "needs a larger corpus" hope is now
+   answered: no.** At 278 documents sharing still reaches only 4.6% of rows —
+   see the amendment below. What remains untested is the label tier itself:
+   13 of 65 sections failed to parse and most labels came in under the 30-42
+   word budget, both of which suppress similarity.
 2. Do L3/L4 basis vectors live in one matrix with L2, or one matrix per level
    with the CES vector being the concatenation? Affects M's shape and the
    meaning of a CES coordinate. Note the decided row order is level-major, which
@@ -266,6 +267,17 @@ Two non-deterministic stages, both must be pinned and recorded:
 - **All LLM output is sanitised** (`sanitize.py`). Not in the definition; added
   after invisible U+2011 and U+2013 characters were found in LLM-authored text
   supplied to this project.
+- **MEASURED: the adaptive basis does not bound CES dimensionality.** Open
+  question 1 assumed a larger corpus would produce sharing. It does not.
+  `tools/basis_scaling.py` over the whole library (416 docmodels, 278 usable,
+  `TAU=0.65`): 8694 candidates to **5923 rows**, `rows/doc` 10.4 → 21.3 rising,
+  4861 singletons, and only **275 rows (4.6%) shared across documents**. Three
+  quarters of merging happens inside a single document. `M @ l` takes 384 dims
+  to 5923 — the projection expands. `TAU` scales the constant, not the slope
+  (0.55/0.65/0.75 give 6.19/8.60/10.53 rows per document). The run uses the
+  extractive summariser as a proxy, which is *optimistic* about merging. See
+  README for the full table.
+
 - **Storage follows pdfdrill.** `model.ces.json` in the drill folder, plus a
   `CES_BUILT` capability with a content-hash proof in the sidecar. The
   definition proposed a bespoke sidecar and its own staleness check; pdfdrill
