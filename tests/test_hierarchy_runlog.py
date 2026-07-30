@@ -409,3 +409,125 @@ def test_gate3_reports_word_budgets_without_gating_them(tmp_path):
     result = gate3_tier_independence(root)
     assert result.passed
     assert result.checks["tier_word_budgets"]["label"] == {"under": 1}
+
+
+# --------------------------------------------------------------------------
+# Gate 4 over written artefacts
+# --------------------------------------------------------------------------
+
+from conceptdrill.hierarchy.basis import STRUCTURAL_ROW_ID  # noqa: E402
+from conceptdrill.hierarchy.gates import gate4_structural   # noqa: E402
+
+
+def labelled_run(tmp_path, records, labels, rows):
+    root = written_run(tmp_path, records,
+                       extra=None) if False else None
+    log = RunLog.open(tmp_path, timestamp="t")
+    doc = docmodel_with(tmp_path, records[0]["doc_id"],
+                        [r["section_id"] for r in records])
+    for rec in records:
+        log.add_section(**rec)
+    root = finish(log, corpus_paths=[str(doc)], basis_rows=rows)
+    # Gate 4 compares basis.json against manifest basis_stats.
+    manifest = json.loads((root / "manifest.json").read_text())
+    manifest["basis_stats"] = {"rows": sum(1 for r in rows
+                                           if not r.get("structural"))}
+    (root / "manifest.json").write_text(json.dumps(manifest))
+    path = tmp_path / "labels.json"
+    path.write_text(json.dumps({"labels": labels}))
+    return root, path
+
+
+def concept_row(row_id="row_a"):
+    return {"row_id": row_id, "label": "L", "support": 1, "level": 1,
+            "documents": ["d"], "contributing_section_ids": [],
+            "structural": False}
+
+
+def sink_row():
+    return {"row_id": STRUCTURAL_ROW_ID, "label": "[structural]", "support": 1,
+            "level": 0, "documents": ["d"], "contributing_section_ids": [],
+            "structural": True}
+
+
+def test_gate4_passes_when_nothing_structural_reaches_a_concept_row(tmp_path):
+    root, labels = labelled_run(
+        tmp_path,
+        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+          "structural_class": "bibliography",
+          "structural_rule_fired": "reference-list",
+          "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"},
+         {"doc_id": "d", "section_id": "s2", "title_cleaned": "Method",
+          "row_id_assigned": "row_a", "merge_decision": "added"}],
+        [{"doc_id": "d", "section_id": "s1", "structural": True},
+         {"doc_id": "d", "section_id": "s2", "structural": False}],
+        [sink_row(), concept_row()])
+    result = gate4_structural(root, labels)
+    assert result.passed, result.report()
+    assert result.checks["recall"] == 1.0
+    assert result.checks["basis_rows_with_row0"] - \
+        result.checks["basis_rows_without_row0"] == 1
+
+
+def test_gate4_fails_when_a_structural_section_holds_a_concept_row(tmp_path):
+    """The binding clause. Recall is what this gate is for."""
+    root, labels = labelled_run(
+        tmp_path,
+        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+          "row_id_assigned": "row_a", "merge_decision": "added"}],
+        [{"doc_id": "d", "section_id": "s1", "structural": True}],
+        [concept_row()])
+    result = gate4_structural(root, labels)
+    assert not result.passed
+    assert result.checks["reached_a_concept_row"] == 1
+    assert result.checks["recall"] == 0.0
+
+
+def test_gate4_fails_when_an_absorbed_section_names_no_rule(tmp_path):
+    root, labels = labelled_run(
+        tmp_path,
+        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+          "structural_class": "bibliography", "structural_rule_fired": None,
+          "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"}],
+        [{"doc_id": "d", "section_id": "s1", "structural": True}],
+        [sink_row()])
+    result = gate4_structural(root, labels)
+    assert not result.passed
+    assert any("name no rule" in f for f in result.failures)
+
+
+def test_gate4_fails_on_more_than_one_structural_row(tmp_path):
+    """Row 0 is reserved; a second sink means the reservation broke."""
+    second = dict(sink_row(), row_id="row_other_sink")
+    root, labels = labelled_run(
+        tmp_path,
+        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+          "structural_class": "bibliography",
+          "structural_rule_fired": "reference-list",
+          "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"}],
+        [{"doc_id": "d", "section_id": "s1", "structural": True}],
+        [sink_row(), second])
+    result = gate4_structural(root, labels)
+    assert not result.passed
+    assert any("row 0 is reserved" in f for f in result.failures)
+
+
+def test_gate4_reports_precision_without_gating_it(tmp_path):
+    """Over-absorption is recoverable; it must be visible, not fatal."""
+    root, labels = labelled_run(
+        tmp_path,
+        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+          "structural_class": "bibliography",
+          "structural_rule_fired": "reference-list",
+          "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"},
+         {"doc_id": "d", "section_id": "s2", "title_cleaned": "Contributions",
+          "structural_class": "author-contributions",
+          "structural_rule_fired": "author-contributions",
+          "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"}],
+        [{"doc_id": "d", "section_id": "s1", "structural": True},
+         {"doc_id": "d", "section_id": "s2", "structural": False}],
+        [sink_row()])
+    result = gate4_structural(root, labels)
+    assert result.passed
+    assert result.checks["recall"] == 1.0
+    assert result.checks["precision"] == 0.5

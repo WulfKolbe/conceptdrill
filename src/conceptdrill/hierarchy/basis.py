@@ -145,11 +145,29 @@ class IntegrationResult:
     label: str
 
 
+#: Row 0 of M. Reserved, fixed, and never derived from a label — a sink for
+#: document furniture, not a concept. Its id is a constant rather than a hash
+#: so it is recognisable in any artefact without consulting the basis.
+STRUCTURAL_ROW_ID = "row_structural_sink"
+
+#: The sink sits below every real level so it always sorts to index 0.
+#: `read_sections` coerces a missing or zero level to 1, so 0 cannot collide.
+STRUCTURAL_LEVEL = 0
+
+
 @dataclass
 class ConceptBasis:
-    """The shared basis: rows plus the machinery to grow it."""
+    """The shared basis: rows plus the machinery to grow it.
+
+    `rows` holds concept rows only. The structural sink is kept separately so
+    that no size statistic can accidentally include it: a basis of 106 concepts
+    plus a sink is 106 concepts, and reporting 107 makes every rows-per-section
+    figure wrong by one.
+    """
 
     rows: dict[str, BasisRow] = field(default_factory=dict)
+    #: The reserved sink, created on first absorption. See `absorb_structural`.
+    structural: Optional[BasisRow] = None
     tau: float = DEFAULT_TAU
     #: Documents integrated, in order. The basis depends on this.
     document_order: tuple[str, ...] = ()
@@ -168,15 +186,26 @@ class ConceptBasis:
 
     # ---- ordering -------------------------------------------------------
 
-    def ordered_rows(self) -> list[BasisRow]:
-        """Canonical order: level-major, then support descending, then label.
+    def concept_rows(self) -> list[BasisRow]:
+        """Concept rows in canonical order: level, support descending, label.
 
         The label tie-break is what makes the ordering total. Without it, two
         rows at the same level with equal support fall back to dict insertion
         order, which varies between runs.
+
+        Excludes the structural sink. This is the list every count reports on.
         """
         return sorted(self.rows.values(),
                       key=lambda r: (r.level, -r.support, r.canonical))
+
+    def ordered_rows(self) -> list[BasisRow]:
+        """Every row of `M`, sink first when it exists.
+
+        The sink is index 0 by construction rather than by sorting luck: it is
+        prepended, so no support count can ever displace it.
+        """
+        rows = self.concept_rows()
+        return ([self.structural] + rows) if self.structural is not None else rows
 
     def row_ids(self) -> list[str]:
         return [r.row_id for r in self.ordered_rows()]
@@ -205,6 +234,40 @@ class ConceptBasis:
         return None
 
     # ---- the adaptive core ---------------------------------------------
+
+    def absorb_structural(self, label: str, vector, *, document: str = "",
+                          rule: str = "") -> IntegrationResult:
+        """Absorb a structural section into row 0, bypassing tau entirely.
+
+        No similarity comparison is made, because the question "how close is
+        this reference list to that reference list?" has no bearing on whether
+        either belongs in the concept space. They do not.
+
+        The sink keeps a running mean of what it absorbed, like any other row.
+        A zero row would also be defensible, but a mean gives row 0 a direction
+        and so makes it useful at projection time: a sentence that projects
+        strongly onto row 0 is boilerplate, and that is worth being able to
+        see.
+        """
+        vec = _unit(vector)
+        if self.structural is None:
+            self.structural = BasisRow(
+                row_id=STRUCTURAL_ROW_ID, level=STRUCTURAL_LEVEL,
+                label="[structural]", vector=vec, support=1,
+                documents=(document,) if document else (),
+                merged_labels=(label,) if label else ())
+        else:
+            self.structural = merge(self.structural, vec, label, document)
+            # `merge` recomputes nothing about identity, but be explicit: the
+            # sink's id and label are reserved and never move.
+            self.structural = BasisRow(
+                row_id=STRUCTURAL_ROW_ID, level=STRUCTURAL_LEVEL,
+                label="[structural]", vector=self.structural.vector,
+                support=self.structural.support,
+                documents=self.structural.documents,
+                merged_labels=self.structural.merged_labels)
+        return IntegrationResult("absorbed", STRUCTURAL_ROW_ID, -1.0,
+                                 STRUCTURAL_LEVEL, label)
 
     def nearest(self, level: int, vector) -> tuple[Optional[BasisRow], float]:
         """Closest row *at the same level*, and its cosine.
@@ -277,8 +340,14 @@ class ConceptBasis:
             by_level[row.level] = by_level.get(row.level, 0) + 1
         supports = [r.support for r in self.rows.values()] or [0]
         shared = [r for r in self.rows.values() if len(r.documents) > 1]
+        sink = self.structural
         return {
+            # Concept rows. The sink is reported separately and never added in.
             "rows": len(self.rows),
+            "rows_including_structural": len(self.rows) + (1 if sink else 0),
+            "structural_row": ({"row_id": sink.row_id, "support": sink.support,
+                                "documents": len(sink.documents)}
+                               if sink else None),
             "levels": dict(sorted(by_level.items())),
             "documents": len(self.document_order),
             "tau": self.tau,

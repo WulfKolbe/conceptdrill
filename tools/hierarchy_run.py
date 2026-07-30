@@ -30,11 +30,13 @@ import blasfix                                                    # noqa: E402
 blasfix.apply_env_mitigations()
 
 from conceptdrill.embeddings import get_embedder                  # noqa: E402
-from conceptdrill.hierarchy.basis import ConceptBasis             # noqa: E402
+from conceptdrill.hierarchy.basis import (STRUCTURAL_ROW_ID,      # noqa: E402
+                                          ConceptBasis)
 from conceptdrill.hierarchy.basistext import clean_basis_text      # noqa: E402
 from conceptdrill.hierarchy.captions import clean_caption_traced  # noqa: E402
 from conceptdrill.hierarchy.docmodel_tree import load_tree        # noqa: E402
 from conceptdrill.hierarchy.runlog import RunLog                  # noqa: E402
+from conceptdrill.hierarchy.structural import classify_section    # noqa: E402
 from conceptdrill.hierarchy.summarize import (SummaryCache,  # noqa: E402
                                               TitleOnlySummarizer,
                                               check_tier_independence,
@@ -163,6 +165,14 @@ def main() -> int:
                 summary.basis_text,
                 title="" if is_ablation else node.title_raw)
 
+        # Dimension zero. Classified before embedding so a structural section
+        # never competes for a concept row, whatever it looks like in vector
+        # space.
+        classes: dict[str, tuple] = {
+            node.id: classify_section(node.title,
+                                      is_appendix=node.is_appendix)
+            for node in nodes}
+
         # Integrate only what survives cleaning, but keep the decision per
         # section so the sections that did not reach the basis say why.
         usable = [(n, cleaned[n.id]) for n in nodes
@@ -172,6 +182,11 @@ def main() -> int:
         if usable:
             vectors = embedder.encode([c.text for _, c in usable])
             for (node, basis_text), vector in zip(usable, vectors):
+                if classes[node.id][0] is not None:
+                    decisions[node.id] = basis.absorb_structural(
+                        basis_text.text, vector, document=bibkey,
+                        rule=classes[node.id][1])
+                    continue
                 decisions[node.id] = basis.integrate(
                     node.level, basis_text.text, vector, document=bibkey)
             if bibkey not in basis.document_order:
@@ -199,8 +214,8 @@ def main() -> int:
                 title_raw=node.title_raw,
                 title_cleaned=title_clean,
                 cleaning_rules_fired=fired,
-                structural_class=None,          # step 4
-                structural_rule_fired=None,     # step 4
+                structural_class=classes.get(node.id, (None, None))[0],
+                structural_rule_fired=classes.get(node.id, (None, None))[1],
                 tier_label=summary.label if summary else None,
                 tier_abstraction=summary.abstraction if summary else None,
                 tier_summary=summary.summary if summary else None,
@@ -227,6 +242,7 @@ def main() -> int:
         flush()
 
     rows = [{"row_id": r.row_id, "label": r.label, "support": r.support,
+             "structural": r.row_id == STRUCTURAL_ROW_ID,
              "level": r.level, "documents": list(r.documents),
              "contributing_section_ids": sorted(
                  rec["section_id"] for rec in log._sections
@@ -250,8 +266,10 @@ def main() -> int:
                "basis_version": basis.basis_version(),
                "basis_stats": basis.stats()})
 
+    stats = basis.stats()
     print(f"sections: {len(log)}  documents: {docs_done}  "
-          f"basis rows: {len(rows)}")
+          f"concept rows: {stats['rows']}  "
+          f"(+1 structural sink, support {(stats['structural_row'] or {}).get('support', 0)})")
     print(f"run -> {root}")
     return 0
 

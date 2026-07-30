@@ -235,3 +235,84 @@ def gate3_tier_independence(run_dir: str | Path,
 
     result.passed = not (prefix_hits or jaccard_hits)
     return result
+
+
+def gate4_structural(run_dir: str | Path,
+                     labels_path: str | Path) -> GateResult:
+    """Gate 4: no hand-labelled structural section reaches the concept basis.
+
+    Recall is the binding constraint and precision is reported only. A concept
+    wrongly absorbed is visible in the record and recoverable; a reference list
+    that became a basis row contaminates every coordinate derived from it and
+    is not.
+    """
+    from .basis import STRUCTURAL_ROW_ID
+
+    manifest, records, basis = read_run(run_dir)
+    truth = json.loads(Path(labels_path).read_text(encoding="utf-8"))
+    want = {(l["doc_id"], l["section_id"]) for l in truth["labels"]
+            if l["structural"]}
+
+    result = GateResult(name="GATE 4 (structural layer)", passed=True)
+    by_key = {(r["doc_id"], r["section_id"]): r for r in records}
+
+    missing_labels = want - set(by_key)
+    if missing_labels:
+        result.failures.append(
+            f"labelled sections absent from the run: {sorted(missing_labels)[:5]}")
+
+    classified = {k for k, r in by_key.items() if r.get("structural_class")}
+    tp = len(want & classified)
+    fn = len(want - classified)
+    fp = len(classified - want)
+
+    # The binding clause: a structural section must not hold a concept row.
+    leaked = []
+    for key in want:
+        rec = by_key.get(key)
+        if rec is None:
+            continue
+        row = rec.get("row_id_assigned")
+        if row and row != STRUCTURAL_ROW_ID:
+            leaked.append(f"{key[0]}/{key[1]} ({rec.get('title_cleaned')!r}) "
+                          f"holds concept row {row}")
+
+    unnamed = [k for k, r in by_key.items()
+               if r.get("structural_class") and not r.get("structural_rule_fired")]
+
+    rows = basis.get("rows") or []
+    sink_rows = [r for r in rows if r.get("structural")]
+    concept_rows = len(rows) - len(sink_rows)
+
+    result.checks["hand_labelled_structural"] = len(want)
+    result.checks["classified_structural"] = len(classified)
+    result.checks["true_positives"] = tp
+    result.checks["false_negatives"] = fn
+    result.checks["false_positives"] = fp
+    result.checks["recall"] = round(tp / len(want), 4) if want else None
+    result.checks["precision"] = (round(tp / len(classified), 4)
+                                  if classified else None)
+    result.checks["reached_a_concept_row"] = len(leaked)
+    result.checks["basis_rows_without_row0"] = concept_rows
+    result.checks["basis_rows_with_row0"] = len(rows)
+    result.checks["manifest_stats_rows"] = (
+        (manifest.get("basis_stats") or {}).get("rows"))
+
+    for entry in leaked[:10]:
+        result.failures.append(entry)
+    if unnamed:
+        result.failures.append(
+            f"{len(unnamed)} absorbed sections name no rule: {unnamed[:5]}")
+    if len(sink_rows) > 1:
+        result.failures.append(f"{len(sink_rows)} structural rows; row 0 is reserved")
+    if sink_rows and len(rows) - concept_rows != 1:
+        result.failures.append(
+            f"basis size with and without row 0 differ by "
+            f"{len(rows) - concept_rows}, not 1")
+    if (manifest.get("basis_stats") or {}).get("rows") != concept_rows:
+        result.failures.append(
+            f"manifest reports {(manifest.get('basis_stats') or {}).get('rows')} "
+            f"rows but basis.json holds {concept_rows} concept rows")
+
+    result.passed = not result.failures
+    return result

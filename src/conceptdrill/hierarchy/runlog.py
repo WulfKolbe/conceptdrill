@@ -63,10 +63,14 @@ MANIFEST_REQUIRED: tuple[str, ...] = (
     "summarizer_class", "embedder_backend", "gemm_check_result", "strict_mode",
 )
 
-#: `merge_decision` vocabulary. `not_integrated` covers everything that never
-#: reached `ConceptBasis`: no usable label, a summariser failure, or (from
-#: step 4) absorption into the structural row.
-MERGE_DECISIONS = frozenset({"added", "merged", "skipped", "not_integrated"})
+#: `merge_decision` vocabulary.
+#:
+#: `absorbed` is distinct from `not_integrated` on purpose: a section absorbed
+#: into the reserved structural row *was* processed and *did* reach the basis,
+#: it simply did not become a concept. Collapsing the two would make it
+#: impossible to tell dimension zero from a pipeline failure.
+MERGE_DECISIONS = frozenset({"added", "merged", "absorbed", "skipped",
+                             "not_integrated"})
 
 
 class IncompleteRun(RuntimeError):
