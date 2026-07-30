@@ -39,11 +39,29 @@ FORMAT = "conceptdrill.hierarchy.run"
 FORMAT_VERSION = 1
 
 #: Every key on every `sections.jsonl` line, in write order. The contract.
+#:
+#: One line per section still, so gate 1 can assert that every input section
+#: appears exactly once. But the CONCEPT, not the section, is the unit that
+#: becomes a basis row: a section defining three ideas yields three vectors.
+#: Everything that is a property of a concept lives in `concepts`, and
+#: everything that is a property of the section stays here.
 SECTION_FIELDS: tuple[str, ...] = (
     "doc_id", "section_id", "level", "flow_index", "is_appendix",
     "title_raw", "title_cleaned", "cleaning_rules_fired",
     "structural_class", "structural_rule_fired",
+    "concept_count", "concepts",
+    "warnings", "error",
+)
+
+#: Every key on every entry of a section's `concepts` list.
+#:
+#: Same rule as `SECTION_FIELDS`: unknown keys raise, missing keys become null.
+#: A concept is what gets embedded, integrated and counted, so this is where
+#: the embedding and merge decisions live.
+CONCEPT_FIELDS: tuple[str, ...] = (
+    "concept_index",
     "tier_label", "tier_abstraction", "tier_summary", "basis_text",
+    "cleaning_rules_fired",
     "embedding_model", "embedding_revision",
     "row_id_assigned", "merge_decision", "merge_cosine", "merge_target_row_id",
     "warnings", "error",
@@ -182,6 +200,19 @@ def blas_build() -> dict[str, Any]:
 # Records
 # --------------------------------------------------------------------------
 
+def concept_record(**values: Any) -> dict[str, Any]:
+    """One entry of a section's `concepts` list: exactly `CONCEPT_FIELDS`."""
+    unknown = set(values) - set(CONCEPT_FIELDS)
+    if unknown:
+        raise KeyError(f"not part of the concept record contract: "
+                       f"{sorted(unknown)}")
+    decision = values.get("merge_decision")
+    if decision is not None and decision not in MERGE_DECISIONS:
+        raise ValueError(f"merge_decision {decision!r} not in "
+                         f"{sorted(MERGE_DECISIONS)}")
+    return {name: values.get(name) for name in CONCEPT_FIELDS}
+
+
 def section_record(**values: Any) -> dict[str, Any]:
     """One `sections.jsonl` line: exactly `SECTION_FIELDS`, nothing else.
 
@@ -193,9 +224,16 @@ def section_record(**values: Any) -> dict[str, Any]:
     if unknown:
         raise KeyError(f"not part of the section record contract: "
                        f"{sorted(unknown)}")
-    decision = values.get("merge_decision")
-    if decision is not None and decision not in MERGE_DECISIONS:
-        raise ValueError(f"merge_decision {decision!r} not in {sorted(MERGE_DECISIONS)}")
+
+    concepts = values.get("concepts")
+    if concepts is not None:
+        if not isinstance(concepts, (list, tuple)):
+            raise TypeError("concepts must be a list of concept records")
+        # Rebuild each entry through the concept contract, so a hole or a typo
+        # in a nested record raises here rather than reaching the artefact.
+        concepts = [concept_record(**dict(c)) for c in concepts]
+        values = {**values, "concepts": concepts,
+                  "concept_count": values.get("concept_count", len(concepts))}
     return {name: values.get(name) for name in SECTION_FIELDS}
 
 

@@ -35,7 +35,8 @@ from conceptdrill.hierarchy.basis import (STRUCTURAL_ROW_ID,      # noqa: E402
 from conceptdrill.hierarchy.basistext import clean_basis_text      # noqa: E402
 from conceptdrill.hierarchy.captions import clean_caption_traced  # noqa: E402
 from conceptdrill.hierarchy.docmodel_tree import load_tree        # noqa: E402
-from conceptdrill.hierarchy.runlog import RunLog                  # noqa: E402
+from conceptdrill.hierarchy.runlog import (RunLog,                 # noqa: E402
+                                           concept_record)
 from conceptdrill.hierarchy.structural import classify_section    # noqa: E402
 from conceptdrill.hierarchy.summarize import (SummaryCache,  # noqa: E402
                                               TitleOnlySummarizer,
@@ -156,19 +157,21 @@ def main() -> int:
 
         run = summarize_tree(tree, summarizer, cache=cache)
 
-        # Every section's basis text goes through the one cleaner, whether or
+        # Every concept's basis text goes through the one cleaner, whether or
         # not it reaches the basis, so `cleaning_rules_fired` is populated for
-        # sections that were later dropped.
-        cleaned: dict[str, object] = {}
+        # concepts that were later dropped. The CONCEPT is the unit: a section
+        # defining three ideas contributes three candidates, not one blend.
+        cleaned: dict[tuple[str, int], object] = {}
         for node in nodes:
             summary = run.summaries.get(node.id)
             if summary is None:
                 continue
-            # For the ablation arm the title *is* the content, so it must not
-            # be stripped from the front of itself.
-            cleaned[node.id] = clean_basis_text(
-                summary.basis_text,
-                title="" if is_ablation else node.title_raw)
+            for i, concept in enumerate(summary.concepts):
+                # For the ablation arm the title *is* the content, so it must
+                # not be stripped from the front of itself.
+                cleaned[(node.id, i)] = clean_basis_text(
+                    concept.basis_text,
+                    title="" if is_ablation else node.title_raw)
 
         # Dimension zero. Classified before embedding so a structural section
         # never competes for a concept row, whatever it looks like in vector
@@ -179,29 +182,37 @@ def main() -> int:
             for node in nodes}
 
         # Integrate only what survives cleaning, but keep the decision per
-        # section so the sections that did not reach the basis say why.
-        usable = [(n, cleaned[n.id]) for n in nodes
-                  if n.id in run.summaries and run.summaries[n.id].is_usable
-                  and n.id in cleaned and cleaned[n.id].text]
-        decisions: dict[str, object] = {}
+        # concept so the concepts that did not reach the basis say why.
+        usable = []
+        for node in nodes:
+            summary = run.summaries.get(node.id)
+            if summary is None:
+                continue
+            for i, concept in enumerate(summary.concepts):
+                text = cleaned.get((node.id, i))
+                if concept.is_usable and text is not None and text.text:
+                    usable.append((node, i, text))
+
+        decisions: dict[tuple[str, int], object] = {}
         if usable:
+            texts = [t.text for _, _, t in usable]
             report = getattr(embedder, "token_report", None)
             if callable(report):
-                r = report([c.text for _, c in usable])
+                r = report(texts)
                 for k, v in r.items():
                     if k in ("texts", "truncated", "tokens_lost",
                              "over_70_token_window"):
                         token_stats[k] = token_stats.get(k, 0) + v
                     else:
                         token_stats[k] = max(token_stats.get(k, 0), v)
-            vectors = embedder.encode([c.text for _, c in usable])
-            for (node, basis_text), vector in zip(usable, vectors):
+            vectors = embedder.encode(texts)
+            for (node, i, basis_text), vector in zip(usable, vectors):
                 if classes[node.id][0] is not None:
-                    decisions[node.id] = basis.absorb_structural(
+                    decisions[(node.id, i)] = basis.absorb_structural(
                         basis_text.text, vector, document=bibkey,
                         rule=classes[node.id][1])
                     continue
-                decisions[node.id] = basis.integrate(
+                decisions[(node.id, i)] = basis.integrate(
                     node.level, basis_text.text, vector, document=bibkey)
             if bibkey not in basis.document_order:
                 basis.document_order = basis.document_order + (bibkey,)
@@ -209,16 +220,40 @@ def main() -> int:
         for node in nodes:
             summary = run.summaries.get(node.id)
             title_clean, title_rules = clean_caption_traced(node.title_raw)
-            basis_text = cleaned.get(node.id)
-            result = decisions.get(node.id)
-            fired = [f"title:{r}" for r in title_rules]
-            if basis_text is not None:
-                fired += [f"basis:{r}" for r in basis_text.rules_fired]
-            warnings = list(summary.warnings) if summary else []
-            if summary is not None:
-                degenerate = check_tier_independence(summary)
+            title_fired = [f"title:{r}" for r in title_rules]
+            structural_class, structural_rule = classes.get(node.id, (None, None))
+
+            concepts = []
+            for i, concept in enumerate(summary.concepts if summary else ()):
+                basis_text = cleaned.get((node.id, i))
+                result = decisions.get((node.id, i))
+                degenerate = check_tier_independence(concept)
                 tier_violations += len(degenerate)
-                warnings += [f"tier: {d}" for d in degenerate]
+                concepts.append(concept_record(
+                    concept_index=i,
+                    tier_label=concept.label or None,
+                    tier_abstraction=concept.abstraction or None,
+                    tier_summary=concept.summary or None,
+                    basis_text=(basis_text.text
+                                if basis_text is not None else None),
+                    cleaning_rules_fired=(
+                        [f"basis:{r}" for r in basis_text.rules_fired]
+                        if basis_text is not None else []),
+                    embedding_model=embedder.name if result is not None else None,
+                    embedding_revision=(embedder.revision
+                                        if result is not None else None),
+                    row_id_assigned=getattr(result, "row_id", None) or None,
+                    merge_decision=(getattr(result, "action", None)
+                                    if result is not None else "not_integrated"),
+                    merge_cosine=(round(float(result.similarity), 6)
+                                  if result is not None else None),
+                    merge_target_row_id=(result.row_id
+                                         if result is not None
+                                         and result.action == "merged" else None),
+                    warnings=(list(concept.warnings)
+                              + [f"tier: {d}" for d in degenerate]),
+                    error=_error_for(concept, basis_text)))
+
             log.add_section(
                 doc_id=bibkey,
                 section_id=node.id,
@@ -227,27 +262,13 @@ def main() -> int:
                 is_appendix=node.is_appendix,
                 title_raw=node.title_raw,
                 title_cleaned=title_clean,
-                cleaning_rules_fired=fired,
-                structural_class=classes.get(node.id, (None, None))[0],
-                structural_rule_fired=classes.get(node.id, (None, None))[1],
-                tier_label=summary.label if summary else None,
-                tier_abstraction=summary.abstraction if summary else None,
-                tier_summary=summary.summary if summary else None,
-                basis_text=basis_text.text if basis_text is not None else None,
-                embedding_model=embedder.name if result is not None else None,
-                embedding_revision=(embedder.revision if result is not None
-                                    else None),
-                row_id_assigned=getattr(result, "row_id", None) or None,
-                merge_decision=(getattr(result, "action", None)
-                                if result is not None else "not_integrated"),
-                merge_cosine=(round(float(result.similarity), 6)
-                              if result is not None else None),
-                merge_target_row_id=(result.row_id
-                                     if result is not None
-                                     and result.action == "merged" else None),
-                warnings=warnings,
-                error=_error_for(summary, basis_text),
-            )
+                cleaning_rules_fired=title_fired,
+                structural_class=structural_class,
+                structural_rule_fired=structural_rule,
+                concept_count=len(concepts),
+                concepts=concepts,
+                warnings=[],
+                error=None if summary else "no summary produced")
 
     if cache is not None:
         cache.flush()
@@ -258,9 +279,10 @@ def main() -> int:
     rows = [{"row_id": r.row_id, "label": r.label, "support": r.support,
              "structural": r.row_id == STRUCTURAL_ROW_ID,
              "level": r.level, "documents": list(r.documents),
-             "contributing_section_ids": sorted(
-                 rec["section_id"] for rec in log._sections
-                 if rec["row_id_assigned"] == r.row_id)}
+             "contributing_concepts": sorted(
+                 f"{rec['section_id']}#{c['concept_index']}"
+                 for rec in log._sections for c in (rec["concepts"] or [])
+                 if c["row_id_assigned"] == r.row_id)}
             for r in basis.ordered_rows()]
 
     root = log.finish(

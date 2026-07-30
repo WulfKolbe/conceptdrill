@@ -49,6 +49,28 @@ def read_run(run_dir: str | Path) -> tuple[dict[str, Any], list[dict[str, Any]],
     return manifest, records, basis
 
 
+#: Flat per-concept keys as they appeared before the concept became the unit.
+_LEGACY_CONCEPT_KEYS = ("tier_label", "tier_abstraction", "tier_summary",
+                        "basis_text", "embedding_model", "embedding_revision",
+                        "row_id_assigned", "merge_decision", "merge_cosine",
+                        "merge_target_row_id", "warnings", "error")
+
+
+def concepts_of(record: dict[str, Any]) -> list[dict[str, Any]]:
+    """Every concept on a section record, whichever schema wrote it.
+
+    The concept is the unit that becomes a basis row. Records written before
+    that change carry exactly one concept in flat fields; reading them as a
+    one-element list keeps older run directories checkable rather than
+    silently passing gates that never looked at them.
+    """
+    concepts = record.get("concepts")
+    if isinstance(concepts, list):
+        return [c for c in concepts if isinstance(c, dict)]
+    legacy = {k: record.get(k) for k in _LEGACY_CONCEPT_KEYS if k in record}
+    return [{"concept_index": 0, **legacy}] if legacy else []
+
+
 def gate1_persistence(run_dir: str | Path) -> GateResult:
     """Gate 1: the run accounts for its input, in full, with no holes.
 
@@ -139,21 +161,34 @@ def gate2_basis_text(run_dir: str | Path) -> GateResult:
     """
     from .basistext import check_basis_text
 
-    _, records, _ = read_run(run_dir)
+    manifest, records, _ = read_run(run_dir)
     result = GateResult(name="GATE 2 (basis text)", passed=True)
 
+    # In the title-only ablation the title IS the content, so `basis_text`
+    # begins with it by construction and `clean_basis_text` is called with no
+    # title to strip. The gate has to agree with the arm the runner declared,
+    # or it fails a baseline for being the baseline.
+    ablation = bool(manifest.get("is_ablation"))
+    result.checks["is_ablation"] = ablation
+
     checked = 0
+    concepts_seen = 0
     violations: list[tuple[str, str, str]] = []
     for rec in records:
-        text = rec.get("basis_text")
-        if text is None:
-            continue
-        checked += 1
-        for problem in check_basis_text(text, rec.get("title_raw") or ""):
-            violations.append((rec.get("doc_id"), rec.get("section_id"), problem))
+        for concept in concepts_of(rec):
+            concepts_seen += 1
+            text = concept.get("basis_text")
+            if text is None:
+                continue
+            checked += 1
+            where = f"{rec.get('section_id')}#{concept.get('concept_index')}"
+            title = "" if ablation else (rec.get("title_raw") or "")
+            for problem in check_basis_text(text, title):
+                violations.append((rec.get("doc_id"), where, problem))
 
+    result.checks["concepts"] = concepts_seen
     result.checks["basis_texts_checked"] = checked
-    result.checks["records_without_basis_text"] = len(records) - checked
+    result.checks["records_without_basis_text"] = concepts_seen - checked
     result.checks["violations"] = len(violations)
     result.checks["sections_violating"] = len({(d, s) for d, s, _ in violations})
     if checked:
@@ -189,10 +224,13 @@ def gate3_tier_independence(run_dir: str | Path,
     worst = 0.0
     budgets: dict[str, dict[str, int]] = {t: {} for t in TIER_WORDS}
 
+    total_concepts = 0
     for rec in records:
+      for concept in concepts_of(rec):
+        total_concepts += 1
         present = {}
         for tier, key in tier_field.items():
-            text = (rec.get(key) or "").strip()
+            text = (concept.get(key) or "").strip()
             if text:
                 present[tier] = text
                 n = len(text.split())
@@ -207,7 +245,8 @@ def gate3_tier_independence(run_dir: str | Path,
         for i, left in enumerate(names):
             for right in names[i + 1:]:
                 a, b = present[left], present[right]
-                where = f"{rec.get('doc_id')}/{rec.get('section_id')}"
+                where = (f"{rec.get('doc_id')}/{rec.get('section_id')}"
+                         f"#{concept.get('concept_index')}")
                 if a.startswith(b) or b.startswith(a):
                     prefix_hits.append(f"{where}: {left} and {right} share a prefix")
                     continue
@@ -218,7 +257,8 @@ def gate3_tier_independence(run_dir: str | Path,
                         f"{where}: {left}/{right} Jaccard {overlap:.3f}")
 
     result.checks["records"] = len(records)
-    result.checks["records_with_two_or_more_tiers"] = comparable
+    result.checks["concepts"] = total_concepts
+    result.checks["concepts_with_two_or_more_tiers"] = comparable
     result.checks["prefix_relations"] = len(prefix_hits)
     result.checks["jaccard_above_threshold"] = len(jaccard_hits)
     result.checks["worst_jaccard"] = round(worst, 4)
@@ -272,10 +312,12 @@ def gate4_structural(run_dir: str | Path,
         rec = by_key.get(key)
         if rec is None:
             continue
-        row = rec.get("row_id_assigned")
-        if row and row != STRUCTURAL_ROW_ID:
-            leaked.append(f"{key[0]}/{key[1]} ({rec.get('title_cleaned')!r}) "
-                          f"holds concept row {row}")
+        for concept in concepts_of(rec):
+            row = concept.get("row_id_assigned")
+            if row and row != STRUCTURAL_ROW_ID:
+                leaked.append(
+                    f"{key[0]}/{key[1]}#{concept.get('concept_index')} "
+                    f"({rec.get('title_cleaned')!r}) holds concept row {row}")
 
     unnamed = [k for k, r in by_key.items()
                if r.get("structural_class") and not r.get("structural_rule_fired")]

@@ -31,10 +31,14 @@ def test_a_record_has_every_field_even_when_nothing_is_known():
 
 def test_absent_is_not_allowed_but_null_is():
     """The distinction the whole contract rests on: null is a measurement,
-    a missing key is an unanswered question."""
-    rec = section_record(doc_id="d", section_id="s", tier_label=None)
-    assert "tier_label" in rec and rec["tier_label"] is None
+    a missing key is an unanswered question. Holds at both levels."""
+    from conceptdrill.hierarchy.runlog import concept_record
+    rec = section_record(doc_id="d", section_id="s", concepts=None)
+    assert "concepts" in rec and rec["concepts"] is None
     assert "structural_class" in rec
+    concept = concept_record(concept_index=0, tier_label=None)
+    assert "tier_label" in concept and concept["tier_label"] is None
+    assert "merge_cosine" in concept
 
 
 def test_an_unknown_field_raises_rather_than_being_dropped():
@@ -47,14 +51,42 @@ def test_field_order_is_the_declared_order():
 
 
 def test_an_unknown_merge_decision_raises():
+    from conceptdrill.hierarchy.runlog import concept_record
     with pytest.raises(ValueError, match="merge_decision"):
-        section_record(merge_decision="probably-merged")
+        concept_record(merge_decision="probably-merged")
 
 
-@pytest.mark.parametrize("decision",
-                         ["added", "merged", "skipped", "not_integrated"])
+@pytest.mark.parametrize("decision", ["added", "merged", "absorbed", "skipped",
+                                      "not_integrated"])
 def test_the_decision_vocabulary_is_accepted(decision):
-    assert section_record(merge_decision=decision)["merge_decision"] == decision
+    from conceptdrill.hierarchy.runlog import concept_record
+    assert concept_record(merge_decision=decision)["merge_decision"] == decision
+
+
+def test_a_concept_record_has_every_field():
+    from conceptdrill.hierarchy.runlog import CONCEPT_FIELDS, concept_record
+    assert set(concept_record()) == set(CONCEPT_FIELDS)
+
+
+def test_an_unknown_concept_field_raises():
+    from conceptdrill.hierarchy.runlog import concept_record
+    with pytest.raises(KeyError, match="concept record contract"):
+        concept_record(tier_lable="typo")
+
+
+def test_a_malformed_nested_concept_raises_at_the_section(tmp_path):
+    """A hole in a nested record must not reach the artefact."""
+    with pytest.raises(KeyError, match="concept record contract"):
+        section_record(doc_id="d", section_id="s1",
+                       concepts=[{"not_a_field": 1}])
+
+
+def test_concept_count_is_derived_when_not_given():
+    from conceptdrill.hierarchy.runlog import concept_record
+    rec = section_record(doc_id="d", section_id="s1",
+                         concepts=[concept_record(concept_index=0),
+                                   concept_record(concept_index=1)])
+    assert rec["concept_count"] == 2
 
 
 # --------------------------------------------------------------------------
@@ -120,7 +152,8 @@ def test_the_line_count_equals_the_manifest_section_count(tmp_path):
 
 def test_every_written_line_carries_every_field(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(doc_id="d", section_id="s1", tier_label="a label")
+    log.add_section(**as_section(doc_id="d", section_id="s1",
+                                 tier_label="a label"))
     root = finish(log)
     for line in (root / "sections.jsonl").read_text().strip().splitlines():
         assert set(json.loads(line)) == set(SECTION_FIELDS)
@@ -191,7 +224,8 @@ def test_gemm_state_reports_a_verdict():
 
 def test_basis_rows_are_written_with_their_sections(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(doc_id="d", section_id="s1", row_id_assigned="row_a")
+    log.add_section(**as_section(doc_id="d", section_id="s1",
+                                 row_id_assigned="row_a"))
     root = finish(log, basis_rows=[{"row_id": "row_a", "label": "L", "support": 1,
                                     "level": 1, "documents": ["d"],
                                     "contributing_section_ids": ["s1"]}])
@@ -217,7 +251,23 @@ def docmodel_with(tmp_path, doc_id, section_ids):
     return doc
 
 
+def as_section(**kw):
+    """Split a flat test record into section fields plus one concept.
+
+    The concept is the unit that becomes a basis row, so per-concept keys now
+    live in `concepts`. Tests stay readable by writing them flat and letting
+    this route them.
+    """
+    from conceptdrill.hierarchy.runlog import CONCEPT_FIELDS, concept_record
+    concept = {k: kw.pop(k) for k in list(kw) if k in CONCEPT_FIELDS}
+    if concept:
+        concept.setdefault("concept_index", 0)
+        kw["concepts"] = [concept_record(**concept)]
+    return kw
+
+
 def written_run(tmp_path, records, **over):
+    records = [as_section(**dict(r)) for r in records]
     doc = docmodel_with(tmp_path, records[0]["doc_id"],
                         [r["section_id"] for r in records])
     log = RunLog.open(tmp_path, timestamp="t")
@@ -249,7 +299,7 @@ def test_gate1_fails_when_the_line_count_disagrees_with_the_manifest(tmp_path):
 def test_gate1_fails_on_a_record_with_a_field_removed(tmp_path):
     root = written_run(tmp_path, [{"doc_id": "d", "section_id": "s1"}])
     rec = json.loads((root / "sections.jsonl").read_text().strip())
-    rec.pop("basis_text")
+    rec.pop("concepts")
     (root / "sections.jsonl").write_text(json.dumps(rec) + "\n")
     result = gate1_persistence(root)
     assert not result.passed
@@ -366,7 +416,7 @@ def test_gate3_passes_on_independent_tiers(tmp_path):
         "tier_label": "temporal orientation assignment for retrieval requests"}])
     result = gate3_tier_independence(root)
     assert result.passed, result.report()
-    assert result.checks["records_with_two_or_more_tiers"] == 1
+    assert result.checks["concepts_with_two_or_more_tiers"] == 1
 
 
 def test_gate3_fails_on_a_prefix_relation(tmp_path):
@@ -398,7 +448,7 @@ def test_gate3_does_not_compare_a_single_tier_ablation(tmp_path):
         {"doc_id": "d", "section_id": "s2", "tier_label": "4 Method"}])
     result = gate3_tier_independence(root)
     assert result.passed
-    assert result.checks["records_with_two_or_more_tiers"] == 0
+    assert result.checks["concepts_with_two_or_more_tiers"] == 0
 
 
 def test_gate3_reports_word_budgets_without_gating_them(tmp_path):
@@ -420,6 +470,7 @@ from conceptdrill.hierarchy.gates import gate4_structural   # noqa: E402
 
 
 def labelled_run(tmp_path, records, labels, rows):
+    records = [as_section(**dict(r)) for r in records]
     root = written_run(tmp_path, records,
                        extra=None) if False else None
     log = RunLog.open(tmp_path, timestamp="t")
@@ -585,3 +636,26 @@ def test_an_interrupted_run_leaves_the_last_good_one_in_place(tmp_path):
         finish(crashed)
     assert (tmp_path / "current" / "manifest.json").exists()
     assert (tmp_path / "current.partial").exists(), "the wreck is kept for inspection"
+
+
+def test_gate2_does_not_fail_the_ablation_for_being_the_ablation(tmp_path):
+    """In the title-only arm the title IS the content, so basis_text begins
+    with it by construction. The gate must agree with the arm the runner
+    declared rather than failing a baseline for being a baseline."""
+    root = written_run(
+        tmp_path,
+        [{"doc_id": "d", "section_id": "s1", "title_raw": "References",
+          "basis_text": "References"}],
+        extra={"is_ablation": True})
+    assert gate2_basis_text(root).passed
+    assert gate2_basis_text(root).checks["is_ablation"] is True
+
+
+def test_gate2_still_applies_the_title_clause_to_a_real_run(tmp_path):
+    root = written_run(
+        tmp_path,
+        [{"doc_id": "d", "section_id": "s1", "title_raw": "Dialogue Framework",
+          "basis_text": "Dialogue Framework. It fuses multimodal input."}])
+    result = gate2_basis_text(root)
+    assert not result.passed
+    assert result.checks["is_ablation"] is False
