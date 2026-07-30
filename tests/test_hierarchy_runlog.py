@@ -292,3 +292,58 @@ def test_read_run_round_trips(tmp_path):
     manifest, records, basis = read_run(root)
     assert manifest["run_id"] == basis["run_id"]
     assert records[0]["section_id"] == "s1"
+
+
+# --------------------------------------------------------------------------
+# Gate 2 over written artefacts
+# --------------------------------------------------------------------------
+
+from conceptdrill.hierarchy.gates import gate2_basis_text  # noqa: E402
+
+
+def test_gate2_passes_on_clean_basis_text(tmp_path):
+    root = written_run(tmp_path, [
+        {"doc_id": "d", "section_id": "s1", "title_raw": "1 Introduction",
+         "basis_text": "Temporal query intent classification for retrieval."}])
+    result = gate2_basis_text(root)
+    assert result.passed, result.report()
+    assert result.checks["clean_fraction"] == 1.0
+
+
+def test_gate2_fails_on_the_real_corpus_failure(tmp_path):
+    root = written_run(tmp_path, [
+        {"doc_id": "d", "section_id": "s1", "title_raw": "2 Related Work",
+         "basis_text": r"\section*{2 Related Work} Prominent examples."}])
+    result = gate2_basis_text(root)
+    assert not result.passed
+    assert any("s1" in f for f in result.failures)
+
+
+def test_gate2_fails_on_a_single_violation_among_many(tmp_path):
+    """Zero tolerance: one dirty section in a hundred still fails."""
+    records = [{"doc_id": "d", "section_id": f"s{i}", "title_raw": "T",
+                "basis_text": "Clean prose about embeddings and retrieval."}
+               for i in range(20)]
+    records[7]["basis_text"] = "Prose with a $ sign in it."
+    result = gate2_basis_text(written_run(tmp_path, records))
+    assert not result.passed
+    assert result.checks["sections_violating"] == 1
+    assert result.checks["clean_fraction"] < 1.0
+
+
+def test_gate2_fails_when_basis_text_begins_with_its_title(tmp_path):
+    root = written_run(tmp_path, [
+        {"doc_id": "d", "section_id": "s1", "title_raw": "Dialogue Framework",
+         "basis_text": "Dialogue Framework. It fuses multimodal input."}])
+    assert not gate2_basis_text(root).passed
+
+
+def test_gate2_ignores_records_with_no_basis_text(tmp_path):
+    """A section that produced nothing is a gate 1 concern, not a gate 2 one."""
+    root = written_run(tmp_path, [
+        {"doc_id": "d", "section_id": "s1", "basis_text": None},
+        {"doc_id": "d", "section_id": "s2", "basis_text": "Clean prose here."}])
+    result = gate2_basis_text(root)
+    assert result.passed
+    assert result.checks["basis_texts_checked"] == 1
+    assert result.checks["records_without_basis_text"] == 1

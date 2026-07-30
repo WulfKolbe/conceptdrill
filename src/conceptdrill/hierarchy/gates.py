@@ -127,3 +127,42 @@ def gate1_persistence(run_dir: str | Path) -> GateResult:
 
     result.passed = not result.failures
     return result
+
+
+def gate2_basis_text(run_dir: str | Path) -> GateResult:
+    """Gate 2: every `basis_text` in the run satisfies the cleaning contract.
+
+    Zero tolerance by construction — the gate reports each violating section
+    with the offending substring, because "99% clean" describes a corpus with
+    a constant substring in one section in a hundred, which is exactly the
+    failure mode this exists to catch.
+    """
+    from .basistext import check_basis_text
+
+    _, records, _ = read_run(run_dir)
+    result = GateResult(name="GATE 2 (basis text)", passed=True)
+
+    checked = 0
+    violations: list[tuple[str, str, str]] = []
+    for rec in records:
+        text = rec.get("basis_text")
+        if text is None:
+            continue
+        checked += 1
+        for problem in check_basis_text(text, rec.get("title_raw") or ""):
+            violations.append((rec.get("doc_id"), rec.get("section_id"), problem))
+
+    result.checks["basis_texts_checked"] = checked
+    result.checks["records_without_basis_text"] = len(records) - checked
+    result.checks["violations"] = len(violations)
+    result.checks["sections_violating"] = len({(d, s) for d, s, _ in violations})
+    if checked:
+        clean_fraction = 1.0 - len({(d, s) for d, s, _ in violations}) / checked
+        result.checks["clean_fraction"] = round(clean_fraction, 6)
+    for doc, sid, problem in violations[:20]:
+        result.failures.append(f"{doc}/{sid}: {problem}")
+    if len(violations) > 20:
+        result.failures.append(f"... and {len(violations) - 20} more")
+
+    result.passed = not violations
+    return result

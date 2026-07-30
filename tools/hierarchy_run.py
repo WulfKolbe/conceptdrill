@@ -28,6 +28,7 @@ blasfix.apply_env_mitigations()
 
 from conceptdrill.embeddings import get_embedder                  # noqa: E402
 from conceptdrill.hierarchy.basis import ConceptBasis             # noqa: E402
+from conceptdrill.hierarchy.basistext import clean_basis_text      # noqa: E402
 from conceptdrill.hierarchy.captions import clean_caption_traced  # noqa: E402
 from conceptdrill.hierarchy.docmodel_tree import load_tree        # noqa: E402
 from conceptdrill.hierarchy.runlog import RunLog                  # noqa: E402
@@ -43,6 +44,19 @@ def make_summarizer(kind: str, llm_model: str):
     load_dotenv()
     model = llm_model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
     return NovitaSummarizer(make_openai_chat(model=model), model=model)
+
+
+def _error_for(summary, basis_text) -> str | None:
+    """Why this section has no basis vector, or None when it has one."""
+    if summary is None:
+        return "no summary produced"
+    if summary.error:
+        return summary.error
+    if not summary.is_usable:
+        return "summary produced no usable tier text"
+    if basis_text is not None and not basis_text.text:
+        return "cleaning left no text: the section was entirely markup"
+    return None
 
 
 def main() -> int:
@@ -100,24 +114,39 @@ def main() -> int:
 
         run = summarize_tree(tree, summarizer, cache=cache)
 
-        # Integrate only what is usable, but keep the decision per section so
-        # the sections that did not reach the basis say why.
-        usable = [(n, run.summaries[n.id]) for n in nodes
-                  if n.id in run.summaries and run.summaries[n.id].is_usable]
+        # Every section's basis text goes through the one cleaner, whether or
+        # not it reaches the basis, so `cleaning_rules_fired` is populated for
+        # sections that were later dropped.
+        cleaned: dict[str, object] = {}
+        for node in nodes:
+            summary = run.summaries.get(node.id)
+            if summary is None:
+                continue
+            cleaned[node.id] = clean_basis_text(summary.basis_text,
+                                                title=node.title_raw)
+
+        # Integrate only what survives cleaning, but keep the decision per
+        # section so the sections that did not reach the basis say why.
+        usable = [(n, cleaned[n.id]) for n in nodes
+                  if n.id in run.summaries and run.summaries[n.id].is_usable
+                  and n.id in cleaned and cleaned[n.id].text]
         decisions: dict[str, object] = {}
         if usable:
-            texts = [s.basis_text for _, s in usable]
-            vectors = embedder.encode(texts)
-            for (node, summary), vector in zip(usable, vectors):
+            vectors = embedder.encode([c.text for _, c in usable])
+            for (node, basis_text), vector in zip(usable, vectors):
                 decisions[node.id] = basis.integrate(
-                    node.level, summary.basis_text, vector, document=bibkey)
+                    node.level, basis_text.text, vector, document=bibkey)
             if bibkey not in basis.document_order:
                 basis.document_order = basis.document_order + (bibkey,)
 
         for node in nodes:
             summary = run.summaries.get(node.id)
-            cleaned, rules = clean_caption_traced(node.title_raw)
+            title_clean, title_rules = clean_caption_traced(node.title_raw)
+            basis_text = cleaned.get(node.id)
             result = decisions.get(node.id)
+            fired = [f"title:{r}" for r in title_rules]
+            if basis_text is not None:
+                fired += [f"basis:{r}" for r in basis_text.rules_fired]
             log.add_section(
                 doc_id=bibkey,
                 section_id=node.id,
@@ -125,14 +154,14 @@ def main() -> int:
                 flow_index=node.flow_index,
                 is_appendix=node.is_appendix,
                 title_raw=node.title_raw,
-                title_cleaned=cleaned,
-                cleaning_rules_fired=list(rules),
+                title_cleaned=title_clean,
+                cleaning_rules_fired=fired,
                 structural_class=None,          # step 4
                 structural_rule_fired=None,     # step 4
                 tier_label=summary.label if summary else None,
                 tier_abstraction=summary.abstraction if summary else None,
                 tier_summary=summary.summary if summary else None,
-                basis_text=summary.basis_text if summary else None,
+                basis_text=basis_text.text if basis_text is not None else None,
                 embedding_model=embedder.name if result is not None else None,
                 embedding_revision=(embedder.revision if result is not None
                                     else None),
@@ -145,7 +174,7 @@ def main() -> int:
                                      if result is not None
                                      and result.action == "merged" else None),
                 warnings=list(summary.warnings) if summary else [],
-                error=(summary.error or None) if summary else "no summary produced",
+                error=_error_for(summary, basis_text),
             )
 
     if cache is not None:
