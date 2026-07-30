@@ -46,7 +46,34 @@ from .sanitize import sanitize_text
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "section-concept.md"
 
 #: Word budgets per tier, from the prompt.
-TIER_WORDS = {"summary": (80, 150), "abstraction": (55, 85), "label": (30, 42)}
+#:
+#: MEASURED against the embedder's own tokenizer, tokenising exactly as
+#: `TransformerEmbedder._encode_batch` does (all-MiniLM-L6-v2, truncation=True,
+#: max_length=256), over 786 cached summaries:
+#:
+#:     tier          tokens p50   p90   truncated
+#:     summary          116       189   3.1%
+#:     abstraction       81       114   0.8%
+#:     label             39        66   0.1%
+#:
+#: Nothing was being silently truncated -- the cap is 256, not 70 -- but only
+#: `label` sat inside the 50-70 token window CES targets. `summary` at 116
+#: tokens is roughly double it, and mean pooling over twice the tokens dilutes
+#: the concept signal.
+#:
+#: All three budgets now fit 70 tokens at the measured **1.441** tokens per
+#: word (median, n=786). The long-standing 1.604 figure was an estimate and is
+#: 11% high; 70 tokens is 49 words, not 44.
+#:
+#: The tiers no longer differ much in length, so their independence rests
+#: entirely on role and form -- see `TIER_ROLES` and `check_tier_independence`.
+TIER_WORDS = {"summary": (40, 48), "abstraction": (34, 42), "label": (30, 42)}
+
+#: The embedder's window, in tokens. Every tier is sized to fit it.
+EMBEDDING_TOKEN_WINDOW = (50, 70)
+
+#: Measured tokens per word on this corpus, all-MiniLM-L6-v2, n=786.
+TOKENS_PER_WORD = 1.441
 
 #: The tier used to build the cross-document basis.
 BASIS_TIER = "label"

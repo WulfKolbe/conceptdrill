@@ -15,12 +15,19 @@ describe the context it establishes and the problem it frames. Do not invent
 concepts the section does not contain. If it defines several unrelated
 concepts, take the dominant one and mention the others in summary only.
 
-The three texts differ in scope AND IN FORM.
+EVERY FIELD MUST FIT 70 TOKENS OF A SENTENCE EMBEDDING MODEL. That is about
+49 words. A longer text is not richer: it is averaged over more tokens, and the
+concept it was supposed to carry is diluted. Cut adjectives, examples, and
+restatements before you cut content.
 
-summary      80-150 words of prose. The concept as this document presents it,
-             in the author's own terminology, preserving scope and nuance.
+The three texts are the SAME length. They differ in SCOPE and in FORM, and
+they must not share wording.
 
-abstraction  55-85 words of prose. The same idea stated so it makes sense
+summary      40-48 words of prose. The concept as this document presents it,
+             in the author's own terminology, preserving its scope and its
+             qualifications. The most specific of the three.
+
+abstraction  34-42 words of prose. The same idea stated so it makes sense
              outside this document. Write it as a textbook or glossary entry.
              Use no proper noun that names this paper's own system, dataset,
              corpus, tool or benchmark, unless that artifact is itself the
@@ -80,13 +87,16 @@ GENERAL RULES
 - summary and abstraction are complete sentences. label is a noun phrase.
 - The three texts must not repeat each other. Do not write the label by
   truncating the abstraction, or the abstraction by truncating the summary;
-  they are three separate derivations at three different scopes.
+  they are three separate derivations at three different scopes. Because they
+  are now the same length, this is the only thing keeping them distinct: if
+  two of them share most of their words, both are wrong. Choose different
+  wording for the same idea at each scope.
 - Do not count words aloud, explain your reasoning, or comment on the task.
 
 Reply with exactly one JSON object and nothing else. No preamble, no code
 fence, no trailing remarks. Your reply must begin with the character { and end
 with the character }.
 
-{"summary": "<80-150 words, prose, this document's terminology>",
- "abstraction": "<55-85 words, prose, document-independent, no local proper nouns>",
+{"summary": "<40-48 words, prose, this document's terminology>",
+ "abstraction": "<34-42 words, prose, document-independent, no local proper nouns>",
  "label": "<30-42 words, a noun phrase, no copula, no acronyms, no citations>"}

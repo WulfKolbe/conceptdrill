@@ -5,10 +5,12 @@ import json
 
 import pytest
 
-from conceptdrill.hierarchy.summarize import (BASIS_TIER, ExtractiveSummarizer,
+from conceptdrill.hierarchy.summarize import (BASIS_TIER,
+                                              EMBEDDING_TOKEN_WINDOW,
+                                              ExtractiveSummarizer,
                                               SectionSummary, SummaryCache,
-                                              TIER_WORDS, load_prompt,
-                                              summary_key)
+                                              TIER_WORDS, TOKENS_PER_WORD,
+                                              load_prompt, summary_key)
 
 BODY = (
     "Semantic projection maps a document object into a concept space. "
@@ -113,9 +115,28 @@ def test_label_leads_with_the_title(summarizer):
     assert got.label.startswith("Semantic Projection")
 
 
-def test_summary_is_longer_than_the_label(summarizer):
+def test_every_tier_fits_the_embedding_window(summarizer):
+    """The contract that replaced "summary is longer than label".
+
+    All three budgets now fit 70 tokens, because the embedder averages over
+    whatever it is given and a 116-token summary dilutes the concept it was
+    meant to carry. Length no longer distinguishes the tiers; role and form
+    do, and `check_tier_independence` is what enforces that.
+    """
     got = summarizer.summarize("s1", "T", BODY)
-    assert len(got.summary.split()) > len(got.label.split())
+    for tier, (lo, hi) in TIER_WORDS.items():
+        words = len(getattr(got, tier).split())
+        assert words <= hi, f"{tier}: {words} words, budget {lo}-{hi}"
+        assert hi * TOKENS_PER_WORD <= EMBEDDING_TOKEN_WINDOW[1] + 1, (
+            f"{tier} budget of {hi} words is "
+            f"{hi * TOKENS_PER_WORD:.0f} tokens, over the window")
+
+
+def test_the_token_estimate_is_the_measured_one():
+    """1.604 was an estimate carried since the design spec and is 11% high.
+    Measured on 786 cached summaries with the embedder's own tokenizer."""
+    assert TOKENS_PER_WORD == 1.441
+    assert round(EMBEDDING_TOKEN_WINDOW[1] / TOKENS_PER_WORD) == 49
 
 
 def test_tiers_cut_at_sentence_boundaries(summarizer):
