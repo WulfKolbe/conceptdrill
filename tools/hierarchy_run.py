@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """One auditable hierarchy run: documents in, run directory out.
 
-    python3 tools/hierarchy_run.py --limit 3 --out ~/conceptdrill-runs
+    python3 tools/hierarchy_run.py --limit 3
+
+Runs land in `~/conceptdrill-corpus-llm/runs/` by default. Not /tmp: a
+measurement that a reboot can delete is not a record of anything.
 
 Writes `run-<timestamp>-<git-sha>/` per `hierarchy/runlog.py`. Every section in
 every input tree gets a line in `sections.jsonl`, including sections that were
@@ -85,7 +88,11 @@ def _error_for(summary, basis_text) -> str | None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--library", default=str(Path.home() / "pdfdrill-library"))
-    ap.add_argument("--out", default=str(Path.home() / "conceptdrill-runs"))
+    ap.add_argument("--out",
+                    default=str(Path.home() / "conceptdrill-corpus-llm"
+                                / "runs"),
+                    help="run directories land here; keep them out of /tmp "
+                         "so a measurement survives a reboot and is findable")
     ap.add_argument("--limit", type=int, default=3)
     ap.add_argument("--docs", nargs="*", default=None,
                     help="explicit bibkeys; overrides --limit")
