@@ -1,4 +1,5 @@
 {
+  "VOID": "This measurement is void: it ran ExtractiveSummarizer rather than the LLM label tier, that summariser does not summarise, and only aggregates were persisted. Do not cite these numbers. See tools/basis_scaling.py.",
   "tau": 0.65,
   "model": "sentencebert",
   "summarizer": "extractive (proxy -- see module docstring)",

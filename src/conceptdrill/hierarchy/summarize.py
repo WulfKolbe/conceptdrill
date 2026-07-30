@@ -12,12 +12,22 @@ reference paper at 1.604 tokens/word, the tiers land at 128-241, 96-128 and
 **48-67** tokens respectively. The other two are kept for per-document views and
 for comparing which tier projects better.
 
-`Summarizer` is a protocol with two implementations:
+The three tiers must be **independent derivations**, not cut points on one
+string. `check_tier_independence` enforces that: no tier may be a prefix of
+another, and no two may share more than `MAX_TIER_JACCARD` of their token
+vocabulary. Budgets alone were never a sufficient contract — three truncations
+of the same paragraph satisfy every word count and answer none of the roles in
+`TIER_ROLES`.
 
-  * `ExtractiveSummarizer` — deterministic, offline, no model. Selects text
-    rather than generating it, so it is honest about being a floor rather than
-    a substitute. This is what the test suite runs against.
-  * `NovitaSummarizer` (in `novita.py`) — the real thing.
+`Summarizer` is a protocol with three implementations, and only one of them
+belongs in a measurement:
+
+  * `NovitaSummarizer` (in `novita.py`) — the real thing. `measurement_safe`.
+  * `TitleOnlySummarizer` — the ablation baseline. `measurement_safe`, and
+    flagged `is_ablation` so it is never mistaken for a summariser.
+  * `ExtractiveSummarizer` — **a test fixture**, `measurement_safe = False`.
+    It fails `check_tier_independence` by construction; using it as a stand-in
+    voided a whole corpus build.
 
 Realised token lengths are **measured, never assumed**: a target of 30-42 words
 is an instruction to a model, not a guarantee from one.
@@ -40,6 +50,22 @@ TIER_WORDS = {"summary": (80, 150), "abstraction": (55, 85), "label": (30, 42)}
 
 #: The tier used to build the cross-document basis.
 BASIS_TIER = "label"
+
+#: What each tier is *for*. Three cut points on one string satisfy the word
+#: budgets and answer none of these questions, which is why the budgets alone
+#: were never a sufficient contract.
+TIER_ROLES = {
+    "summary": "document-faithful prose",
+    "abstraction": "document-independent prose, no document-local references",
+    "label": "a noun phrase, canonical across documents: the basis tier",
+}
+
+#: Two tiers sharing more than this fraction of their token vocabulary are not
+#: independent derivations. Jaccard rather than containment: a label that is a
+#: scattered subset of its abstraction is as degenerate as a prefix of it.
+MAX_TIER_JACCARD = 0.6
+
+_TOKEN = re.compile(r"[a-z0-9]+")
 
 _SENTENCE = re.compile(r"(?<=[.!?])\s+(?=[A-Z(])")
 
@@ -82,6 +108,64 @@ class SectionSummary:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def token_set(text: str) -> frozenset[str]:
+    """Lowercased alphanumeric tokens. The unit the Jaccard test counts."""
+    return frozenset(_TOKEN.findall((text or "").lower()))
+
+
+def jaccard(left: str, right: str) -> float:
+    """Token-set overlap. 0.0 when either side is empty."""
+    a, b = token_set(left), token_set(right)
+    if not a or not b:
+        return 0.0
+    return len(a & b) / len(a | b)
+
+
+def check_tier_independence(summary: "SectionSummary", *,
+                            max_jaccard: float = MAX_TIER_JACCARD) -> list[str]:
+    """Every way this summary's tiers fail to be independent derivations.
+
+    Two relations, because they catch different degeneracies. A **prefix**
+    relation means one tier was produced by truncating another — the
+    `ExtractiveSummarizer` failure. A high **Jaccard** means the tiers were
+    written separately but say the same thing in the same words, which the
+    prefix test alone would pass.
+
+    Tiers that are absent are not compared: `null` is a declared absence, and
+    an ablation arm legitimately has only one tier.
+    """
+    problems: list[str] = []
+    present = {tier: getattr(summary, tier, "") or "" for tier in TIER_WORDS}
+    present = {tier: text.strip() for tier, text in present.items() if text.strip()}
+
+    names = sorted(present)
+    for i, left in enumerate(names):
+        for right in names[i + 1:]:
+            a, b = present[left], present[right]
+            if a.startswith(b) or b.startswith(a):
+                shorter, longer = (right, left) if len(a) >= len(b) else (left, right)
+                problems.append(f"{shorter} is a prefix of {longer}")
+                continue
+            overlap = jaccard(a, b)
+            if overlap > max_jaccard:
+                problems.append(
+                    f"{left}/{right} token Jaccard {overlap:.3f} > {max_jaccard}")
+    return problems
+
+
+def assert_tier_independence(summary: "SectionSummary", *,
+                             max_jaccard: float = MAX_TIER_JACCARD) -> None:
+    """Raise when the tiers are not independent derivations."""
+    problems = check_tier_independence(summary, max_jaccard=max_jaccard)
+    if problems:
+        raise TierDegeneracy(
+            f"{summary.section_id}: {problems}")
+
+
+class TierDegeneracy(ValueError):
+    """Tiers that are truncations of one another, not separate derivations."""
 
 
 @runtime_checkable
@@ -127,16 +211,26 @@ def _sentences_upto(text: str, max_words: int) -> str:
 
 
 class ExtractiveSummarizer:
-    """Deterministic, offline, no model. Selects text; does not generate it.
+    """TEST FIXTURE ONLY. Not a summariser and not a measurement floor.
 
-    A genuine floor, not a stand-in for the real summariser: it cannot abstract
-    away from this document's wording, which is exactly what the `abstraction`
-    and `label` tiers are supposed to do. It exists so the pipeline runs, and
-    so the test suite is offline and reproducible.
+    It does not summarise. `summary` and `abstraction` are sentence-boundary
+    prefixes of one raw string and `label` is the title plus a word-prefix of
+    that same string, so all three fail `check_tier_independence` by
+    construction. Used as a stand-in for a real summariser it produced a corpus
+    in which `\\section*{` appeared in every label, and every number derived
+    from that corpus was void.
+
+    `measurement_safe = False` keeps it out of measurement runs mechanically
+    rather than by convention. The honest floor is the title-only ablation
+    (`TitleOnlySummarizer`), which does not claim to be a summary.
+
+    It stays because the test suite must run offline and deterministically.
     """
 
     name = "extractive"
     deterministic = True
+    #: Refused by measurement runners. See the class docstring.
+    measurement_safe = False
 
     def summarize(self, section_id: str, title: str, body: str) -> SectionSummary:
         # Sanitised even though the source is the document rather than a
@@ -164,6 +258,33 @@ class ExtractiveSummarizer:
             section_id=section_id, title=clean_title,
             summary=summary, abstraction=abstraction, label=label,
             model=self.name, deterministic=True)
+
+
+class TitleOnlySummarizer:
+    """The ablation arm: the cleaned section title, and nothing else.
+
+    Not a degraded summariser — a deliberate baseline. If a run using real
+    summaries is not clearly distinguishable from this one, the summarisation
+    tier contributed nothing and the run is void. That comparison is the
+    cheapest sanity check available and it is why this class exists.
+
+    Only `label` is populated. `abstraction` and `summary` are empty because a
+    title is neither, and claiming otherwise is the failure mode that made
+    `ExtractiveSummarizer` unusable.
+    """
+
+    name = "title-only"
+    deterministic = True
+    measurement_safe = True
+    #: A baseline to compare against, never a stand-in for a summariser.
+    is_ablation = True
+
+    def summarize(self, section_id: str, title: str, body: str) -> SectionSummary:
+        clean = re.sub(r"\s+", " ", sanitize_text(title or "")).strip()
+        return SectionSummary(
+            section_id=section_id, title=clean, label=clean,
+            model=self.name, deterministic=True,
+            warnings=() if clean else ("section has no title",))
 
 
 # --------------------------------------------------------------------------

@@ -32,18 +32,41 @@ from conceptdrill.hierarchy.basistext import clean_basis_text      # noqa: E402
 from conceptdrill.hierarchy.captions import clean_caption_traced  # noqa: E402
 from conceptdrill.hierarchy.docmodel_tree import load_tree        # noqa: E402
 from conceptdrill.hierarchy.runlog import RunLog                  # noqa: E402
-from conceptdrill.hierarchy.summarize import (ExtractiveSummarizer,  # noqa: E402
-                                              SummaryCache, summarize_tree)
+from conceptdrill.hierarchy.summarize import (SummaryCache,  # noqa: E402
+                                              TitleOnlySummarizer,
+                                              check_tier_independence,
+                                              summarize_tree)
+
+
+class NotMeasurementSafe(RuntimeError):
+    """A summariser that must never stand in for a real one was requested."""
 
 
 def make_summarizer(kind: str, llm_model: str):
-    if kind == "extractive":
-        return ExtractiveSummarizer()
-    from conceptdrill.hierarchy.novita import (DEFAULT_MODEL, NovitaSummarizer,
-                                               load_dotenv, make_openai_chat)
-    load_dotenv()
-    model = llm_model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
-    return NovitaSummarizer(make_openai_chat(model=model), model=model)
+    """The requested summariser, or a raise. Never a substitute.
+
+    There is no fallback path here on purpose. When the LLM is unreachable the
+    correct outcome is that the run does not happen: a run that quietly
+    produced extractive output while reporting an LLM question is what made the
+    previous corpus build void.
+    """
+    if kind == "title-only":
+        return TitleOnlySummarizer()
+    if kind == "novita":
+        from conceptdrill.hierarchy.novita import (DEFAULT_MODEL,
+                                                   NovitaSummarizer,
+                                                   load_dotenv, make_openai_chat)
+        load_dotenv()
+        model = llm_model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
+        summarizer = NovitaSummarizer(make_openai_chat(model=model), model=model)
+    else:
+        raise NotMeasurementSafe(f"unknown summariser {kind!r}")
+
+    if not getattr(summarizer, "measurement_safe", False):
+        raise NotMeasurementSafe(
+            f"{type(summarizer).__name__} is not measurement safe and must not "
+            f"stand in for a summariser")
+    return summarizer
 
 
 def _error_for(summary, basis_text) -> str | None:
@@ -67,8 +90,11 @@ def main() -> int:
     ap.add_argument("--docs", nargs="*", default=None,
                     help="explicit bibkeys; overrides --limit")
     ap.add_argument("--model", default="sentencebert")
-    ap.add_argument("--summarizer", default="extractive",
-                    choices=["extractive", "novita"])
+    ap.add_argument("--summarizer", default="novita",
+                    choices=["novita", "title-only"],
+                    help="'novita' is arm A; 'title-only' is the arm B "
+                         "ablation. ExtractiveSummarizer is a test fixture and "
+                         "is refused here.")
     ap.add_argument("--llm-model", default="")
     ap.add_argument("--tau", type=float, default=None)
     ap.add_argument("--summary-cache", default=".conceptdrill_cache/summaries.json")
@@ -88,11 +114,13 @@ def main() -> int:
 
     embedder = get_embedder(args.model, cache=True)
     summarizer = make_summarizer(args.summarizer, args.llm_model)
+    is_ablation = bool(getattr(summarizer, "is_ablation", False))
     cache = SummaryCache(args.summary_cache) if args.summary_cache else None
     basis = ConceptBasis() if args.tau is None else ConceptBasis(tau=args.tau)
     log = RunLog.open(args.out)
 
     used_paths: list[str] = []
+    tier_violations = 0
     math_sources: dict[str, int] = {}
     docs_done = 0
 
@@ -122,8 +150,11 @@ def main() -> int:
             summary = run.summaries.get(node.id)
             if summary is None:
                 continue
-            cleaned[node.id] = clean_basis_text(summary.basis_text,
-                                                title=node.title_raw)
+            # For the ablation arm the title *is* the content, so it must not
+            # be stripped from the front of itself.
+            cleaned[node.id] = clean_basis_text(
+                summary.basis_text,
+                title="" if is_ablation else node.title_raw)
 
         # Integrate only what survives cleaning, but keep the decision per
         # section so the sections that did not reach the basis say why.
@@ -147,6 +178,11 @@ def main() -> int:
             fired = [f"title:{r}" for r in title_rules]
             if basis_text is not None:
                 fired += [f"basis:{r}" for r in basis_text.rules_fired]
+            warnings = list(summary.warnings) if summary else []
+            if summary is not None:
+                degenerate = check_tier_independence(summary)
+                tier_violations += len(degenerate)
+                warnings += [f"tier: {d}" for d in degenerate]
             log.add_section(
                 doc_id=bibkey,
                 section_id=node.id,
@@ -173,7 +209,7 @@ def main() -> int:
                 merge_target_row_id=(result.row_id
                                      if result is not None
                                      and result.action == "merged" else None),
-                warnings=list(summary.warnings) if summary else [],
+                warnings=warnings,
                 error=_error_for(summary, basis_text),
             )
 
@@ -202,6 +238,8 @@ def main() -> int:
         basis_rows=rows,
         mathtext_source_counts=math_sources,
         extra={"summarizer_name": getattr(summarizer, "name", ""),
+               "is_ablation": is_ablation,
+               "tier_violations": tier_violations,
                "basis_version": basis.basis_version(),
                "basis_stats": basis.stats()})
 

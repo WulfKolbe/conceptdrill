@@ -154,6 +154,9 @@ class NovitaSummarizer:
     """Generates the three basis texts through a chat model."""
 
     deterministic = False
+    #: The only summariser that actually summarises. See
+    #: `summarize.ExtractiveSummarizer` for why this flag exists.
+    measurement_safe = True
 
     def __init__(self, chat: ChatFn, *, model: str = DEFAULT_MODEL,
                  prompt: Optional[str] = None,

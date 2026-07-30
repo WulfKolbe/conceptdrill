@@ -347,3 +347,65 @@ def test_gate2_ignores_records_with_no_basis_text(tmp_path):
     assert result.passed
     assert result.checks["basis_texts_checked"] == 1
     assert result.checks["records_without_basis_text"] == 1
+
+
+# --------------------------------------------------------------------------
+# Gate 3 over written artefacts
+# --------------------------------------------------------------------------
+
+from conceptdrill.hierarchy.gates import gate3_tier_independence  # noqa: E402
+
+
+def test_gate3_passes_on_independent_tiers(tmp_path):
+    root = written_run(tmp_path, [{
+        "doc_id": "d", "section_id": "s1",
+        "tier_summary": "The system classifies keyword queries by temporal "
+                        "intent into past, recency, future or atemporal.",
+        "tier_abstraction": "Assigning search requests to time orientations "
+                            "using linguistic evidence.",
+        "tier_label": "temporal orientation assignment for retrieval requests"}])
+    result = gate3_tier_independence(root)
+    assert result.passed, result.report()
+    assert result.checks["records_with_two_or_more_tiers"] == 1
+
+
+def test_gate3_fails_on_a_prefix_relation(tmp_path):
+    root = written_run(tmp_path, [{
+        "doc_id": "d", "section_id": "s1",
+        "tier_summary": "alpha beta gamma delta epsilon",
+        "tier_abstraction": "alpha beta gamma",
+        "tier_label": "entirely separate vocabulary"}])
+    result = gate3_tier_independence(root)
+    assert not result.passed
+    assert result.checks["prefix_relations"] == 1
+
+
+def test_gate3_fails_on_high_jaccard(tmp_path):
+    root = written_run(tmp_path, [{
+        "doc_id": "d", "section_id": "s1",
+        "tier_summary": "alpha beta gamma delta",
+        "tier_abstraction": "delta gamma beta alpha",
+        "tier_label": "unrelated words here"}])
+    result = gate3_tier_independence(root)
+    assert not result.passed
+    assert result.checks["jaccard_above_threshold"] == 1
+
+
+def test_gate3_does_not_compare_a_single_tier_ablation(tmp_path):
+    """Arm B has one tier by design and must not fail for having it."""
+    root = written_run(tmp_path, [
+        {"doc_id": "d", "section_id": "s1", "tier_label": "3 Related Work"},
+        {"doc_id": "d", "section_id": "s2", "tier_label": "4 Method"}])
+    result = gate3_tier_independence(root)
+    assert result.passed
+    assert result.checks["records_with_two_or_more_tiers"] == 0
+
+
+def test_gate3_reports_word_budgets_without_gating_them(tmp_path):
+    """Budgets are Gate 5's business; Gate 3 reports what it saw."""
+    root = written_run(tmp_path, [{
+        "doc_id": "d", "section_id": "s1",
+        "tier_label": "two words", "tier_abstraction": "quite different text"}])
+    result = gate3_tier_independence(root)
+    assert result.passed
+    assert result.checks["tier_word_budgets"]["label"] == {"under": 1}

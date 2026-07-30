@@ -166,3 +166,72 @@ def gate2_basis_text(run_dir: str | Path) -> GateResult:
 
     result.passed = not violations
     return result
+
+
+def gate3_tier_independence(run_dir: str | Path,
+                            max_jaccard: float = 0.6) -> GateResult:
+    """Gate 3: the three tiers are independent derivations, not cut points.
+
+    Recomputed from the written tiers rather than from the summariser's own
+    report, so a summariser that never checked is checked anyway. Records with
+    fewer than two tiers present are counted but not compared — an ablation arm
+    has one tier by design, and `null` is a declared absence.
+    """
+    from .summarize import TIER_WORDS, jaccard
+
+    manifest, records, _ = read_run(run_dir)
+    result = GateResult(name="GATE 3 (tier independence)", passed=True)
+
+    tier_field = {tier: f"tier_{tier}" for tier in TIER_WORDS}
+    prefix_hits: list[str] = []
+    jaccard_hits: list[str] = []
+    comparable = 0
+    worst = 0.0
+    budgets: dict[str, dict[str, int]] = {t: {} for t in TIER_WORDS}
+
+    for rec in records:
+        present = {}
+        for tier, key in tier_field.items():
+            text = (rec.get(key) or "").strip()
+            if text:
+                present[tier] = text
+                n = len(text.split())
+                lo, hi = TIER_WORDS[tier]
+                fit = "under" if n < lo else "over" if n > hi else "ok"
+                budgets[tier][fit] = budgets[tier].get(fit, 0) + 1
+
+        if len(present) < 2:
+            continue
+        comparable += 1
+        names = sorted(present)
+        for i, left in enumerate(names):
+            for right in names[i + 1:]:
+                a, b = present[left], present[right]
+                where = f"{rec.get('doc_id')}/{rec.get('section_id')}"
+                if a.startswith(b) or b.startswith(a):
+                    prefix_hits.append(f"{where}: {left} and {right} share a prefix")
+                    continue
+                overlap = jaccard(a, b)
+                worst = max(worst, overlap)
+                if overlap > max_jaccard:
+                    jaccard_hits.append(
+                        f"{where}: {left}/{right} Jaccard {overlap:.3f}")
+
+    result.checks["records"] = len(records)
+    result.checks["records_with_two_or_more_tiers"] = comparable
+    result.checks["prefix_relations"] = len(prefix_hits)
+    result.checks["jaccard_above_threshold"] = len(jaccard_hits)
+    result.checks["worst_jaccard"] = round(worst, 4)
+    result.checks["tier_word_budgets"] = {t: dict(sorted(v.items()))
+                                          for t, v in budgets.items()}
+    result.checks["summarizer_class"] = manifest.get("summarizer_class")
+    result.checks["is_ablation"] = manifest.get("is_ablation")
+
+    for hit in (prefix_hits + jaccard_hits)[:20]:
+        result.failures.append(hit)
+    extra = len(prefix_hits) + len(jaccard_hits) - 20
+    if extra > 0:
+        result.failures.append(f"... and {extra} more")
+
+    result.passed = not (prefix_hits or jaccard_hits)
+    return result

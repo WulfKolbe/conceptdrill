@@ -1,5 +1,25 @@
 #!/usr/bin/env python3
-"""Does the shared basis stay small as the corpus grows?
+"""VOID. Superseded by tools/hierarchy_run.py -- do not run, do not cite.
+
+This tool produced `docs/measurements/basis-scaling-416.json`, which is void
+for three independent reasons:
+
+  1. It ran `ExtractiveSummarizer`, not the LLM label tier, while answering a
+     question that is specifically about the LLM label tier.
+  2. `ExtractiveSummarizer` does not summarise. Its three tiers are cut points
+     on one raw string, `\\section*{` survived into every label, and the section
+     title was duplicated at the head of every `basis_text`.
+  3. It persisted only aggregates, so none of it can be audited.
+
+`TAU = 0.65` was calibrated through the same path and inherits the same defect.
+It must be re-derived from planted positives, not adjusted.
+
+The file is kept so the failure is on the record rather than erased. It raises
+on execution; `tools/hierarchy_run.py` is the replacement.
+
+--- original docstring follows ---
+
+Does the shared basis stay small as the corpus grows?
 
 Builds one `ConceptBasis` incrementally over the drilled library, reporting
 after every batch. The question is the growth curve: if the basis grows
@@ -78,6 +98,13 @@ def candidates_for(tree, summarizer, cache=None):
 
 
 def main() -> int:
+    raise SystemExit(
+        "tools/basis_scaling.py is VOID: it ran ExtractiveSummarizer, whose "
+        "tiers are cut points on one string, and it persisted only aggregates. "
+        "Use tools/hierarchy_run.py. See this module's docstring.")
+
+
+def _void_main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--library", default=str(Path.home() / "pdfdrill-library"))
     ap.add_argument("--batch", type=int, default=100)
