@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -205,6 +206,9 @@ class RunLog:
     root: Path
     run_id: str
     started_at: str
+    #: Where `root` is renamed to on a successful finish. None means write in
+    #: place. See `open` for why this exists.
+    final_root: Optional[Path] = None
     _sections: list[dict[str, Any]] = field(default_factory=list)
     _expected: int = 0
 
@@ -222,10 +226,21 @@ class RunLog:
         stamp = timestamp or time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
         sha, _ = git_state(repo)
         run_id = f"run-{stamp}-{sha}"
-        root = Path(parent) / (name or run_id)
+
+        final = Path(parent) / (name or run_id)
+        # Build in a sibling directory and swap at the end. Writing in place
+        # would empty the output for the whole length of a run -- forty
+        # minutes of an LLM corpus build during which the documented path
+        # holds nothing, so anyone looking finds an empty directory and
+        # concludes the program produced nothing. The previous complete run
+        # stays readable until a new complete one replaces it.
+        root = final.with_name(final.name + ".partial")
+        if root.exists():
+            shutil.rmtree(root)
         root.mkdir(parents=True, exist_ok=True)
         return cls(root=root, run_id=run_id,
-                   started_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+                   started_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                   final_root=final)
 
     # ---- accumulation ---------------------------------------------------
 
@@ -318,4 +333,12 @@ class RunLog:
                         "rows": [dict(r) for r in basis_rows]},
                        indent=2, ensure_ascii=False, default=str) + "\n",
             encoding="utf-8")
+
+        # Swap only now that every file is written. An interrupted run leaves
+        # <name>.partial behind and the last good <name> untouched.
+        if self.final_root is not None:
+            if self.final_root.exists():
+                shutil.rmtree(self.final_root)
+            self.root.rename(self.final_root)
+            self.root = self.final_root
         return self.root

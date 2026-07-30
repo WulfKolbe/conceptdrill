@@ -129,11 +129,8 @@ def main() -> int:
     is_ablation = bool(getattr(summarizer, "is_ablation", False))
     cache = SummaryCache(args.summary_cache) if args.summary_cache else None
     basis = ConceptBasis() if args.tau is None else ConceptBasis(tau=args.tau)
-    root = Path(args.out) / args.name
-    if root.exists():
-        import shutil
-        shutil.rmtree(root)          # one run, one place, no stale mixtures
     log = RunLog.open(args.out, name=args.name)
+    print(f"building in {log.root} -> {log.final_root} on success")
 
     used_paths: list[str] = []
     tier_violations = 0

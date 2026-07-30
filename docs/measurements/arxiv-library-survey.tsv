@@ -1,0 +1,148 @@
+1211.3375	24	In this paper, we propose a scalable and highly efficient index structure for the reachabi
+1310.4843	4	
+1408.0838	28	Estimating a constrained relation is a fundamental problem in machine learning.
+Special ca
+1602.04650	25	Cliques are frequently used to model communities: a community is a set of nodes where each
+1602.06844	20	Modern studies of societal phenomena rely on the availability of large datasets
+capturing 
+1603.00260	9	In this article, I present the questions that I seek to answer in my PhD research. 
+ I pos
+1604.04795	7	Many Web applications require efficient querying of large Knowledge Graphs (KGs).
+We propo
+1608.03889	20	
+1701.08096	24	Discovering the key structure of a database is one of the main goals of data mining. In pa
+1702.06385	17	{\small\baselineskip=9pt 
+{\small 
+
+Given data over the joint distribution of two random v
+1702.06776	17	The algorithmic Markov condition states that the most likely causal 
+direction between two
+1702.06875	18	Mental health forums are online communities where people express their issues and seek hel
+1704.04455	7	Information extraction (IE) from
+
+text has largely focused on relations between individual
+1705.02518	17	\small\baselineskip=9pt
+
+
+Online reviews provided by consumers are a valuable asset for e-
+1705.02522	17	
+1705.09391	9	Given a database and a target attribute of interest, how can we tell whether there exists 
+1706.08746	4	
+1709.00900	5	
+1709.01848	19	Users suffering from mental health conditions often turn to online resources for support, 
+1709.07941	19	Subgroup discovery is a local pattern mining technique to find interpretable descriptions 
+1709.08915	20	We consider the fundamental problem of inferring the causal direction between two univaria
+1801.06136	13	Nonnegative matrix factorization (NMF) is one of the most frequently-used matrix factoriza
+1802.08153	12	1802.08153_PARA_0001
+1805.01788	7	
+1806.01059	4	
+1807.01540	17	The Euler characteristic is an invariant of a topological space that in a  precise sense c
+1807.03656	12	Information extraction traditionally focuses on extracting relations between identifiable 
+1808.06356	24	We consider the problem of inferring the directed, causal graph from observational data, a
+1808.07302	13	Detecting small sets of relevant patterns from a given dataset is a central challenge in d
+1809.06416	6	
+1809.09528	17	To bridge the gap between the capabilities of the state-of-the-art in factoid 
+question an
+1901.05797	20	\small\baselineskip=9pt
+ Boolean matrix factorization is a natural and a popular technique
+1903.04829	24	Testing for conditional independence is a core aspect of constraint-based causal discovery
+1904.01451	18	Popular word embedding methods such as word2vec and GloVe assign a single vector represent
+1904.07094	9	Although considerable attention has been given to neural ranking architectures recently, f
+1904.10887	19	Open-domain dialogue agents must be able to converse about many topics while incorporating
+1905.10989	18	A clear and well-documented \LaTeX\ document is presented as an article formatted for publ
+1906.02691	83	1906.02691_PARA_0001
+1907.01439	18	We revisit the notion of individual fairness proposed by 
+Dwork et al.
+A central challenge
+1908.03109	11	Users increasingly rely on social media feeds for consuming daily information. The items i
+1908.03650	12	Question answering over knowledge bases (KB-QA) poses challenges in handling 
+complex ques
+1909.00692	17	Multimodal contents have become commonplace on the Internet today, manifested as news arti
+1909.00741	16	The social media explosion has populated the Internet with a wealth of images. 
+There are 
+1909.00749	11	With the rise in popularity of social media, images accompanied by contextual text form a 
+1910.03262	18	Fact-centric information needs are rarely one-shot; users typically ask follow-up question
+1910.10255	12	The notion of individual fairness requires that similar people receive similar treatment. 
+1911.02850	14	Information needs around a topic often cannot be satisfied in a single turn; users typical
+1911.08378	11	Interpretable explanations for recommender systems and other machine learning
+models are c
+2001.04425	4	
+2002.08155	26	We present CodeBERT, a bimodal pre-trained model for programming language (PL) and natural
+2003.03155	23	Knowledge Bases (KBs) contain a wealth of structured information about entities and predic
+2004.02023	16	Translating verbose information needs into crisp search queries is 
+a phenomenon that is u
+2004.05631v1	57	2004.05631v1_PARA_0001
+2004.11980	12	The last few years have seen an explosion of research on the topic of automated question a
+2004.13117	8	Question answering (QA) over text passages is a problem of long-standing interest
+in infor
+2005.03529	4	Predicate constraints of general-purpose knowledge bases (KBs) like Wikidata, DBpedia and 
+2009.09049	13	The global infrastructure of the Web, designed as an open and transparent system, has a si
+2009.11564	141	Equipping machines with comprehensive knowledge of the world's entities and their relation
+2010.14265	19	One of the core assumptions in causal discovery is the faithfulness assumption---i.e. assu
+2011.00905	16	Structured commonsense knowledge about concepts and their properties is a foundational ass
+2102.09388	21	System-provided explanations for recommendations are an important component towards transp
+2103.05256	16	In this work we leverage recent advances in context-sensitive language models to improve t
+2104.08926	10	Preference judgments have been demonstrated as a better alternative to
+graded judgments to
+2105.00377	19	2105.00377_PARA_0001#1
+2105.01925	4	Compiling commonsense knowledge is traditionally an AI topic approached by manual labor. R
+2105.04850	22	The rise of personal assistants has made conversational question answering (ConvQA) a very
+2105.05008	15	Understanding why specific items are recommended to users can significantly increase their
+2105.07975	16	Deep Learning Hard (\HARD) is a new annotated dataset designed to more effectively evaluat
+2105.13662	12	\ourkb{} is a fully automated methodology for extracting and consolidating commonsense ass
+2108.08597	18	Answering complex questions over knowledge bases (KB-QA) faces huge input data with billio
+2109.00954	19	2109.00954_PARA_0001
+2109.04713	8	Prior work on personalizing web search results has focused on considering query-and-click 
+2109.04716	13	Prior work on personalized recommendations has focused on exploiting explicit signals
+from
+2109.08935	19	Question answering over knowledge graphs (KG-QA) is a vital topic in IR. Questions with te
+2110.04888	7	Pre-trained language models (LMs) have recently gained attention for their potential as an
+2110.09599	5	
+2110.11150	26	The strong lottery ticket hypothesis holds the promise that pruning randomly initialized d
+2110.13883	19	2110.13883_PARA_0001
+2111.13611	15	2111.13611_PARA_0001
+2201.13360	15	
+2204.10432	24	2204.10432_PARA_0001
+2204.11677	19	2204.11677_PARA_0001
+2208.09292	18	2208.09292_PARA_0001
+2209.00445	24	2209.00445_PARA_0001#1
+2209.00445v3	24	One of the main methods for
+computational interpretation of a text is mapping it into a ve
+2209.07250	33	2209.07250_PARA_0001
+2210.04530	8	2210.04530_PARA_0001
+2210.07763	25	2210.07763_PARA_0001
+2302.07629	14	2302.07629_PARA_0001
+2303.11082	17	2303.11082_PARA_0001
+2305.04710v1	10	We present ElasticHash, a novel approach for high-quality,  efficient, and large-scale sem
+2305.05403	31	2305.05403_PARA_0001
+2305.16755	16	2305.16755_PARA_0001
+2306.17472	10	2306.17472_PARA_0001
+2308.06374	10	2308.06374_PARA_0001
+2311.01314	15	2311.01314_PARA_0001
+2312.11532	14	This paper introduces a novel approach for topic modeling utilizing latent codebooks from 
+2401.03142	14	
+2402.14207	51	We study how to apply large language models  to write grounded and organized long-form ar 
+2405.02732	21	2405.02732_PARA_0001
+2405.07987	27	2405.07987_PARA_0001
+2407.03203	39	Proving mathematical theorems using computer-verifiable Formal Languages (FL) like Lean si
+2411.04920	20	2411.04920_PARA_0001
+2411.12449	10	2411.12449_PARA_0001
+2501.06699	13	2501.06699_PARA_0001
+2502.20855	39	2502.20855_PARA_0001
+2502.20855v2	39	Mathematical formulas are a fundamental and widely used component in various scien tific f
+2509.04603v3	30	When faced with new data, we often conduct a cluster analysis to obtain a better understan
+2510.11170v2	20	2510.11170v2_PARA_0001
+2601.07372	30	2601.07372_PARA_0001
+2602.14075v1	19	Classical algebraic structures require exact satisfaction of their defining axioms. We pro
+2602.23211	20	The algebraic analysis of social systems, or algebraic social network analysis, refers to 
+2603.14147	53	
+2603.16021v2	27	Current approaches to AI agent orchestration typically involve building multi-agent framew
+2604.04771	37	2604.04771_PARA_0001
+2604.17002	20	
+2605.12061v1	102	2605.12061v1_PARA_0001
+2605.22763v1	15	
+2606.16905	23	
+2606.26722	22	2606.26722_PARA_0001
+2606.28429v1	24	2606.28429v1_PARA_0001
+2607.05794	45	2607.05794_PARA_0001
+2607.21333	28	LLM-based retrievers have become a fundamental component of modern information retrieval s

@@ -531,3 +531,57 @@ def test_gate4_reports_precision_without_gating_it(tmp_path):
     assert result.passed
     assert result.checks["recall"] == 1.0
     assert result.checks["precision"] == 0.5
+
+
+# --------------------------------------------------------------------------
+# The previous run stays readable while a new one builds
+# --------------------------------------------------------------------------
+
+def test_a_run_builds_in_a_partial_directory(tmp_path):
+    """Writing in place empties the documented output path for the whole
+    length of a run, so anyone who looks during it finds nothing."""
+    log = RunLog.open(tmp_path, timestamp="t", name="current")
+    assert log.root.name == "current.partial"
+    assert log.final_root.name == "current"
+    assert not log.final_root.exists()
+
+
+def test_the_swap_happens_only_on_finish(tmp_path):
+    log = RunLog.open(tmp_path, timestamp="t", name="current")
+    log.add_section(doc_id="d", section_id="s1")
+    assert not (tmp_path / "current").exists(), "swapped too early"
+    root = finish(log)
+    assert root == tmp_path / "current"
+    assert (tmp_path / "current" / "manifest.json").exists()
+    assert not (tmp_path / "current.partial").exists()
+
+
+def test_the_previous_run_survives_until_a_new_one_completes(tmp_path):
+    """The property that matters: output is never absent, only stale."""
+    first = RunLog.open(tmp_path, timestamp="t1", name="current")
+    first.add_section(doc_id="d", section_id="s1")
+    finish(first)
+    marker = json.loads((tmp_path / "current" / "manifest.json").read_text())["run_id"]
+
+    second = RunLog.open(tmp_path, timestamp="t2", name="current")
+    second.add_section(doc_id="d", section_id="s2")
+    still = json.loads((tmp_path / "current" / "manifest.json").read_text())["run_id"]
+    assert still == marker, "the previous run was destroyed while the next built"
+
+    finish(second)
+    now = json.loads((tmp_path / "current" / "manifest.json").read_text())["run_id"]
+    assert now != marker
+
+
+def test_an_interrupted_run_leaves_the_last_good_one_in_place(tmp_path):
+    first = RunLog.open(tmp_path, timestamp="t1", name="current")
+    first.add_section(doc_id="d", section_id="s1")
+    finish(first)
+
+    crashed = RunLog.open(tmp_path, timestamp="t2", name="current")
+    crashed.expect(5)
+    crashed.add_section(doc_id="d", section_id="s2")
+    with pytest.raises(IncompleteRun):
+        finish(crashed)
+    assert (tmp_path / "current" / "manifest.json").exists()
+    assert (tmp_path / "current.partial").exists(), "the wreck is kept for inspection"
