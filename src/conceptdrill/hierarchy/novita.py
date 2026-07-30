@@ -32,18 +32,41 @@ DEFAULT_MIN_INTERVAL = 2.2
 
 #: Chars of section body sent to the model. Enough for a long section, short
 #: enough to stay cheap; the model is asked for the concept, not a précis.
-DEFAULT_MAX_BODY = 6000
+#: Model limits, read from the provider rather than assumed.
+#:
+#: `client.models.list()` reports for inclusionai/ling-3.0-flash:
+#:     context_size       262144
+#:     max_output_tokens   32768
+#: Confirmed by probe: max_tokens=32000 is accepted, 65536 returns
+#: "must be between 0 and 32768".
+MODEL_CONTEXT_TOKENS = 262_144
+MODEL_MAX_OUTPUT_TOKENS = 32_768
 
-#: Completion-token ceiling.
+#: Characters of section body handed to the model.
+#:
+#: MEASURED. This was 6000 -- roughly 2000 tokens against a 262144-token
+#: context, so 0.8% of what the model can read. Across the 10-document arXiv
+#: corpus it silently discarded 172,494 characters from 39 of 203 sections;
+#: the largest section is 26,831 characters and 78% of it never reached the
+#: model. Sections were being summarised from their opening pages.
+#:
+#: 200,000 characters is about 65,000 tokens, which leaves the full output
+#: budget and most of the context free while still bounding a pathological
+#: input. Nothing in the library comes close to it.
+DEFAULT_MAX_BODY = 200_000
+
+#: Completion-token ceiling: the model's own maximum.
 #:
 #: MEASURED, not guessed. `inclusionai/ling-3.0-flash` reasons at length before
 #: emitting JSON, and it counts label words aloud because the prompt asks for a
-#: 30-42 word budget. At 900 and at 2000 every probed section hit the cap and
-#: returned reasoning with no JSON at all; at 4000 two of three completed, and
-#: their labels came in at 32 and 30 words -- inside the target band. The
-#: counting works; it needs room. 8000 leaves headroom above the longest
-#: completion observed (3987).
-DEFAULT_MAX_TOKENS = 8000
+#: word budget. At 900 and at 2000 every probed section returned reasoning with
+#: no JSON at all; at 4000 two of three completed. 8000 was still not enough:
+#: 5 of 203 sections in the arXiv corpus hit it and raised TruncatedReply.
+#:
+#: A ceiling costs nothing unspent -- billing is on tokens produced -- so there
+#: is no reason to sit below the provider's limit and convert a long reply into
+#: a failed section.
+DEFAULT_MAX_TOKENS = MODEL_MAX_OUTPUT_TOKENS
 
 #: Fields the prompt asks for.
 TIERS = ("summary", "abstraction", "label")
@@ -216,7 +239,19 @@ class NovitaSummarizer:
         return "|".join(f"{k}={params[k]}" for k in sorted(params))
 
     def build_user_prompt(self, title: str, body: str) -> str:
-        return f"TITLE: {title}\n\nBODY:\n{(body or '')[:self.max_body]}"
+        return self.build_user_prompt_traced(title, body)[0]
+
+    def build_user_prompt_traced(self, title: str, body: str
+                                 ) -> tuple[str, int]:
+        """The user message, and how many characters of body were dropped.
+
+        Returned rather than discarded. Cutting the input silently is how a
+        section came to be summarised from its opening pages with nothing in
+        the record to say so.
+        """
+        text = body or ""
+        dropped = max(0, len(text) - self.max_body)
+        return f"TITLE: {title}\n\nBODY:\n{text[:self.max_body]}", dropped
 
     def summarize(self, section_id: str, title: str, body: str) -> SectionSummary:
         """One section. Failures are returned as a record, never raised.
@@ -225,12 +260,18 @@ class NovitaSummarizer:
         error travels with the summary and the caller decides what to do.
         """
         self.throttle.wait()
+        user, dropped = self.build_user_prompt_traced(title, body)
+        body_warnings = ()
+        if dropped:
+            body_warnings = (f"input truncated: {dropped} characters of the "
+                             f"section body were not sent (max_body="
+                             f"{self.max_body})",)
         try:
-            reply = self._chat(self.prompt, self.build_user_prompt(title, body))
+            reply = self._chat(self.prompt, user)
         except Exception as exc:
             return SectionSummary(
                 section_id=section_id, title=title, model=self.model,
-                deterministic=False,
+                deterministic=False, warnings=body_warnings,
                 error=f"{type(exc).__name__}: {exc}")
 
         parsed = parse_reply(reply)
@@ -241,7 +282,8 @@ class NovitaSummarizer:
             # unaffected.
             entries = [e for e in parsed["concepts"] if isinstance(e, dict)]
             if entries:
-                built = [self._build(section_id, title, e) for e in entries]
+                built = [self._build(section_id, title, e, body_warnings)
+                         for e in entries]
                 head, rest = built[0], tuple(built[1:])
                 return replace(head, siblings=rest) if rest else head
             parsed = None
@@ -252,13 +294,14 @@ class NovitaSummarizer:
                 error="reply was not JSON",
                 warnings=(f"raw reply: {(reply or '')[:200]}",))
 
-        return self._build(section_id, title, parsed)
+        return self._build(section_id, title, parsed, body_warnings)
 
-    def _build(self, section_id: str, title: str, parsed: dict) -> SectionSummary:
+    def _build(self, section_id: str, title: str, parsed: dict,
+               body_warnings: tuple = ()) -> SectionSummary:
         """One concept entry to a `SectionSummary`, sanitised and checked."""
         raw_values = {tier: str(parsed.get(tier) or "").strip() for tier in TIERS}
 
-        warnings: list[str] = []
+        warnings: list[str] = list(body_warnings)
         # Detect the eaten-escape damage BEFORE sanitising, because sanitising
         # strips the very control characters that evidence it.
         for tier, text in raw_values.items():

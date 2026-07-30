@@ -284,3 +284,68 @@ def test_a_non_dict_entry_is_ignored_rather_than_crashing():
     got = summarize(json.dumps({"concepts": ["not an object",
                                              entry("real phrase")]}))
     assert got.label == "real phrase"
+
+
+# --------------------------------------------------------------------------
+# Input truncation must be visible
+# --------------------------------------------------------------------------
+
+from conceptdrill.hierarchy.novita import (DEFAULT_MAX_BODY,  # noqa: E402
+                                           DEFAULT_MAX_TOKENS,
+                                           MODEL_CONTEXT_TOKENS,
+                                           MODEL_MAX_OUTPUT_TOKENS)
+
+
+def test_the_completion_ceiling_is_the_models_own_maximum():
+    """A ceiling costs nothing unspent, so sitting below the provider limit
+    only converts long replies into failed sections."""
+    assert DEFAULT_MAX_TOKENS == MODEL_MAX_OUTPUT_TOKENS == 32_768
+
+
+def test_the_body_cap_is_a_small_fraction_of_the_context():
+    """It was 6000 characters against a 262144-token context -- 0.8% of what
+    the model can read."""
+    assert DEFAULT_MAX_BODY == 200_000
+    assert DEFAULT_MAX_BODY / 3.1 < MODEL_CONTEXT_TOKENS - MODEL_MAX_OUTPUT_TOKENS
+
+
+def test_a_body_within_the_cap_reports_nothing_dropped():
+    s = NovitaSummarizer(lambda a, b: "{}", model="stub", max_body=100)
+    prompt, dropped = s.build_user_prompt_traced("T", "x" * 50)
+    assert dropped == 0
+    assert prompt.endswith("x" * 50)
+
+
+def test_a_body_over_the_cap_reports_how_much_was_dropped():
+    """Cutting the input silently is how a section came to be summarised from
+    its opening pages with nothing in the record to say so."""
+    s = NovitaSummarizer(lambda a, b: "{}", model="stub", max_body=100)
+    prompt, dropped = s.build_user_prompt_traced("T", "x" * 250)
+    assert dropped == 150
+    assert prompt.count("x") == 100
+
+
+def test_input_truncation_reaches_the_summary_as_a_warning():
+    reply = reply_with(entry("a canonical noun phrase about indexing"))
+    s = NovitaSummarizer(lambda a, b: reply, model="stub", max_body=100)
+    got = s.summarize("s1", "T", "x" * 250)
+    assert any("input truncated" in w and "150 characters" in w
+               for w in got.warnings)
+
+
+def test_every_concept_carries_the_input_truncation_warning():
+    """Not just the dominant one: all of them were built from the cut body."""
+    reply = reply_with(entry("first phrase"), entry("second phrase"))
+    s = NovitaSummarizer(lambda a, b: reply, model="stub", max_body=100)
+    got = s.summarize("s1", "T", "x" * 250)
+    assert all(any("input truncated" in w for w in c.warnings)
+               for c in got.concepts)
+
+
+def test_a_failed_call_still_reports_input_truncation():
+    def boom(a, b):
+        raise RuntimeError("network")
+    s = NovitaSummarizer(boom, model="stub", max_body=100)
+    got = s.summarize("s1", "T", "x" * 250)
+    assert got.error
+    assert any("input truncated" in w for w in got.warnings)
