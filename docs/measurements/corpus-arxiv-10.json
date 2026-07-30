@@ -1,0 +1,126 @@
+{
+  "note": "Test corpus for the hierarchy pipeline. Ten arXiv documents from ~/pdfdrill-library, chosen on evidence rather than directory order.\n\nThe previous set was the first ten library directories that had sections. It was unusable for M5 (planted positives): its documents shared no subject matter, so there were no cross-document concept pairs to plant, and one Elsevier paper contributed 25 of the 37 structural sections.\n\nThis set is two topical clusters. Within a cluster, documents genuinely share concepts, so positive pairs exist to be found. Across clusters they do not, so negative pairs are equally real. Without both, 'this corpus has no shared concepts' and 'this labeller cannot express sharing' are indistinguishable -- the ambiguity that voided the first corpus build.",
+  "selection_rule": "arXiv-named directories (NNNN.NNNNN) with a docmodel and >= 4 sections; titles read from <bibkey>.llm.txt; grouped by subject; the two largest coherent clusters taken whole.",
+  "library_arxiv_dirs": 460,
+  "with_docmodel": 234,
+  "with_four_or_more_sections": 123,
+  "clusters": [
+    {
+      "name": "causal-discovery",
+      "why": "Inferring causal direction and structure from observational data. Shared concepts to plant: conditional independence, the Markov condition, faithfulness, causal direction between two variables, constraint-based discovery.",
+      "documents": [
+        "1702.06385",
+        "1702.06776",
+        "1709.08915",
+        "1808.06356",
+        "1903.04829",
+        "2010.14265"
+      ]
+    },
+    {
+      "name": "kb-question-answering",
+      "why": "Question answering over knowledge bases and knowledge graphs. Shared concepts: entity linking, KB-QA, conversational question answering, structured knowledge retrieval.",
+      "documents": [
+        "2003.03155",
+        "2105.04850",
+        "2108.08597",
+        "2109.08935"
+      ]
+    }
+  ],
+  "measured": {
+    "1702.06385": {
+      "sections": 17,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 39.0
+    },
+    "1702.06776": {
+      "sections": 17,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 45.5
+    },
+    "1709.08915": {
+      "sections": 20,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 48.3
+    },
+    "1808.06356": {
+      "sections": 24,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 50.9
+    },
+    "1903.04829": {
+      "sections": 24,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 50.2
+    },
+    "2010.14265": {
+      "sections": 19,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 66.8
+    },
+    "2003.03155": {
+      "sections": 23,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 52.1
+    },
+    "2105.04850": {
+      "sections": 22,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 51.1
+    },
+    "2108.08597": {
+      "sections": 18,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 52.8
+    },
+    "2109.08935": {
+      "sections": 19,
+      "levels": [
+        2,
+        3
+      ],
+      "body_kb": 50.9
+    }
+  },
+  "conservation": "0 unaccounted and 0 double-counted objects in all ten",
+  "documents": [
+    "1702.06385",
+    "1702.06776",
+    "1709.08915",
+    "1808.06356",
+    "1903.04829",
+    "2010.14265",
+    "2003.03155",
+    "2105.04850",
+    "2108.08597",
+    "2109.08935"
+  ]
+}
