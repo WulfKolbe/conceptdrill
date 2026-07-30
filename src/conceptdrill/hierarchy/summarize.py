@@ -375,13 +375,28 @@ class SummaryCache:
                 self._entries = {}
         return self
 
+    @staticmethod
+    def _revive(raw: dict[str, Any]) -> "SectionSummary":
+        """Rebuild a summary from JSON.
+
+        `asdict` flattens nested summaries to dicts and tuples to lists, so a
+        naive `SectionSummary(**raw)` returns siblings as a list of dicts --
+        objects with no `.label`, which every consumer would then fail on.
+        """
+        siblings = tuple(
+            SummaryCache._revive(s) if isinstance(s, dict) else s
+            for s in raw.get("siblings", ()) or ())
+        return SectionSummary(**{**raw,
+                                 "warnings": tuple(raw.get("warnings", ()) or ()),
+                                 "siblings": siblings})
+
     def get(self, key: str) -> Optional[SectionSummary]:
         self.load()
         raw = self._entries.get(key)
         if not raw:
             return None
         try:
-            return SectionSummary(**{**raw, "warnings": tuple(raw.get("warnings", ()))})
+            return self._revive(raw)
         except TypeError:
             return None
 

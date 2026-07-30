@@ -381,3 +381,22 @@ def test_budgets_stay_inside_the_window():
         assert lo < hi, tier
         assert hi * TOKENS_PER_WORD <= EMBEDDING_TOKEN_WINDOW[1] + 1, (
             f"{tier}: {hi} words is {hi * TOKENS_PER_WORD:.0f} tokens")
+
+
+def test_cache_revives_sibling_concepts_as_objects(tmp_path):
+    """asdict flattens nested summaries to dicts and tuples to lists. A naive
+    SectionSummary(**raw) returns siblings as dicts -- objects with no .label
+    that every consumer then fails on."""
+    from conceptdrill.hierarchy.summarize import SummaryCache
+    inner = SectionSummary(section_id="s1", title="T", label="second phrase")
+    outer = SectionSummary(section_id="s1", title="T", label="first phrase",
+                           siblings=(inner,))
+    cache = SummaryCache(tmp_path / "c.json")
+    cache.put("k", outer)
+    cache.flush()
+
+    reread = SummaryCache(tmp_path / "c.json").get("k")
+    assert reread == outer
+    assert isinstance(reread.siblings, tuple)
+    assert isinstance(reread.siblings[0], SectionSummary)
+    assert [c.label for c in reread.concepts] == ["first phrase", "second phrase"]
