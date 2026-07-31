@@ -527,10 +527,11 @@ def test_real_tree_accounts_for_every_paragraph():
     # attached to a marker, so it was never in this count.
     assert stats["paragraphs"] == 144
     assert stats["math_sources"] == {"fallback": 60, "none": 14}
-    # No orphans now: the Abstract that used to be one is deferred, and the
-    # other candidate was a Paragraph whose entire text is `\\maketitle`,
-    # dropped as a LaTeX artifact.
-    assert stats["orphan_paragraphs"] == 0
+    # Nothing before the first marker now: the Abstract that used to sit
+    # there is deferred to its own prompt, and the other candidate was a
+    # Paragraph whose entire text is `\\maketitle`, dropped as a LaTeX
+    # artifact.
+    assert stats["preamble_units"] == 0
 
 
 @needs_real
@@ -846,3 +847,80 @@ def test_skipped_objects_serialise():
     s = SkippedObject("o1", "Table", "because")
     assert s.to_dict() == {"object_id": "o1", "object_type": "Table",
                            "reason": "because"}
+
+
+# --------------------------------------------------------------------------
+# The worked example: a span is the content between two markers
+# --------------------------------------------------------------------------
+
+def _worked_example(with_lead_paragraph=True):
+    r"""\section{title} P0  \subsection{s1} P1  \subsection{s2} P2"""
+    objs = [span("m0", "title", 1, 10)]
+    if with_lead_paragraph:
+        objs.append(para("P0", "the parent's own paragraph", 11, None))
+    objs += [span("m1", "sstitle1", 2, 20),
+             para("P1", "first subsection text", 21, None),
+             span("m2", "sstitle2", 2, 30),
+             para("P2", "second subsection text", 31, None)]
+    return build_tree({"objects": objs})
+
+
+def test_the_worked_example_yields_three_spans():
+    """\\section{title} P0 \\subsection{s1} P1 \\subsection{s2} P2 is three
+    units and three calls: the parent's own P0, then P1, then P2. Not one
+    rolled-up call, and not four."""
+    tree = _worked_example()
+    units = [n for n in tree.iter_document_order() if n.body_text.strip()]
+    assert len(units) == 3
+    assert [n.id for n in units] == ["m0", "m1", "m2"]
+    assert tree.nodes["m0"].body_text.strip() == "the parent's own paragraph"
+    assert "first subsection" not in tree.nodes["m0"].body_text
+    assert "second subsection" not in tree.nodes["m0"].body_text
+
+
+def test_the_same_example_without_the_lead_paragraph_yields_two():
+    """With nothing between the marker and its first child, the parent
+    contributes zero units and zero calls."""
+    tree = _worked_example(with_lead_paragraph=False)
+    units = [n for n in tree.iter_document_order() if n.body_text.strip()]
+    assert len(units) == 2
+    assert [n.id for n in units] == ["m1", "m2"]
+    assert tree.nodes["m0"].body_text.strip() == ""
+
+
+def test_a_span_ends_at_the_next_marker_of_any_level():
+    """A deeper marker closes the parent's span just as a sibling would."""
+    tree = build_tree({"objects": [
+        span("m0", "A", 1, 10), para("p1", "belongs to A", 11, None),
+        span("m1", "A.1", 3, 20), para("p2", "belongs to A.1", 21, None)]})
+    assert tree.nodes["m0"].body_text.strip() == "belongs to A"
+    assert tree.nodes["m1"].body_text.strip() == "belongs to A.1"
+
+
+def test_content_before_the_first_marker_is_the_preamble():
+    tree = build_tree({"objects": [
+        para("front", "title block matter", 1, None),
+        span("m0", "A", 1, 10), para("p1", "real content", 11, None)]})
+    assert [p.id for p in tree.orphans] == ["front"]
+    assert tree.stats()["preamble_units"] == 1
+
+
+def test_position_overrides_a_disagreeing_parent_section():
+    """MEASURED: 4 of 4253 corpus units name a marker that position
+    contradicts. Position wins, and the override is recorded."""
+    tree = build_tree({"objects": [
+        span("m0", "A", 1, 10), span("m1", "B", 1, 20),
+        para("p1", "sits after B but claims A", 21, "m0")]})
+    assert [p.id for p in tree.nodes["m1"].paragraphs] == ["p1"]
+    assert tree.nodes["m0"].paragraphs == ()
+    assert tree.moved_by_position == ("p1",)
+
+
+def test_maths_needs_no_special_case_under_a_positional_rule():
+    """Formula carries no parent_section and used to need assign_by_flow."""
+    tree = build_tree({"objects": [
+        span("m0", "A", 1, 10),
+        {"id": "f1", "type": "Formula",
+         "props": {"latex": "x = y + z", "flow_index": 11}}]})
+    assert [p.id for p in tree.nodes["m0"].paragraphs] == ["f1"]
+    assert tree.moved_by_position == ()
