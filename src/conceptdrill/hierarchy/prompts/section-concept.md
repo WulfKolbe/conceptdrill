@@ -40,25 +40,26 @@ essential to defining the concept. For an introductory span, the concept is
 usually the problem the document frames. Do not invent concepts the span
 does not contain.
 
-EVERY FIELD MUST FIT 70 TOKENS OF A SENTENCE EMBEDDING MODEL. That is about
-49 words. A longer text is not richer: it is averaged over more tokens, and the
+EVERY FIELD MUST FIT 50 TOKENS OF A SENTENCE EMBEDDING MODEL. That is about
+35 words. A longer text is not richer: it is averaged over more tokens, and the
 concept it was supposed to carry is diluted. Cut adjectives, examples, and
-restatements before you cut content.
+restatements before you cut content. Say one thing precisely rather than three
+things loosely -- if a field needs to say three things, it was three concepts.
 
 Each entry carries three texts of the SAME length. They differ in SCOPE and in
 FORM, and they must not share wording.
 
-summary      40-48 words of prose. The concept as this document presents it,
+summary      28-34 words of prose. The concept as this document presents it,
              in the author's own terminology, preserving its scope and its
              qualifications. The most specific of the three.
 
-abstraction  34-42 words of prose. The same idea stated so it makes sense
+abstraction  24-30 words of prose. The same idea stated so it makes sense
              outside this document. Write it as a textbook or glossary entry.
              Use no proper noun that names this paper's own system, dataset,
              corpus, tool or benchmark, unless that artifact is itself the
              concept being defined. "a graph reachability index" not "Ferrari".
 
-label        30-42 words forming A NOUN PHRASE. Not a sentence. This is the
+label        22-28 words forming A NOUN PHRASE. Not a sentence. This is the
              cross-document linking key and the single most important field.
 
 STATE THE CONTENT DIRECTLY. Never write about the document. These constructions
@@ -100,8 +101,8 @@ Also for label:
 - Prefer wording another paper on the same subject would plausibly also use.
   The label exists to match a label written from a different document, and a
   term only this document uses can never match anything.
-- 30 to 42 words. Count silently. A 24-word label is a failure; so is a
-  45-word one. Add discriminating detail rather than padding.
+- 22 to 28 words. Count silently. A 16-word label is a failure; so is a
+  32-word one. Add discriminating detail rather than padding.
 
 GENERAL RULES
 - Plain text only. No LaTeX, no markdown, and no backslash characters at all:
@@ -125,7 +126,7 @@ fence, no trailing remarks. Your reply must begin with the character { and end
 with the character }.
 
 {"concepts": [
-  {"summary": "<40-48 words, prose, this document's terminology>",
-   "abstraction": "<34-42 words, prose, document-independent, no local proper nouns>",
-   "label": "<30-42 words, a noun phrase, no copula, no acronyms, no citations>"}
+  {"summary": "<28-34 words, prose, this document's terminology>",
+   "abstraction": "<24-30 words, prose, document-independent, no local proper nouns>",
+   "label": "<22-28 words, a noun phrase, no copula, no acronyms, no citations>"}
 ]}

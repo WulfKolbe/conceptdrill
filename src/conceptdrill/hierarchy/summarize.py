@@ -67,10 +67,20 @@ PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "section-concept.md"
 #:
 #: The tiers no longer differ much in length, so their independence rests
 #: entirely on role and form -- see `TIER_ROLES` and `check_tier_independence`.
-TIER_WORDS = {"summary": (40, 48), "abstraction": (34, 42), "label": (30, 42)}
+TIER_WORDS = {"summary": (28, 34), "abstraction": (24, 30), "label": (22, 28)}
 
 #: The embedder's window, in tokens. Every tier is sized to fit it.
-EMBEDDING_TOKEN_WINDOW = (50, 70)
+#:
+#: The CES design targets 50-70. The ceiling now sits at the BOTTOM of that
+#: range rather than the top: at 70 tokens the measured output was p50 41,
+#: p90 50, max 61, so the band was never binding and the vectors were longer
+#: than they needed to be. Mean pooling averages the concept over every token
+#: it is given, so a shorter text is a sharper vector.
+#:
+#: This is expected to press on GATE 3: three tiers describing one concept
+#: converge as they shorten, and tier independence is already the failing
+#: gate. That cost is measured, not assumed -- see the run that follows.
+EMBEDDING_TOKEN_WINDOW = (35, 50)
 
 #: Measured tokens per word on this corpus, all-MiniLM-L6-v2, n=786.
 TOKENS_PER_WORD = 1.441

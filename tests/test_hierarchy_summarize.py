@@ -66,7 +66,7 @@ def test_prompt_states_budgets_inside_the_json_shape():
     """Budget placement is load-bearing: stated only in a distant description
     block, labels degraded to 8-word noun phrases."""
     tail = load_prompt().strip().rsplit("{", 1)[-1]
-    assert "30-42 words" in tail
+    assert "22-28 words" in tail
 
 
 def test_prompt_asks_for_all_three_tiers():
@@ -76,8 +76,13 @@ def test_prompt_asks_for_all_three_tiers():
 
 
 def test_prompt_states_the_measured_label_budget():
-    """30-42 words is the measured 50-70 BERT token window, not a guess."""
-    assert "30-42 words" in load_prompt()
+    """22-28 words is 32-40 measured tokens, inside the 35-50 ceiling.
+
+    The ceiling moved from 70 to 50: at 70 the observed output was p50 41,
+    p90 50, max 61, so the band never bound and the vectors were longer than
+    they needed to be.
+    """
+    assert "22-28 words" in load_prompt()
 
 
 def test_prompt_forbids_backslashes():
@@ -136,7 +141,7 @@ def test_the_token_estimate_is_the_measured_one():
     """1.604 was an estimate carried since the design spec and is 11% high.
     Measured on 786 cached summaries with the embedder's own tokenizer."""
     assert TOKENS_PER_WORD == 1.441
-    assert round(EMBEDDING_TOKEN_WINDOW[1] / TOKENS_PER_WORD) == 49
+    assert round(EMBEDDING_TOKEN_WINDOW[1] / TOKENS_PER_WORD) == 35
 
 
 def test_tiers_cut_at_sentence_boundaries(summarizer):
@@ -186,7 +191,7 @@ def test_an_empty_summary_is_not_usable():
 
 def test_tier_fit_reports_under_ok_and_over():
     short = SpanSummary("s1", "T", label="one two")
-    good = SpanSummary("s1", "T", label=" ".join(["w"] * 35))
+    good = SpanSummary("s1", "T", label=" ".join(["w"] * 25))
     long = SpanSummary("s1", "T", label=" ".join(["w"] * 99))
     assert short.tier_fit()["label"] == "under"
     assert good.tier_fit()["label"] == "ok"
