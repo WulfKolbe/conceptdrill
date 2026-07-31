@@ -27,6 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import blasfix                                                    # noqa: E402
+import numpy as np                                                # noqa: E402
 
 blasfix.apply_env_mitigations()
 
@@ -322,6 +323,16 @@ def main() -> int:
                  for rec in log._spans for c in (rec["concepts"] or [])
                  if c["row_id_assigned"] == r.row_id)}
             for r in basis.ordered_rows()]
+
+    # The matrix IS the basis. Writing row metadata without the vectors makes
+    # every downstream question -- projection, dimension ranking, search --
+    # require re-embedding the labels and hoping for the same numbers.
+    matrix = basis.matrix()
+    np.savez_compressed(
+        str(log.root / "basis.npz"),
+        matrix=matrix,
+        row_ids=np.array(basis.row_ids(), dtype=object),
+        basis_version=np.array(basis.basis_version()))
 
     root = log.finish(
         summarizer_class=type(summarizer).__name__,
