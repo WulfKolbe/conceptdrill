@@ -433,6 +433,9 @@ class SummaryRun:
     cached: int = 0
     generated: int = 0
     failed: tuple[str, ...] = ()
+    #: Sections with no paragraphs of their own, so nothing to summarise.
+    #: Recorded rather than dropped: a run must account for every section.
+    empty: tuple[str, ...] = ()
 
     def usable(self) -> dict[str, SectionSummary]:
         return {sid: s for sid, s in self.summaries.items() if s.is_usable}
@@ -449,6 +452,7 @@ class SummaryRun:
             "cached": self.cached,
             "generated": self.generated,
             "failed": len(self.failed),
+            "empty": len(self.empty),
             "with_warnings": len(warned),
             "model": self.model,
             "deterministic": self.deterministic,
@@ -461,13 +465,29 @@ def summarize_tree(tree, summarizer: Summarizer, *,
                    levels: Optional[set[int]] = None,
                    prompt: Optional[str] = None,
                    progress=None) -> SummaryRun:
-    """Summarise every section of a `SectionTree`.
+    r"""Summarise every section of a `SectionTree`.
 
     Two choices here are load-bearing:
 
-    * **`subtree_text`, not `body_text`.** Summarising "Empirical Evaluation"
-      from its own 1350 characters while ignoring the 9791 in its subsections
-      would describe almost nothing.
+    * **`body_text`, not `subtree_text`.** The unit is the smallest set of
+      paragraphs that belongs to one heading. Given
+
+          \section{A}    paragraph P0
+          \subsection{B} paragraphs P1
+          \subsection{C} paragraphs P2
+
+      that is three units: A's own P0, then B, then C. A is NOT P0+P1+P2.
+
+      Sending the subtree meant every child's text was summarised twice, once
+      under itself and once under its parent. Measured on the arXiv corpus it
+      sent 848,819 characters where the own extents total 541,825 -- 1.57x,
+      all of it duplication -- and it made parent and child summaries share
+      source text, which manufactures parent-child merges in `basis.py`.
+
+      A section whose own extent is empty -- a heading running straight into
+      its first subsection -- is not summarised at all. There is nothing there
+      to summarise, and a title is not a concept. 10 of the corpus's 36 parents
+      are like this; they are recorded, not silently skipped.
     * **`summarizer_title`, not `title`.** Where caption cleaning dropped a
       macro the cleaned title can be meaningless — `\\ALG\\ Application` becomes
       `Application` — so the raw form is restored for the model.
@@ -481,13 +501,19 @@ def summarize_tree(tree, summarizer: Summarizer, *,
     # Decoding parameters belong in the cache address, not just the model name.
     signature = getattr(summarizer, "cache_signature", None) or run.model
     failed: list[str] = []
+    empty: list[str] = []
 
     for node in tree.iter_document_order():
         if levels is not None and node.level not in levels:
             continue
 
         title = node.summarizer_title
-        body = tree.subtree_text(node.id)
+        body = node.body_text
+        if not body.strip():
+            # A heading with no paragraphs of its own. Its children carry the
+            # content and are summarised in their own right.
+            empty.append(node.id)
+            continue
         key = summary_key(title, body, signature, prompt_text)
 
         summary = cache.get(key) if cache else None
@@ -509,4 +535,5 @@ def summarize_tree(tree, summarizer: Summarizer, *,
     if cache is not None:
         cache.flush()
     run.failed = tuple(failed)
+    run.empty = tuple(empty)
     return run

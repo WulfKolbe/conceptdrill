@@ -223,6 +223,9 @@ def main() -> int:
             title_fired = [f"title:{r}" for r in title_rules]
             structural_class, structural_rule = classes.get(node.id, (None, None))
 
+            own_chars = len(node.body_text)
+            derivation = "own_text" if own_chars else "empty"
+
             concepts = []
             for i, concept in enumerate(summary.concepts if summary else ()):
                 basis_text = cleaned.get((node.id, i))
@@ -265,10 +268,15 @@ def main() -> int:
                 cleaning_rules_fired=title_fired,
                 structural_class=structural_class,
                 structural_rule_fired=structural_rule,
+                derivation=derivation,
+                own_text_chars=own_chars,
                 concept_count=len(concepts),
                 concepts=concepts,
                 warnings=[],
-                error=None if summary else "no summary produced")
+                error=(None if summary else
+                       ("no paragraphs of its own: the content belongs to its "
+                        "subsections, which are summarised separately"
+                        if derivation == "empty" else "no summary produced")))
 
     if cache is not None:
         cache.flush()

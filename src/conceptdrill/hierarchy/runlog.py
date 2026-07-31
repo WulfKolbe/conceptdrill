@@ -49,6 +49,7 @@ SECTION_FIELDS: tuple[str, ...] = (
     "doc_id", "section_id", "level", "flow_index", "is_appendix",
     "title_raw", "title_cleaned", "cleaning_rules_fired",
     "structural_class", "structural_rule_fired",
+    "derivation", "own_text_chars",
     "concept_count", "concepts",
     "warnings", "error",
 )
@@ -90,6 +91,17 @@ MANIFEST_REQUIRED: tuple[str, ...] = (
 #: impossible to tell dimension zero from a pipeline failure.
 MERGE_DECISIONS = frozenset({"added", "merged", "absorbed", "skipped",
                              "not_integrated"})
+
+#: Where a section's summarised text came from.
+#:
+#: `own_text` -- the paragraphs belonging to this heading and no deeper one.
+#: That is the unit: given `\section{A} P0 \subsection{B} P1 \subsection{C} P2`
+#: there are three units, A's own P0 plus B plus C, and A is not P0+P1+P2.
+#:
+#: `empty` -- a heading running straight into its first subsection, with no
+#: paragraphs of its own. Nothing to summarise; a title is not a concept. It is
+#: recorded rather than dropped, because a run must account for every section.
+DERIVATIONS = frozenset({"own_text", "empty"})
 
 
 class IncompleteRun(RuntimeError):
@@ -224,6 +236,10 @@ def section_record(**values: Any) -> dict[str, Any]:
     if unknown:
         raise KeyError(f"not part of the section record contract: "
                        f"{sorted(unknown)}")
+
+    derivation = values.get("derivation")
+    if derivation is not None and derivation not in DERIVATIONS:
+        raise ValueError(f"derivation {derivation!r} not in {sorted(DERIVATIONS)}")
 
     concepts = values.get("concepts")
     if concepts is not None:

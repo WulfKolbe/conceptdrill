@@ -292,11 +292,41 @@ def test_level_filter_restricts_the_run(tree, summarizer):
     assert set(run.summaries) == {"s1"}
 
 
-def test_parent_summary_sees_its_subsection_text(tree, summarizer):
-    """subtree_text, not body_text: a level-2 summary from its own paragraphs
-    alone would describe almost nothing."""
+def test_a_parent_is_summarised_from_its_own_paragraphs_only(tree, summarizer):
+    """The unit is the smallest set of paragraphs under one heading.
+
+    Given `\\section{A} P0 \\subsection{B} P1`, A is P0 -- not P0+P1. Sending
+    the subtree summarised every child's text twice, once under itself and
+    once under its parent, and made parent and child share source text, which
+    manufactures parent-child merges in the basis.
+    """
     run = summarize_tree(tree, summarizer)
-    assert "Scoring combines" in run.summaries["s1"].summary
+    parent = run.summaries["s1"].summary
+    child = run.summaries["s2"].summary
+    assert "Scoring combines" in child
+    assert "Scoring combines" not in parent
+
+
+def test_a_heading_with_no_paragraphs_of_its_own_is_not_summarised(summarizer):
+    """A title is not a concept, and there is nothing else there. Recorded,
+    not silently skipped."""
+    t = build_tree({"objects": [
+        _sec("s1", "Parent", 2, 1),
+        _sec("s2", "Child", 3, 2),
+        _par("p1", "Only the child has paragraphs of its own.", 3, "s2")]})
+    run = summarize_tree(t, summarizer)
+    assert set(run.summaries) == {"s2"}
+    assert run.empty == ("s1",)
+    assert run.stats()["empty"] == 1
+
+
+def test_every_section_is_accounted_for_as_summarised_or_empty(summarizer):
+    t = build_tree({"objects": [
+        _sec("s1", "Parent", 2, 1),
+        _sec("s2", "Child", 3, 2),
+        _par("p1", "child text here", 3, "s2")]})
+    run = summarize_tree(t, summarizer)
+    assert len(run.summaries) + len(run.empty) == len(t)
 
 
 def test_degraded_title_is_restored_for_the_model(summarizer):
