@@ -270,12 +270,33 @@ def test_paragraph_without_a_parent_section_keeps_none():
     assert read_paragraphs([para("p1", "front matter", 1)])[0].marker_id is None
 
 
-def test_listitem_and_abstract_count_as_body_text():
-    objs = [{"id": "a1", "type": "Abstract",
-             "props": {"text": "we present", "flow_index": 0}},
-            {"id": "l1", "type": "ListItem",
+def test_listitem_counts_as_body_text():
+    objs = [{"id": "l1", "type": "ListItem",
              "props": {"content": "an item", "flow_index": 2}}]
-    assert {p.id for p in read_paragraphs(objs)} == {"a1", "l1"}
+    assert {p.id for p in read_paragraphs(objs)} == {"l1"}
+
+
+def test_an_abstract_is_deferred_rather_than_read():
+    """Decided, not overlooked. An abstract is likely the most valuable span
+    for concept extraction, but a typical one states what was done rather
+    than what the solution is, so it needs its own prompt."""
+    units, skips = read_content([{"id": "a1", "type": "Abstract",
+                                  "props": {"text": "we present a method",
+                                            "flow_index": 0}}])
+    assert units == []
+    assert "deferred" in skips[0].reason and "own prompt" in skips[0].reason
+
+
+@pytest.mark.parametrize("otype", ["Algorithm", "AlgorithmStep"])
+def test_algorithm_objects_are_deferred_pending_a_boundary_rule(otype):
+    """119 of them across 5 corpus documents. An Algorithm plausibly opens a
+    unit and its steps are its content -- a boundary rule, and boundary rules
+    are decided, not inferred."""
+    units, skips = read_content([{"id": "x1", "type": otype,
+                                  "props": {"text": "step one",
+                                            "flow_index": 1}}])
+    assert units == []
+    assert "boundary semantics not yet decided" in skips[0].reason
 
 
 def test_sections_are_not_read_as_paragraphs():
@@ -502,13 +523,14 @@ def test_real_tree_accounts_for_every_paragraph():
     stats = tree.stats()
     # 84 prose units + 60 math units rendered to text. The other 14 math
     # objects are single symbols like T and k, dropped as signal-free.
+    # Unchanged by the Abstract deferral: the Abstract was an orphan, never
+    # attached to a marker, so it was never in this count.
     assert stats["paragraphs"] == 144
     assert stats["math_sources"] == {"fallback": 60, "none": 14}
-    # One orphan remains: the Abstract, which legitimately precedes the first
-    # span. The other candidate was a Paragraph whose entire text is
-    # `\\maketitle`, dropped as a LaTeX artifact.
-    assert stats["orphan_paragraphs"] == 1
-    assert "computational interpretation" in tree.orphans[0].text
+    # No orphans now: the Abstract that used to be one is deferred, and the
+    # other candidate was a Paragraph whose entire text is `\\maketitle`,
+    # dropped as a LaTeX artifact.
+    assert stats["orphan_paragraphs"] == 0
 
 
 @needs_real
@@ -698,7 +720,7 @@ def obj(oid, otype, flow=1, **props):
 
 
 @pytest.mark.parametrize("otype,prop", [
-    ("Paragraph", "text"), ("Abstract", "text"), ("ListItem", "content"),
+    ("Paragraph", "text"), ("ListItem", "content"),
     ("Sidenote", "content"), ("Footnote", "content"),
     ("Picture", "caption"), ("Diagram", "caption"),
 ])

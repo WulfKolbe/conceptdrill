@@ -148,7 +148,6 @@ def link_parents(markers: Sequence[SectionMarker]) -> dict[str, Optional[str]]:
 #: and are pure noise in an embedding.
 BODY_PROPS: dict[str, tuple[str, ...]] = {
     "paragraph": ("text", "content"),
-    "abstract": ("text", "content"),
     "listitem": ("content", "text"),
     "sidenote": ("content",),
     "footnote": ("content",),
@@ -167,6 +166,16 @@ BODY_TYPES = frozenset(BODY_PROPS)
 #: prompt explicitly excludes numerical results. Feeding it in would add digits
 #: to concept labels, not concepts.
 SKIPPED_TYPES: dict[str, str] = {
+    # Deferred by decision, not by oversight. An abstract is likely the most
+    # valuable span in a document for concept extraction, but a typical one
+    # states what was done rather than what the solution is, so it needs its
+    # own prompt. Reading it under the span prompt would put process
+    # description into the basis.
+    "abstract": "deferred: needs its own prompt, not the span prompt",
+    # An Algorithm plausibly opens a unit and its steps are its content. That
+    # is a boundary rule, and boundary rules are decided, not inferred.
+    "algorithm": "deferred: boundary semantics not yet decided",
+    "algorithmstep": "deferred: boundary semantics not yet decided",
     "table": "tabular data: numeric results, which the concept prompt excludes",
     "tablecell": "fragment of a Table, not an independent content object",
     "tablerow": "fragment of a Table, not an independent content object",
