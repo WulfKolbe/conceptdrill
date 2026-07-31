@@ -50,7 +50,7 @@ class NotMeasurementSafe(RuntimeError):
     """A summariser that must never stand in for a real one was requested."""
 
 
-def make_summarizer(kind: str, llm_model: str):
+def make_summarizer(kind: str, llm_model: str, *, temperature: float = 0.2):
     """The requested summariser, or a raise. Never a substitute.
 
     There is no fallback path here on purpose. When the LLM is unreachable the
@@ -66,7 +66,8 @@ def make_summarizer(kind: str, llm_model: str):
                                                    load_dotenv, make_openai_chat)
         load_dotenv()
         model = llm_model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
-        summarizer = NovitaSummarizer(make_openai_chat(model=model), model=model)
+        summarizer = NovitaSummarizer(
+            make_openai_chat(model=model, temperature=temperature), model=model)
     else:
         raise NotMeasurementSafe(f"unknown summariser {kind!r}")
 
@@ -107,6 +108,9 @@ def main() -> int:
                          "ablation. ExtractiveSummarizer is a test fixture and "
                          "is refused here.")
     ap.add_argument("--llm-model", default="")
+    ap.add_argument("--temperature", type=float, default=0.2,
+                    help="decoding temperature. Part of the cache signature, "
+                         "so changing it is a cache miss by construction.")
     ap.add_argument("--tau", type=float, default=None)
     ap.add_argument("--summary-cache", default=".conceptdrill_cache/summaries.json")
     ap.add_argument("--speech", default="",
@@ -140,7 +144,8 @@ def main() -> int:
         paths = sorted(library.glob("*/model.docmodel.json"))
 
     embedder = get_embedder(args.model, cache=True)
-    summarizer = make_summarizer(args.summarizer, args.llm_model)
+    summarizer = make_summarizer(args.summarizer, args.llm_model,
+                                 temperature=args.temperature)
     is_ablation = bool(getattr(summarizer, "is_ablation", False))
     cache = SummaryCache(args.summary_cache) if args.summary_cache else None
     basis = ConceptBasis() if args.tau is None else ConceptBasis(tau=args.tau)
@@ -362,6 +367,8 @@ def main() -> int:
                "tier_violations": tier_violations,
                "basis_text_tokens": token_stats,
                "speech_backend": speech_info,
+               "temperature": args.temperature,
+               "summary_cache": args.summary_cache or None,
                "basis_version": basis.basis_version(),
                "basis_stats": basis.stats()})
 
