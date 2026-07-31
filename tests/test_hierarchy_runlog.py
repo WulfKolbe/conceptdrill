@@ -659,3 +659,38 @@ def test_gate2_still_applies_the_title_clause_to_a_real_run(tmp_path):
     result = gate2_basis_text(root)
     assert not result.passed
     assert result.checks["is_ablation"] is False
+
+
+# --------------------------------------------------------------------------
+# Extent metadata: what the model was given, provable from the artefact
+# --------------------------------------------------------------------------
+
+def test_an_unknown_extent_end_reason_raises():
+    with pytest.raises(ValueError, match="extent_end_reason"):
+        span_record(extent_end_reason="somewhere")
+
+
+@pytest.mark.parametrize("reason", ["next_marker", "end_of_document"])
+def test_the_end_reason_vocabulary_is_accepted(reason):
+    assert span_record(extent_end_reason=reason)["extent_end_reason"] == reason
+
+
+def test_the_extent_fields_are_part_of_the_contract():
+    """input_text_last_200 is the one that matters: it is what proves the
+    model saw the END of the span rather than its opening page."""
+    rec = span_record()
+    for name in ("extent_object_ids", "extent_object_count",
+                 "extent_start_flow_index", "extent_end_flow_index",
+                 "extent_end_reason", "subtree_object_count",
+                 "child_marker_ids", "is_leaf", "input_text_sha256",
+                 "input_text_first_200", "input_text_last_200"):
+        assert name in rec, name
+
+
+def test_subtree_count_is_metadata_and_never_the_input():
+    """The subtree is useful for describing the hierarchy. It is not what the
+    summariser reads -- that is the own extent, and sending the subtree meant
+    every child's text was summarised twice."""
+    rec = span_record(extent_object_count=4, subtree_object_count=30,
+                      own_text_chars=802)
+    assert rec["extent_object_count"] < rec["subtree_object_count"]

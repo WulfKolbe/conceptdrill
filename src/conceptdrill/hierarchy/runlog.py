@@ -51,6 +51,10 @@ SPAN_FIELDS: tuple[str, ...] = (
     "title_raw", "title_cleaned", "cleaning_rules_fired",
     "structural_class", "structural_rule_fired",
     "derivation", "own_text_chars",
+    "extent_object_ids", "extent_object_count",
+    "extent_start_flow_index", "extent_end_flow_index", "extent_end_reason",
+    "subtree_object_count", "child_marker_ids", "is_leaf",
+    "input_text_sha256", "input_text_first_200", "input_text_last_200",
     "concept_count", "concepts",
     "warnings", "error",
 )
@@ -103,6 +107,9 @@ MERGE_DECISIONS = frozenset({"added", "merged", "absorbed", "skipped",
 #: paragraphs of its own. Nothing to summarise; a title is not a concept. It is
 #: recorded rather than dropped, because a run must account for every span.
 DERIVATIONS = frozenset({"own_text", "empty"})
+
+#: Why a span stopped where it did.
+EXTENT_END_REASONS = frozenset({"next_marker", "end_of_document"})
 
 
 class IncompleteRun(RuntimeError):
@@ -237,6 +244,11 @@ def span_record(**values: Any) -> dict[str, Any]:
     if unknown:
         raise KeyError(f"not part of the span record contract: "
                        f"{sorted(unknown)}")
+
+    reason = values.get("extent_end_reason")
+    if reason is not None and reason not in EXTENT_END_REASONS:
+        raise ValueError(f"extent_end_reason {reason!r} not in "
+                         f"{sorted(EXTENT_END_REASONS)}")
 
     derivation = values.get("derivation")
     if derivation is not None and derivation not in DERIVATIONS:

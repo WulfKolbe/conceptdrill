@@ -19,6 +19,7 @@ schema.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import sys
 from pathlib import Path
@@ -153,6 +154,7 @@ def main() -> int:
 
         # Every node in the tree, in document order. This list is the ledger.
         nodes = list(tree.iter_document_order())
+        ordered_markers = sorted(nodes, key=lambda n: (n.flow_index, n.id))
         log.expect(len(nodes))
 
         run = summarize_tree(tree, summarizer, cache=cache)
@@ -226,6 +228,15 @@ def main() -> int:
             own_chars = len(node.body_text)
             derivation = "own_text" if own_chars else "empty"
 
+            # What the model was actually given, recorded so a future input
+            # bug is visible in the artefact without re-running anything.
+            # last_200 is the one that matters: it proves the model saw the
+            # END of the span.
+            sent = node.body_text
+            after = [m.flow_index for m in ordered_markers
+                     if m.flow_index > node.flow_index]
+            extent_ids = [u.id for u in node.paragraphs]
+
             concepts = []
             for i, concept in enumerate(summary.concepts if summary else ()):
                 basis_text = cleaned.get((node.id, i))
@@ -275,6 +286,20 @@ def main() -> int:
                 structural_rule_fired=structural_rule,
                 derivation=derivation,
                 own_text_chars=own_chars,
+                extent_object_ids=extent_ids,
+                extent_object_count=len(extent_ids),
+                extent_start_flow_index=node.flow_index,
+                extent_end_flow_index=(min(after) if after else None),
+                extent_end_reason=("next_marker" if after else "end_of_document"),
+                subtree_object_count=len(
+                    [u for n2 in [node] + list(tree.descendants(node.id))
+                     for u in n2.paragraphs]),
+                child_marker_ids=list(node.children),
+                is_leaf=not node.children,
+                input_text_sha256=(hashlib.sha256(sent.encode()).hexdigest()
+                                   if sent else None),
+                input_text_first_200=sent[:200] or None,
+                input_text_last_200=sent[-200:] or None,
                 concept_count=len(concepts),
                 concepts=concepts,
                 warnings=[],
