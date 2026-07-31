@@ -45,7 +45,7 @@ def store(tmp_path):
 
 def _proj(sid, vector, version, label="alpha concept", doc="doc1"):
     return SentenceProjection(
-        sentence_id=sid, text=f"sentence {sid}", section_id="s1",
+        sentence_id=sid, text=f"sentence {sid}", span_id="s1",
         source_id="p1", basis_version=version, embedding_model="fixed",
         embedding_revision="v1",
         top_concepts=(ConceptHit("row_a", label, 2, 0.9, 1),),
@@ -178,7 +178,7 @@ def test_index_records_carry_provenance(store, basis):
                            document_of=lambda p: "2209.00445")
     records, _ = store.load_index(basis_version=v)
     assert records[0]["document"] == "2209.00445"
-    assert records[0]["section_id"] == "s1"
+    assert records[0]["span_id"] == "s1"
 
 
 def test_projections_without_vectors_are_skipped(store, basis):

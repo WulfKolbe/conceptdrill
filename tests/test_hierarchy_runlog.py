@@ -2,7 +2,7 @@
 
 These tests are the reason a run is auditable: they assert that a record cannot
 be written with a field missing, that a run cannot be written when it has lost
-track of a section, and that the manifest cannot claim not to know what produced
+track of a span, and that the manifest cannot claim not to know what produced
 it.
 """
 from __future__ import annotations
@@ -15,17 +15,17 @@ from conceptdrill.hierarchy.captions import (caption_cleaner_tier,
                                              clean_caption,
                                              clean_caption_traced)
 from conceptdrill.hierarchy.runlog import (MANIFEST_FIELDS, MANIFEST_REQUIRED,
-                                           SECTION_FIELDS, IncompleteRun,
-                                           RunLog, gemm_state, section_record)
+                                           SPAN_FIELDS, IncompleteRun,
+                                           RunLog, gemm_state, span_record)
 
 
 # --------------------------------------------------------------------------
-# The section record
+# The span record
 # --------------------------------------------------------------------------
 
 def test_a_record_has_every_field_even_when_nothing_is_known():
-    rec = section_record()
-    assert set(rec) == set(SECTION_FIELDS)
+    rec = span_record()
+    assert set(rec) == set(SPAN_FIELDS)
     assert all(v is None for v in rec.values())
 
 
@@ -33,7 +33,7 @@ def test_absent_is_not_allowed_but_null_is():
     """The distinction the whole contract rests on: null is a measurement,
     a missing key is an unanswered question. Holds at both levels."""
     from conceptdrill.hierarchy.runlog import concept_record
-    rec = section_record(doc_id="d", section_id="s", concepts=None)
+    rec = span_record(doc_id="d", span_id="s", concepts=None)
     assert "concepts" in rec and rec["concepts"] is None
     assert "structural_class" in rec
     concept = concept_record(concept_index=0, tier_label=None)
@@ -43,11 +43,11 @@ def test_absent_is_not_allowed_but_null_is():
 
 def test_an_unknown_field_raises_rather_than_being_dropped():
     with pytest.raises(KeyError, match="contract"):
-        section_record(doc_id="d", tier_lable="typo")
+        span_record(doc_id="d", tier_lable="typo")
 
 
 def test_field_order_is_the_declared_order():
-    assert list(section_record()) == list(SECTION_FIELDS)
+    assert list(span_record()) == list(SPAN_FIELDS)
 
 
 def test_an_unknown_merge_decision_raises():
@@ -77,13 +77,13 @@ def test_an_unknown_concept_field_raises():
 def test_a_malformed_nested_concept_raises_at_the_section(tmp_path):
     """A hole in a nested record must not reach the artefact."""
     with pytest.raises(KeyError, match="concept record contract"):
-        section_record(doc_id="d", section_id="s1",
+        span_record(doc_id="d", span_id="s1",
                        concepts=[{"not_a_field": 1}])
 
 
 def test_concept_count_is_derived_when_not_given():
     from conceptdrill.hierarchy.runlog import concept_record
-    rec = section_record(doc_id="d", section_id="s1",
+    rec = span_record(doc_id="d", span_id="s1",
                          concepts=[concept_record(concept_index=0),
                                    concept_record(concept_index=1)])
     assert rec["concept_count"] == 2
@@ -133,60 +133,60 @@ def test_a_run_directory_is_named_for_its_commit(tmp_path):
 
 def test_the_three_files_are_written(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(doc_id="d", section_id="s1")
+    log.add_span(doc_id="d", span_id="s1")
     root = finish(log)
     assert (root / "manifest.json").exists()
-    assert (root / "sections.jsonl").exists()
+    assert (root / "spans.jsonl").exists()
     assert (root / "basis.json").exists()
 
 
 def test_the_line_count_equals_the_manifest_section_count(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
     for i in range(4):
-        log.add_section(doc_id="d", section_id=f"s{i}")
+        log.add_span(doc_id="d", span_id=f"s{i}")
     root = finish(log)
-    lines = (root / "sections.jsonl").read_text().strip().splitlines()
+    lines = (root / "spans.jsonl").read_text().strip().splitlines()
     manifest = json.loads((root / "manifest.json").read_text())
-    assert len(lines) == manifest["section_count"] == 4
+    assert len(lines) == manifest["span_count"] == 4
 
 
 def test_every_written_line_carries_every_field(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(**as_section(doc_id="d", section_id="s1",
+    log.add_span(**as_section(doc_id="d", span_id="s1",
                                  tier_label="a label"))
     root = finish(log)
-    for line in (root / "sections.jsonl").read_text().strip().splitlines():
-        assert set(json.loads(line)) == set(SECTION_FIELDS)
+    for line in (root / "spans.jsonl").read_text().strip().splitlines():
+        assert set(json.loads(line)) == set(SPAN_FIELDS)
 
 
 def test_losing_a_section_refuses_to_write(tmp_path):
     """The gate that makes the ledger mean something."""
     log = RunLog.open(tmp_path, timestamp="t")
     log.expect(3)
-    log.add_section(doc_id="d", section_id="s1")
+    log.add_span(doc_id="d", span_id="s1")
     with pytest.raises(IncompleteRun, match="not auditable"):
         finish(log)
 
 
 def test_a_duplicated_section_refuses_to_write(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(doc_id="d", section_id="s1")
-    log.add_section(doc_id="d", section_id="s1")
+    log.add_span(doc_id="d", span_id="s1")
+    log.add_span(doc_id="d", span_id="s1")
     with pytest.raises(IncompleteRun, match="duplicate"):
         finish(log)
 
 
 def test_the_same_section_id_in_two_documents_is_not_a_duplicate(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(doc_id="a", section_id="s1")
-    log.add_section(doc_id="b", section_id="s1")
+    log.add_span(doc_id="a", span_id="s1")
+    log.add_span(doc_id="b", span_id="s1")
     assert finish(log)
 
 
 @pytest.mark.parametrize("field", MANIFEST_REQUIRED)
 def test_a_null_in_a_required_manifest_field_refuses_to_write(tmp_path, field):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(doc_id="d", section_id="s1")
+    log.add_span(doc_id="d", span_id="s1")
     if field == "gemm_check_result":
         pytest.skip("measured, not caller-supplied")
     with pytest.raises(IncompleteRun, match="must not be null"):
@@ -195,7 +195,7 @@ def test_a_null_in_a_required_manifest_field_refuses_to_write(tmp_path, field):
 
 def test_the_manifest_carries_every_declared_field(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(doc_id="d", section_id="s1")
+    log.add_span(doc_id="d", span_id="s1")
     manifest = json.loads((finish(log) / "manifest.json").read_text())
     assert set(MANIFEST_FIELDS) <= set(manifest)
 
@@ -204,14 +204,14 @@ def test_strict_mode_false_is_recorded_not_treated_as_missing(tmp_path):
     """`False` is an answer. A required-field check written with a falsiness
     test rather than an is-None test would reject it."""
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(doc_id="d", section_id="s1")
+    log.add_span(doc_id="d", span_id="s1")
     manifest = json.loads((finish(log, strict_mode=False) / "manifest.json").read_text())
     assert manifest["strict_mode"] is False
 
 
 def test_the_manifest_records_whether_the_tree_was_dirty(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(doc_id="d", section_id="s1")
+    log.add_span(doc_id="d", span_id="s1")
     manifest = json.loads((finish(log) / "manifest.json").read_text())
     assert "git_dirty" in manifest
 
@@ -224,7 +224,7 @@ def test_gemm_state_reports_a_verdict():
 
 def test_basis_rows_are_written_with_their_sections(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t")
-    log.add_section(**as_section(doc_id="d", section_id="s1",
+    log.add_span(**as_section(doc_id="d", span_id="s1",
                                  row_id_assigned="row_a"))
     root = finish(log, basis_rows=[{"row_id": "row_a", "label": "L", "support": 1,
                                     "level": 1, "documents": ["d"],
@@ -240,19 +240,19 @@ def test_basis_rows_are_written_with_their_sections(tmp_path):
 from conceptdrill.hierarchy.gates import gate1_persistence, read_run  # noqa: E402
 
 
-def docmodel_with(tmp_path, doc_id, section_ids):
+def docmodel_with(tmp_path, doc_id, marker_ids):
     """A minimal real docmodel, so gate 1 has an input to compare against."""
     doc = tmp_path / doc_id / "model.docmodel.json"
     doc.parent.mkdir(parents=True, exist_ok=True)
     doc.write_text(json.dumps({"objects": [
         {"id": sid, "type": "Section",
          "props": {"caption": f"Section {i}", "level": 1, "flow_index": i}}
-        for i, sid in enumerate(section_ids, start=1)]}))
+        for i, sid in enumerate(marker_ids, start=1)]}))
     return doc
 
 
 def as_section(**kw):
-    """Split a flat test record into section fields plus one concept.
+    """Split a flat test record into span fields plus one concept.
 
     The concept is the unit that becomes a basis row, so per-concept keys now
     live in `concepts`. Tests stay readable by writing them flat and letting
@@ -269,17 +269,17 @@ def as_section(**kw):
 def written_run(tmp_path, records, **over):
     records = [as_section(**dict(r)) for r in records]
     doc = docmodel_with(tmp_path, records[0]["doc_id"],
-                        [r["section_id"] for r in records])
+                        [r["span_id"] for r in records])
     log = RunLog.open(tmp_path, timestamp="t")
     for rec in records:
-        log.add_section(**rec)
+        log.add_span(**rec)
     over.setdefault("corpus_paths", [str(doc)])
     return finish(log, **over)
 
 
 def test_gate1_passes_on_a_well_formed_run(tmp_path):
-    root = written_run(tmp_path, [{"doc_id": "d", "section_id": "s1"},
-                                  {"doc_id": "d", "section_id": "s2"}])
+    root = written_run(tmp_path, [{"doc_id": "d", "span_id": "s1"},
+                                  {"doc_id": "d", "span_id": "s2"}])
     result = gate1_persistence(root)
     assert result.passed, result.report()
     assert result.checks["records"] == 2
@@ -287,9 +287,9 @@ def test_gate1_passes_on_a_well_formed_run(tmp_path):
 
 def test_gate1_fails_when_the_line_count_disagrees_with_the_manifest(tmp_path):
     """Hand-edit the artefact: the gate must re-derive, not trust."""
-    root = written_run(tmp_path, [{"doc_id": "d", "section_id": "s1"}])
+    root = written_run(tmp_path, [{"doc_id": "d", "span_id": "s1"}])
     manifest = json.loads((root / "manifest.json").read_text())
-    manifest["section_count"] = 99
+    manifest["span_count"] = 99
     (root / "manifest.json").write_text(json.dumps(manifest))
     result = gate1_persistence(root)
     assert not result.passed
@@ -297,17 +297,17 @@ def test_gate1_fails_when_the_line_count_disagrees_with_the_manifest(tmp_path):
 
 
 def test_gate1_fails_on_a_record_with_a_field_removed(tmp_path):
-    root = written_run(tmp_path, [{"doc_id": "d", "section_id": "s1"}])
-    rec = json.loads((root / "sections.jsonl").read_text().strip())
+    root = written_run(tmp_path, [{"doc_id": "d", "span_id": "s1"}])
+    rec = json.loads((root / "spans.jsonl").read_text().strip())
     rec.pop("concepts")
-    (root / "sections.jsonl").write_text(json.dumps(rec) + "\n")
+    (root / "spans.jsonl").write_text(json.dumps(rec) + "\n")
     result = gate1_persistence(root)
     assert not result.passed
     assert any("absent fields" in f for f in result.failures)
 
 
 def test_gate1_fails_on_a_null_required_manifest_field(tmp_path):
-    root = written_run(tmp_path, [{"doc_id": "d", "section_id": "s1"}])
+    root = written_run(tmp_path, [{"doc_id": "d", "span_id": "s1"}])
     manifest = json.loads((root / "manifest.json").read_text())
     manifest["embedder_backend"] = None
     (root / "manifest.json").write_text(json.dumps(manifest))
@@ -317,9 +317,9 @@ def test_gate1_fails_on_a_null_required_manifest_field(tmp_path):
 
 
 def test_gate1_fails_when_a_section_of_the_input_has_no_record(tmp_path):
-    """The clause that matters most: silent section loss."""
-    root = written_run(tmp_path, [{"doc_id": "lib", "section_id": "s1"}])
-    doc = docmodel_with(tmp_path, "lib", ["s1", "s2"])   # input gains a section
+    """The clause that matters most: silent span loss."""
+    root = written_run(tmp_path, [{"doc_id": "lib", "span_id": "s1"}])
+    doc = docmodel_with(tmp_path, "lib", ["s1", "s2"])   # input gains a span
     manifest = json.loads((root / "manifest.json").read_text())
     manifest["corpus_paths"] = [str(doc)]
     (root / "manifest.json").write_text(json.dumps(manifest))
@@ -330,7 +330,7 @@ def test_gate1_fails_when_a_section_of_the_input_has_no_record(tmp_path):
 
 def test_gate1_fails_when_the_manifest_names_no_inputs(tmp_path):
     """An un-evaluable clause must not be reported as a satisfied one."""
-    root = written_run(tmp_path, [{"doc_id": "d", "section_id": "s1"}],
+    root = written_run(tmp_path, [{"doc_id": "d", "span_id": "s1"}],
                        corpus_paths=[])
     result = gate1_persistence(root)
     assert not result.passed
@@ -338,10 +338,10 @@ def test_gate1_fails_when_the_manifest_names_no_inputs(tmp_path):
 
 
 def test_read_run_round_trips(tmp_path):
-    root = written_run(tmp_path, [{"doc_id": "d", "section_id": "s1"}])
+    root = written_run(tmp_path, [{"doc_id": "d", "span_id": "s1"}])
     manifest, records, basis = read_run(root)
     assert manifest["run_id"] == basis["run_id"]
-    assert records[0]["section_id"] == "s1"
+    assert records[0]["span_id"] == "s1"
 
 
 # --------------------------------------------------------------------------
@@ -353,7 +353,7 @@ from conceptdrill.hierarchy.gates import gate2_basis_text  # noqa: E402
 
 def test_gate2_passes_on_clean_basis_text(tmp_path):
     root = written_run(tmp_path, [
-        {"doc_id": "d", "section_id": "s1", "title_raw": "1 Introduction",
+        {"doc_id": "d", "span_id": "s1", "title_raw": "1 Introduction",
          "basis_text": "Temporal query intent classification for retrieval."}])
     result = gate2_basis_text(root)
     assert result.passed, result.report()
@@ -362,37 +362,37 @@ def test_gate2_passes_on_clean_basis_text(tmp_path):
 
 def test_gate2_fails_on_the_real_corpus_failure(tmp_path):
     root = written_run(tmp_path, [
-        {"doc_id": "d", "section_id": "s1", "title_raw": "2 Related Work",
-         "basis_text": r"\section*{2 Related Work} Prominent examples."}])
+        {"doc_id": "d", "span_id": "s1", "title_raw": "2 Related Work",
+         "basis_text": r"\span*{2 Related Work} Prominent examples."}])
     result = gate2_basis_text(root)
     assert not result.passed
     assert any("s1" in f for f in result.failures)
 
 
 def test_gate2_fails_on_a_single_violation_among_many(tmp_path):
-    """Zero tolerance: one dirty section in a hundred still fails."""
-    records = [{"doc_id": "d", "section_id": f"s{i}", "title_raw": "T",
+    """Zero tolerance: one dirty span in a hundred still fails."""
+    records = [{"doc_id": "d", "span_id": f"s{i}", "title_raw": "T",
                 "basis_text": "Clean prose about embeddings and retrieval."}
                for i in range(20)]
     records[7]["basis_text"] = "Prose with a $ sign in it."
     result = gate2_basis_text(written_run(tmp_path, records))
     assert not result.passed
-    assert result.checks["sections_violating"] == 1
+    assert result.checks["spans_violating"] == 1
     assert result.checks["clean_fraction"] < 1.0
 
 
 def test_gate2_fails_when_basis_text_begins_with_its_title(tmp_path):
     root = written_run(tmp_path, [
-        {"doc_id": "d", "section_id": "s1", "title_raw": "Dialogue Framework",
+        {"doc_id": "d", "span_id": "s1", "title_raw": "Dialogue Framework",
          "basis_text": "Dialogue Framework. It fuses multimodal input."}])
     assert not gate2_basis_text(root).passed
 
 
 def test_gate2_ignores_records_with_no_basis_text(tmp_path):
-    """A section that produced nothing is a gate 1 concern, not a gate 2 one."""
+    """A span that produced nothing is a gate 1 concern, not a gate 2 one."""
     root = written_run(tmp_path, [
-        {"doc_id": "d", "section_id": "s1", "basis_text": None},
-        {"doc_id": "d", "section_id": "s2", "basis_text": "Clean prose here."}])
+        {"doc_id": "d", "span_id": "s1", "basis_text": None},
+        {"doc_id": "d", "span_id": "s2", "basis_text": "Clean prose here."}])
     result = gate2_basis_text(root)
     assert result.passed
     assert result.checks["basis_texts_checked"] == 1
@@ -408,7 +408,7 @@ from conceptdrill.hierarchy.gates import gate3_tier_independence  # noqa: E402
 
 def test_gate3_passes_on_independent_tiers(tmp_path):
     root = written_run(tmp_path, [{
-        "doc_id": "d", "section_id": "s1",
+        "doc_id": "d", "span_id": "s1",
         "tier_summary": "The system classifies keyword queries by temporal "
                         "intent into past, recency, future or atemporal.",
         "tier_abstraction": "Assigning search requests to time orientations "
@@ -421,7 +421,7 @@ def test_gate3_passes_on_independent_tiers(tmp_path):
 
 def test_gate3_fails_on_a_prefix_relation(tmp_path):
     root = written_run(tmp_path, [{
-        "doc_id": "d", "section_id": "s1",
+        "doc_id": "d", "span_id": "s1",
         "tier_summary": "alpha beta gamma delta epsilon",
         "tier_abstraction": "alpha beta gamma",
         "tier_label": "entirely separate vocabulary"}])
@@ -432,7 +432,7 @@ def test_gate3_fails_on_a_prefix_relation(tmp_path):
 
 def test_gate3_fails_on_high_jaccard(tmp_path):
     root = written_run(tmp_path, [{
-        "doc_id": "d", "section_id": "s1",
+        "doc_id": "d", "span_id": "s1",
         "tier_summary": "alpha beta gamma delta",
         "tier_abstraction": "delta gamma beta alpha",
         "tier_label": "unrelated words here"}])
@@ -444,8 +444,8 @@ def test_gate3_fails_on_high_jaccard(tmp_path):
 def test_gate3_does_not_compare_a_single_tier_ablation(tmp_path):
     """Arm B has one tier by design and must not fail for having it."""
     root = written_run(tmp_path, [
-        {"doc_id": "d", "section_id": "s1", "tier_label": "3 Related Work"},
-        {"doc_id": "d", "section_id": "s2", "tier_label": "4 Method"}])
+        {"doc_id": "d", "span_id": "s1", "tier_label": "3 Related Work"},
+        {"doc_id": "d", "span_id": "s2", "tier_label": "4 Method"}])
     result = gate3_tier_independence(root)
     assert result.passed
     assert result.checks["concepts_with_two_or_more_tiers"] == 0
@@ -454,7 +454,7 @@ def test_gate3_does_not_compare_a_single_tier_ablation(tmp_path):
 def test_gate3_reports_word_budgets_without_gating_them(tmp_path):
     """Budgets are Gate 5's business; Gate 3 reports what it saw."""
     root = written_run(tmp_path, [{
-        "doc_id": "d", "section_id": "s1",
+        "doc_id": "d", "span_id": "s1",
         "tier_label": "two words", "tier_abstraction": "quite different text"}])
     result = gate3_tier_independence(root)
     assert result.passed
@@ -475,9 +475,9 @@ def labelled_run(tmp_path, records, labels, rows):
                        extra=None) if False else None
     log = RunLog.open(tmp_path, timestamp="t")
     doc = docmodel_with(tmp_path, records[0]["doc_id"],
-                        [r["section_id"] for r in records])
+                        [r["span_id"] for r in records])
     for rec in records:
-        log.add_section(**rec)
+        log.add_span(**rec)
     root = finish(log, corpus_paths=[str(doc)], basis_rows=rows)
     # Gate 4 compares basis.json against manifest basis_stats.
     manifest = json.loads((root / "manifest.json").read_text())
@@ -504,14 +504,14 @@ def sink_row():
 def test_gate4_passes_when_nothing_structural_reaches_a_concept_row(tmp_path):
     root, labels = labelled_run(
         tmp_path,
-        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+        [{"doc_id": "d", "span_id": "s1", "title_cleaned": "References",
           "structural_class": "bibliography",
           "structural_rule_fired": "reference-list",
           "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"},
-         {"doc_id": "d", "section_id": "s2", "title_cleaned": "Method",
+         {"doc_id": "d", "span_id": "s2", "title_cleaned": "Method",
           "row_id_assigned": "row_a", "merge_decision": "added"}],
-        [{"doc_id": "d", "section_id": "s1", "structural": True},
-         {"doc_id": "d", "section_id": "s2", "structural": False}],
+        [{"doc_id": "d", "span_id": "s1", "structural": True},
+         {"doc_id": "d", "span_id": "s2", "structural": False}],
         [sink_row(), concept_row()])
     result = gate4_structural(root, labels)
     assert result.passed, result.report()
@@ -524,9 +524,9 @@ def test_gate4_fails_when_a_structural_section_holds_a_concept_row(tmp_path):
     """The binding clause. Recall is what this gate is for."""
     root, labels = labelled_run(
         tmp_path,
-        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+        [{"doc_id": "d", "span_id": "s1", "title_cleaned": "References",
           "row_id_assigned": "row_a", "merge_decision": "added"}],
-        [{"doc_id": "d", "section_id": "s1", "structural": True}],
+        [{"doc_id": "d", "span_id": "s1", "structural": True}],
         [concept_row()])
     result = gate4_structural(root, labels)
     assert not result.passed
@@ -537,10 +537,10 @@ def test_gate4_fails_when_a_structural_section_holds_a_concept_row(tmp_path):
 def test_gate4_fails_when_an_absorbed_section_names_no_rule(tmp_path):
     root, labels = labelled_run(
         tmp_path,
-        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+        [{"doc_id": "d", "span_id": "s1", "title_cleaned": "References",
           "structural_class": "bibliography", "structural_rule_fired": None,
           "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"}],
-        [{"doc_id": "d", "section_id": "s1", "structural": True}],
+        [{"doc_id": "d", "span_id": "s1", "structural": True}],
         [sink_row()])
     result = gate4_structural(root, labels)
     assert not result.passed
@@ -552,11 +552,11 @@ def test_gate4_fails_on_more_than_one_structural_row(tmp_path):
     second = dict(sink_row(), row_id="row_other_sink")
     root, labels = labelled_run(
         tmp_path,
-        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+        [{"doc_id": "d", "span_id": "s1", "title_cleaned": "References",
           "structural_class": "bibliography",
           "structural_rule_fired": "reference-list",
           "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"}],
-        [{"doc_id": "d", "section_id": "s1", "structural": True}],
+        [{"doc_id": "d", "span_id": "s1", "structural": True}],
         [sink_row(), second])
     result = gate4_structural(root, labels)
     assert not result.passed
@@ -567,16 +567,16 @@ def test_gate4_reports_precision_without_gating_it(tmp_path):
     """Over-absorption is recoverable; it must be visible, not fatal."""
     root, labels = labelled_run(
         tmp_path,
-        [{"doc_id": "d", "section_id": "s1", "title_cleaned": "References",
+        [{"doc_id": "d", "span_id": "s1", "title_cleaned": "References",
           "structural_class": "bibliography",
           "structural_rule_fired": "reference-list",
           "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"},
-         {"doc_id": "d", "section_id": "s2", "title_cleaned": "Contributions",
+         {"doc_id": "d", "span_id": "s2", "title_cleaned": "Contributions",
           "structural_class": "author-contributions",
           "structural_rule_fired": "author-contributions",
           "row_id_assigned": STRUCTURAL_ROW_ID, "merge_decision": "absorbed"}],
-        [{"doc_id": "d", "section_id": "s1", "structural": True},
-         {"doc_id": "d", "section_id": "s2", "structural": False}],
+        [{"doc_id": "d", "span_id": "s1", "structural": True},
+         {"doc_id": "d", "span_id": "s2", "structural": False}],
         [sink_row()])
     result = gate4_structural(root, labels)
     assert result.passed
@@ -599,7 +599,7 @@ def test_a_run_builds_in_a_partial_directory(tmp_path):
 
 def test_the_swap_happens_only_on_finish(tmp_path):
     log = RunLog.open(tmp_path, timestamp="t", name="current")
-    log.add_section(doc_id="d", section_id="s1")
+    log.add_span(doc_id="d", span_id="s1")
     assert not (tmp_path / "current").exists(), "swapped too early"
     root = finish(log)
     assert root == tmp_path / "current"
@@ -610,12 +610,12 @@ def test_the_swap_happens_only_on_finish(tmp_path):
 def test_the_previous_run_survives_until_a_new_one_completes(tmp_path):
     """The property that matters: output is never absent, only stale."""
     first = RunLog.open(tmp_path, timestamp="t1", name="current")
-    first.add_section(doc_id="d", section_id="s1")
+    first.add_span(doc_id="d", span_id="s1")
     finish(first)
     marker = json.loads((tmp_path / "current" / "manifest.json").read_text())["run_id"]
 
     second = RunLog.open(tmp_path, timestamp="t2", name="current")
-    second.add_section(doc_id="d", section_id="s2")
+    second.add_span(doc_id="d", span_id="s2")
     still = json.loads((tmp_path / "current" / "manifest.json").read_text())["run_id"]
     assert still == marker, "the previous run was destroyed while the next built"
 
@@ -626,12 +626,12 @@ def test_the_previous_run_survives_until_a_new_one_completes(tmp_path):
 
 def test_an_interrupted_run_leaves_the_last_good_one_in_place(tmp_path):
     first = RunLog.open(tmp_path, timestamp="t1", name="current")
-    first.add_section(doc_id="d", section_id="s1")
+    first.add_span(doc_id="d", span_id="s1")
     finish(first)
 
     crashed = RunLog.open(tmp_path, timestamp="t2", name="current")
     crashed.expect(5)
-    crashed.add_section(doc_id="d", section_id="s2")
+    crashed.add_span(doc_id="d", span_id="s2")
     with pytest.raises(IncompleteRun):
         finish(crashed)
     assert (tmp_path / "current" / "manifest.json").exists()
@@ -644,7 +644,7 @@ def test_gate2_does_not_fail_the_ablation_for_being_the_ablation(tmp_path):
     declared rather than failing a baseline for being a baseline."""
     root = written_run(
         tmp_path,
-        [{"doc_id": "d", "section_id": "s1", "title_raw": "References",
+        [{"doc_id": "d", "span_id": "s1", "title_raw": "References",
           "basis_text": "References"}],
         extra={"is_ablation": True})
     assert gate2_basis_text(root).passed
@@ -654,7 +654,7 @@ def test_gate2_does_not_fail_the_ablation_for_being_the_ablation(tmp_path):
 def test_gate2_still_applies_the_title_clause_to_a_real_run(tmp_path):
     root = written_run(
         tmp_path,
-        [{"doc_id": "d", "section_id": "s1", "title_raw": "Dialogue Framework",
+        [{"doc_id": "d", "span_id": "s1", "title_raw": "Dialogue Framework",
           "basis_text": "Dialogue Framework. It fuses multimodal input."}])
     result = gate2_basis_text(root)
     assert not result.passed

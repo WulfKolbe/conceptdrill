@@ -2,7 +2,7 @@
 
 Models asked for JSON return *nearly* JSON. Four defect classes account for
 almost all of it, and each is worth repairing rather than discarding a whole
-section's summary:
+span's summary:
 
   1. markdown fences        ```json ... ```
   2. raw LaTeX backslashes  "\\sum" is not a legal JSON escape -- the dominant
@@ -15,7 +15,7 @@ Repairs are attempted in increasing order of aggression, and clean JSON is
 parsed untouched, so a well-behaved reply is never mangled by a repair it did
 not need.
 
-This module is pure: text in, dict out. It knows nothing about HTTP, sections,
+This module is pure: text in, dict out. It knows nothing about HTTP, markers,
 or files. The approach follows `~/Gemma4/gemmatester.parse_objects`, which was
 built against the same models.
 """
@@ -126,7 +126,7 @@ def parse_reply(text: str) -> Optional[dict[str, Any]]:
     """The first JSON object in a model reply, or None.
 
     Returns a dict even when the model wrapped its answer in a list, because
-    every caller here wants one object per section.
+    every caller here wants one object per span.
     """
     body = strip_fences(text)
     if not body:

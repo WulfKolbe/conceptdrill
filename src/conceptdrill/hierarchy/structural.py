@@ -1,18 +1,18 @@
 r"""Dimension zero: telling document furniture from subject matter.
 
-A reference list, a funding statement and a numbered box are all sections, and
+A reference list, a funding statement and a numbered box are all markers, and
 none of them is a concept. Left in the basis they become rows — the previous
 corpus build merged `4 URDF Framework` with `References` — and every row they
 occupy is a CES coordinate that means nothing.
 
-Sections classified here are **absorbed into the reserved structural row**,
+Markers classified here are **absorbed into the reserved structural row**,
 bypassing the similarity threshold entirely. They never compete for a concept
 row and never create one.
 
 ## Deterministic and rule-based, not model-driven
 
-This is a closed vocabulary. A model asked "is this section structural?" would
-be unauditable, non-reproducible, and would cost an API call per section to
+This is a closed vocabulary. A model asked "is this span structural?" would
+be unauditable, non-reproducible, and would cost an API call per span to
 answer a question a lookup table answers exactly. Every classification names
 the rule that fired, so a disputed one can be argued about.
 
@@ -122,14 +122,14 @@ PREFIX_RULES: tuple[tuple[str, str, str], ...] = (
     ("supplementary", "supplementary", "supplementary"),
 )
 
-#: A numbered float that the drill surfaced as a section: `Box 12`, `Figure 3`.
+#: A numbered float that the drill surfaced as a span: `Box 12`, `Figure 3`.
 #: These carry a caption, not a topic.
 FLOAT_PATTERN = re.compile(
     r"^(box|figure|fig|table|tab|listing|algorithm|alg|equation|eq|scheme|plate)"
     r"\s*\.?\s*\d+[a-z]?$")
 
-#: Drill artifacts that are not sections at all: `#1` is a LaTeX macro
-#: parameter that reached the section list, and a title of only digits or
+#: Drill artifacts that are not markers at all: `#1` is a LaTeX macro
+#: parameter that reached the span list, and a title of only digits or
 #: punctuation names nothing.
 ARTIFACT_PATTERN = re.compile(r"^(#\d+|\d+(\.\d+)*|[^\w]+)$")
 
@@ -144,7 +144,7 @@ _UMLAUT = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss",
 
 
 def normalise_title(title: str) -> str:
-    """Fold a section title to its comparison form.
+    """Fold a marker title to its comparison form.
 
     Lowercased, umlauts transliterated, accents stripped, leading ordinal and
     trailing punctuation removed, whitespace collapsed. `7. REFERENCES` and
@@ -160,7 +160,7 @@ def normalise_title(title: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def classify_section(title: str, *, is_appendix: bool = False
+def classify_marker(title: str, *, is_appendix: bool = False
                      ) -> tuple[Optional[str], Optional[str]]:
     """`(structural_class, rule_fired)`, or `(None, None)` for content.
 
@@ -173,7 +173,7 @@ def classify_section(title: str, *, is_appendix: bool = False
     normalised = normalise_title(title)
 
     if not normalised:
-        return "untitled", "untitled-section"
+        return "untitled", "untitled-span"
     if ARTIFACT_PATTERN.match(normalised):
         return "artifact", "drill-artifact"
     if FLOAT_PATTERN.match(normalised):
@@ -193,4 +193,4 @@ def classify_section(title: str, *, is_appendix: bool = False
 
 
 def is_structural(title: str, *, is_appendix: bool = False) -> bool:
-    return classify_section(title, is_appendix=is_appendix)[0] is not None
+    return classify_marker(title, is_appendix=is_appendix)[0] is not None

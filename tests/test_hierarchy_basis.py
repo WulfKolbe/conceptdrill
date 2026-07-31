@@ -190,7 +190,7 @@ def test_document_integration_records_the_document():
 
 
 def test_candidate_order_within_a_document_is_normalised():
-    """Otherwise the basis depends on section ordering, which nobody intended."""
+    """Otherwise the basis depends on span ordering, which nobody intended."""
     a = ConceptBasis(tau=0.9)
     a.integrate_document("d", [(2, "B", E2), (2, "A", E1)])
     b = ConceptBasis(tau=0.9)

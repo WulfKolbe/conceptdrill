@@ -3,24 +3,24 @@
 A run that reports only aggregates cannot be checked afterwards. Row counts,
 merge rates and basis sizes are all derived numbers; when one of them looks
 wrong there is no way back to the text that produced it. This module writes the
-inputs and the per-section decisions alongside the totals, so every number in a
+inputs and the per-span decisions alongside the totals, so every number in a
 report has a line of JSON behind it.
 
     run-<timestamp>-<git-sha>/
         manifest.json    what produced this run: code, models, environment
-        sections.jsonl   one line per section IN THE INPUT TREE, skips included
-        basis.json       the rows, each naming the sections that built it
+        spans.jsonl   one line per span IN THE INPUT TREE, skips included
+        basis.json       the rows, each naming the markers that built it
 
 Two properties are enforced in code rather than left to the caller:
 
 * **Every field is present on every record.** `null` is a measurement (the
-  section had no label); a missing key is an unanswered question. `section_record`
-  builds each line from `SECTION_FIELDS` exactly, so a typo raises instead of
+  span had no label); a missing key is an unanswered question. `span_record`
+  builds each line from `SPAN_FIELDS` exactly, so a typo raises instead of
   silently producing a record with a hole in it.
 
-* **Every section in the tree gets a line.** Skipped, failed and absorbed
-  sections are recorded with a reason. `RunLog.finish` refuses to write when the
-  line count and the tree's section count disagree, because a run that cannot
+* **Every span in the tree gets a line.** Skipped, failed and absorbed
+  markers are recorded with a reason. `RunLog.finish` refuses to write when the
+  line count and the tree's span count disagree, because a run that cannot
   account for its input is not evidence.
 """
 from __future__ import annotations
@@ -38,15 +38,16 @@ from typing import Any, Iterable, Mapping, Optional, Sequence
 FORMAT = "conceptdrill.hierarchy.run"
 FORMAT_VERSION = 1
 
-#: Every key on every `sections.jsonl` line, in write order. The contract.
+#: Every key on every `spans.jsonl` line, in write order. The contract.
 #:
-#: One line per section still, so gate 1 can assert that every input section
-#: appears exactly once. But the CONCEPT, not the section, is the unit that
-#: becomes a basis row: a section defining three ideas yields three vectors.
+#: One line per SPAN. A span is the content between one section marker and the
+#: next marker at any level -- the unit that is summarised and embedded. A
+#: marker never carries text; it opens a span. But the CONCEPT, not the span, is the unit that
+#: becomes a basis row: a span defining three ideas yields three vectors.
 #: Everything that is a property of a concept lives in `concepts`, and
-#: everything that is a property of the section stays here.
-SECTION_FIELDS: tuple[str, ...] = (
-    "doc_id", "section_id", "level", "flow_index", "is_appendix",
+#: everything that is a property of the span stays here.
+SPAN_FIELDS: tuple[str, ...] = (
+    "doc_id", "span_id", "marker_id", "level", "flow_index", "is_appendix",
     "title_raw", "title_cleaned", "cleaning_rules_fired",
     "structural_class", "structural_rule_fired",
     "derivation", "own_text_chars",
@@ -54,9 +55,9 @@ SECTION_FIELDS: tuple[str, ...] = (
     "warnings", "error",
 )
 
-#: Every key on every entry of a section's `concepts` list.
+#: Every key on every entry of a span's `concepts` list.
 #:
-#: Same rule as `SECTION_FIELDS`: unknown keys raise, missing keys become null.
+#: Same rule as `SPAN_FIELDS`: unknown keys raise, missing keys become null.
 #: A concept is what gets embedded, integrated and counted, so this is where
 #: the embedding and merge decisions live.
 CONCEPT_FIELDS: tuple[str, ...] = (
@@ -74,7 +75,7 @@ MANIFEST_FIELDS: tuple[str, ...] = (
     "summarizer_class", "embedder_backend", "embedder_resolved_revision",
     "nlp_backend", "caption_cleaner_tier", "mathtext_source_counts",
     "tau", "git_sha", "git_dirty", "gemm_check_result", "torch_threads",
-    "blas_build", "strict_mode", "corpus_paths", "section_count", "doc_count",
+    "blas_build", "strict_mode", "corpus_paths", "span_count", "doc_count",
 )
 
 #: Manifest keys a run may never leave unanswered. A null here means the run
@@ -85,22 +86,22 @@ MANIFEST_REQUIRED: tuple[str, ...] = (
 
 #: `merge_decision` vocabulary.
 #:
-#: `absorbed` is distinct from `not_integrated` on purpose: a section absorbed
+#: `absorbed` is distinct from `not_integrated` on purpose: a span absorbed
 #: into the reserved structural row *was* processed and *did* reach the basis,
 #: it simply did not become a concept. Collapsing the two would make it
 #: impossible to tell dimension zero from a pipeline failure.
 MERGE_DECISIONS = frozenset({"added", "merged", "absorbed", "skipped",
                              "not_integrated"})
 
-#: Where a section's summarised text came from.
+#: Where a span's summarised text came from.
 #:
 #: `own_text` -- the paragraphs belonging to this heading and no deeper one.
-#: That is the unit: given `\section{A} P0 \subsection{B} P1 \subsection{C} P2`
+#: That is the unit: given `\span{A} P0 \subsection{B} P1 \subsection{C} P2`
 #: there are three units, A's own P0 plus B plus C, and A is not P0+P1+P2.
 #:
 #: `empty` -- a heading running straight into its first subsection, with no
 #: paragraphs of its own. Nothing to summarise; a title is not a concept. It is
-#: recorded rather than dropped, because a run must account for every section.
+#: recorded rather than dropped, because a run must account for every span.
 DERIVATIONS = frozenset({"own_text", "empty"})
 
 
@@ -213,7 +214,7 @@ def blas_build() -> dict[str, Any]:
 # --------------------------------------------------------------------------
 
 def concept_record(**values: Any) -> dict[str, Any]:
-    """One entry of a section's `concepts` list: exactly `CONCEPT_FIELDS`."""
+    """One entry of a span's `concepts` list: exactly `CONCEPT_FIELDS`."""
     unknown = set(values) - set(CONCEPT_FIELDS)
     if unknown:
         raise KeyError(f"not part of the concept record contract: "
@@ -225,16 +226,16 @@ def concept_record(**values: Any) -> dict[str, Any]:
     return {name: values.get(name) for name in CONCEPT_FIELDS}
 
 
-def section_record(**values: Any) -> dict[str, Any]:
-    """One `sections.jsonl` line: exactly `SECTION_FIELDS`, nothing else.
+def span_record(**values: Any) -> dict[str, Any]:
+    """One `spans.jsonl` line: exactly `SPAN_FIELDS`, nothing else.
 
     Unknown keys raise. Missing keys become `None`. This is what makes "null is
     allowed, absent is not" a property of the code rather than a convention the
     caller is asked to remember.
     """
-    unknown = set(values) - set(SECTION_FIELDS)
+    unknown = set(values) - set(SPAN_FIELDS)
     if unknown:
-        raise KeyError(f"not part of the section record contract: "
+        raise KeyError(f"not part of the span record contract: "
                        f"{sorted(unknown)}")
 
     derivation = values.get("derivation")
@@ -250,7 +251,7 @@ def section_record(**values: Any) -> dict[str, Any]:
         concepts = [concept_record(**dict(c)) for c in concepts]
         values = {**values, "concepts": concepts,
                   "concept_count": values.get("concept_count", len(concepts))}
-    return {name: values.get(name) for name in SECTION_FIELDS}
+    return {name: values.get(name) for name in SPAN_FIELDS}
 
 
 @dataclass
@@ -263,7 +264,7 @@ class RunLog:
     #: Where `root` is renamed to on a successful finish. None means write in
     #: place. See `open` for why this exists.
     final_root: Optional[Path] = None
-    _sections: list[dict[str, Any]] = field(default_factory=list)
+    _spans: list[dict[str, Any]] = field(default_factory=list)
     _expected: int = 0
 
     @classmethod
@@ -299,16 +300,16 @@ class RunLog:
     # ---- accumulation ---------------------------------------------------
 
     def expect(self, n: int) -> None:
-        """Declare how many sections the input tree holds. Checked at write."""
+        """Declare how many markers the input tree holds. Checked at write."""
         self._expected += int(n)
 
-    def add_section(self, **values: Any) -> dict[str, Any]:
-        record = section_record(**values)
-        self._sections.append(record)
+    def add_span(self, **values: Any) -> dict[str, Any]:
+        record = span_record(**values)
+        self._spans.append(record)
         return record
 
     def __len__(self) -> int:
-        return len(self._sections)
+        return len(self._spans)
 
     # ---- writing --------------------------------------------------------
 
@@ -323,19 +324,19 @@ class RunLog:
         """Write the three files. Raises when the run cannot account for itself."""
         from .captions import caption_cleaner_tier
 
-        if self._expected and len(self._sections) != self._expected:
+        if self._expected and len(self._spans) != self._expected:
             raise IncompleteRun(
-                f"{len(self._sections)} section records for {self._expected} "
-                f"sections in the input trees; a run that drops sections is "
+                f"{len(self._spans)} span records for {self._expected} "
+                f"markers in the input trees; a run that drops markers is "
                 f"not auditable")
 
         seen: dict[tuple[Any, Any], int] = {}
-        for rec in self._sections:
-            key = (rec["doc_id"], rec["section_id"])
+        for rec in self._spans:
+            key = (rec["doc_id"], rec["span_id"])
             seen[key] = seen.get(key, 0) + 1
         duplicates = sorted(k for k, n in seen.items() if n > 1)
         if duplicates:
-            raise IncompleteRun(f"duplicate section records: {duplicates[:5]}")
+            raise IncompleteRun(f"duplicate span records: {duplicates[:5]}")
 
         sha, dirty = git_state(repo)
         gemm = gemm_state()
@@ -362,7 +363,7 @@ class RunLog:
             # job is to say that no guessing happened.
             "strict_mode": strict_mode if isinstance(strict_mode, bool) else None,
             "corpus_paths": list(corpus_paths),
-            "section_count": len(self._sections),
+            "span_count": len(self._spans),
             "doc_count": int(doc_count),
         }
         if extra:
@@ -377,8 +378,8 @@ class RunLog:
             json.dumps(manifest, indent=2, ensure_ascii=False, default=str) + "\n",
             encoding="utf-8")
 
-        with (self.root / "sections.jsonl").open("w", encoding="utf-8") as fh:
-            for rec in self._sections:
+        with (self.root / "spans.jsonl").open("w", encoding="utf-8") as fh:
+            for rec in self._spans:
                 fh.write(json.dumps(rec, ensure_ascii=False, default=str) + "\n")
 
         (self.root / "basis.json").write_text(

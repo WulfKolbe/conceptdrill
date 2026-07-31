@@ -1,7 +1,7 @@
 """The self-adapting cross-document concept basis.
 
-Each document contributes one candidate vector per section, embedded from that
-section's `label` tier. Candidates are integrated into a shared basis one at a
+Each document contributes one candidate vector per span, embedded from that
+span's `label` tier. Candidates are integrated into a shared basis one at a
 time, per level:
 
     j = argmax cosine(v, M_L)
@@ -151,7 +151,7 @@ class IntegrationResult:
 STRUCTURAL_ROW_ID = "row_structural_sink"
 
 #: The sink sits below every real level so it always sorts to index 0.
-#: `read_sections` coerces a missing or zero level to 1, so 0 cannot collide.
+#: `read_markers` coerces a missing or zero level to 1, so 0 cannot collide.
 STRUCTURAL_LEVEL = 0
 
 
@@ -161,7 +161,7 @@ class ConceptBasis:
 
     `rows` holds concept rows only. The structural sink is kept separately so
     that no size statistic can accidentally include it: a basis of 106 concepts
-    plus a sink is 106 concepts, and reporting 107 makes every rows-per-section
+    plus a sink is 106 concepts, and reporting 107 makes every rows-per-span
     figure wrong by one.
     """
 
@@ -237,7 +237,7 @@ class ConceptBasis:
 
     def absorb_structural(self, label: str, vector, *, document: str = "",
                           rule: str = "") -> IntegrationResult:
-        """Absorb a structural section into row 0, bypassing tau entirely.
+        """Absorb a structural span into row 0, bypassing tau entirely.
 
         No similarity comparison is made, because the question "how close is
         this reference list to that reference list?" has no bearing on whether
@@ -321,7 +321,7 @@ class ConceptBasis:
         """Integrate one document's candidates as `(level, label, vector)`.
 
         Candidates are sorted by `(level, canonical label)` first: within a
-        document the arrival order would otherwise depend on section ordering,
+        document the arrival order would otherwise depend on span ordering,
         making the basis depend on something no one intended.
         """
         ordered = sorted(candidates, key=lambda c: (c[0], canonical_label(c[1])))
@@ -369,7 +369,7 @@ def similarity_profile(vector_sets: Sequence[np.ndarray]) -> dict[str, Any]:
     The two distributions answer different questions. Within-set similarity is
     how much a single document repeats itself; cross-set similarity is how much
     two documents genuinely share. A threshold that ignores the difference
-    either collapses one document's sections or never merges anything.
+    either collapses one document's markers or never merges anything.
     """
     sets = [np.asarray(v, dtype=np.float64) for v in vector_sets
             if getattr(v, "size", 0)]

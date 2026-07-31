@@ -1,1392 +1,1565 @@
 {
   "note": "Hand labels for GATE 4, judged from section titles BEFORE the rule vocabulary in hierarchy/structural.py was written, so recall is not circular. Structural = document furniture rather than subject matter: front/back matter, metadata blocks, reference lists, publisher-required statements, appendices, float containers and drill artifacts. Abstract is content. Judgement calls are recorded in the assumptions section of the step 4 report.",
   "run": "run-20260730T183311Z-5ceff28",
-  "sections": 173,
   "structural": 37,
   "labels": [
     {
       "doc_id": "0049",
-      "section_id": "obj_0bd26652ac31",
       "title": "1 Introduction",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_0bd26652ac31",
+      "span_id": "obj_0bd26652ac31"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_f612133471eb",
       "title": "2 Related Work",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_f612133471eb",
+      "span_id": "obj_f612133471eb"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_e7e24a769b04",
       "title": "3 Dialogue System Framework",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_e7e24a769b04",
+      "span_id": "obj_e7e24a769b04"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_09fa359a3eb5",
       "title": "4 URDF Framework",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_09fa359a3eb5",
+      "span_id": "obj_09fa359a3eb5"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_e6e6c959e850",
       "title": "4.1 Representation Model and Expressiveness",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_e6e6c959e850",
+      "span_id": "obj_e6e6c959e850"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_6e42fa1e4d6f",
       "title": "4.2 Reasoning Framework",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_6e42fa1e4d6f",
+      "span_id": "obj_6e42fa1e4d6f"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_61842957460f",
       "title": "5 Example Dialogue",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_61842957460f",
+      "span_id": "obj_61842957460f"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_211268522228",
       "title": "6 Conclusion",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_211268522228",
+      "span_id": "obj_211268522228"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_5f16cc237ef9",
       "title": "Acknowledgments",
       "level": 1,
       "structural": true,
-      "reason": "back matter: acknowledgements"
+      "reason": "back matter: acknowledgements",
+      "marker_id": "obj_5f16cc237ef9",
+      "span_id": "obj_5f16cc237ef9"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_54e2b56cb585",
       "title": "References",
       "level": 1,
       "structural": true,
-      "reason": "back matter: reference list"
+      "reason": "back matter: reference list",
+      "marker_id": "obj_54e2b56cb585",
+      "span_id": "obj_54e2b56cb585"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_32c421fa1539",
       "title": "Keywords",
       "level": 1,
       "structural": true,
-      "reason": "front matter: metadata block"
+      "reason": "front matter: metadata block",
+      "marker_id": "obj_32c421fa1539",
+      "span_id": "obj_32c421fa1539"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_21aa95abfaac",
       "title": "Team Name",
       "level": 1,
       "structural": true,
-      "reason": "front matter: metadata block"
+      "reason": "front matter: metadata block",
+      "marker_id": "obj_21aa95abfaac",
+      "span_id": "obj_21aa95abfaac"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_f10cbece5559",
       "title": "Subtasks",
       "level": 1,
       "structural": true,
-      "reason": "front matter: NTCIR metadata block"
+      "reason": "front matter: NTCIR metadata block",
+      "marker_id": "obj_f10cbece5559",
+      "span_id": "obj_f10cbece5559"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_d6b8e6319a1b",
       "title": "1. INTRODUCTION",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_d6b8e6319a1b",
+      "span_id": "obj_d6b8e6319a1b"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_230305020759",
       "title": "2. RELATED WORK",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_230305020759",
+      "span_id": "obj_230305020759"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_7696f397c09a",
       "title": "3. APPROACH",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_7696f397c09a",
+      "span_id": "obj_7696f397c09a"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_01e9d1077dc5",
       "title": "4. FEATURE DESIGN",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_01e9d1077dc5",
+      "span_id": "obj_01e9d1077dc5"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_60ecf0789027",
       "title": "4.1 Surface Features",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_60ecf0789027",
+      "span_id": "obj_60ecf0789027"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_8d99eb98ea78",
       "title": "4.2 Lexical Features",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_8d99eb98ea78",
+      "span_id": "obj_8d99eb98ea78"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_1e5091b7f30a",
       "title": "4.3 Temporal Features",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_1e5091b7f30a",
+      "span_id": "obj_1e5091b7f30a"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_1e07b7bbba49",
       "title": "Publication Time",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_1e07b7bbba49",
+      "span_id": "obj_1e07b7bbba49"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_fd697bfa9032",
       "title": "Content Time",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_fd697bfa9032",
+      "span_id": "obj_fd697bfa9032"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_43a820c13768",
       "title": "Publication + Content Time",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_43a820c13768",
+      "span_id": "obj_43a820c13768"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_b0a051e6eab9",
       "title": "Events",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_b0a051e6eab9",
+      "span_id": "obj_b0a051e6eab9"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_75c79c3fa0bf",
       "title": "Temporal Dictionary",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_75c79c3fa0bf",
+      "span_id": "obj_75c79c3fa0bf"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_0339195e1f3b",
       "title": "4.4 Linguistic Features",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_0339195e1f3b",
+      "span_id": "obj_0339195e1f3b"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_53d7892a48c8",
       "title": "4.5 Topical Features",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_53d7892a48c8",
+      "span_id": "obj_53d7892a48c8"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_6c41b8521d98",
       "title": "4.6 Other Features",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_6c41b8521d98",
+      "span_id": "obj_6c41b8521d98"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_83763168b056",
       "title": "5. EXPERIMENTS",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_83763168b056",
+      "span_id": "obj_83763168b056"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_03e1c4c6f160",
       "title": "5.1 Cross Validation",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_03e1c4c6f160",
+      "span_id": "obj_03e1c4c6f160"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_6d714f38ed95",
       "title": "Discussion",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_6d714f38ed95",
+      "span_id": "obj_6d714f38ed95"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_fbc60b9912d8",
       "title": "5.2 Formal Run",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_fbc60b9912d8",
+      "span_id": "obj_fbc60b9912d8"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_bdfcce424230",
       "title": "6. CONCLUSIONS",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_bdfcce424230",
+      "span_id": "obj_bdfcce424230"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_eec316078fa4",
       "title": "7. REFERENCES",
       "level": 1,
       "structural": true,
-      "reason": "back matter: reference list"
+      "reason": "back matter: reference list",
+      "marker_id": "obj_eec316078fa4",
+      "span_id": "obj_eec316078fa4"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_9ae8aa5eda44",
       "title": "1 Introduction",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_9ae8aa5eda44",
+      "span_id": "obj_9ae8aa5eda44"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_604ec32fec02",
       "title": "2 Architecture",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_604ec32fec02",
+      "span_id": "obj_604ec32fec02"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_ec67cc138fad",
       "title": "2.1 Local Search in a Community",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_ec67cc138fad",
+      "span_id": "obj_ec67cc138fad"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_9885f565463c",
       "title": "2.2 Comprehensive Search across Multiple Communities",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_9885f565463c",
+      "span_id": "obj_9885f565463c"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_afea0ec3eea5",
       "title": "3 Workflow",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_afea0ec3eea5",
+      "span_id": "obj_afea0ec3eea5"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_c5478afa9327",
       "title": "3.1 Information Extraction",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_c5478afa9327",
+      "span_id": "obj_c5478afa9327"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_7f4eef7442e5",
       "title": "3.2 Federated Search",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_7f4eef7442e5",
+      "span_id": "obj_7f4eef7442e5"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_70db1aaf26b2",
       "title": "4 Conclusion",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_70db1aaf26b2",
+      "span_id": "obj_70db1aaf26b2"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_1855000beced",
       "title": "References",
       "level": 1,
       "structural": true,
-      "reason": "back matter: reference list"
+      "reason": "back matter: reference list",
+      "marker_id": "obj_1855000beced",
+      "span_id": "obj_1855000beced"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_8e10418181d8",
       "title": "1 Introduction",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_8e10418181d8",
+      "span_id": "obj_8e10418181d8"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_6a9d1a204616",
       "title": "2 Reliable Dependency Discovery",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_6a9d1a204616",
+      "span_id": "obj_6a9d1a204616"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_11c72e69018b",
       "title": "2.1 Specializations and Labeling Homomorphisms",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_11c72e69018b",
+      "span_id": "obj_11c72e69018b"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_36018545c340",
       "title": "2.2 Search Algorithms",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_36018545c340",
+      "span_id": "obj_36018545c340"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_fdf49e3aedb9",
       "title": "3 Hardness of Optimization",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_fdf49e3aedb9",
+      "span_id": "obj_fdf49e3aedb9"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_f83ffb04b97a",
       "title": "4 Refined Bounding Function",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_f83ffb04b97a",
+      "span_id": "obj_f83ffb04b97a"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_f375ba4e24b6",
       "title": "5 Evaluation",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_f375ba4e24b6",
+      "span_id": "obj_f375ba4e24b6"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_57119b70fbb1",
       "title": "5.1 Branch-and-bound",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_57119b70fbb1",
+      "span_id": "obj_57119b70fbb1"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_b59a3efe786e",
       "title": "5.2 Greedy",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_b59a3efe786e",
+      "span_id": "obj_b59a3efe786e"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_a1e99d460800",
       "title": "6 Conclusion",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_a1e99d460800",
+      "span_id": "obj_a1e99d460800"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_00570ceb4078",
       "title": "References",
       "level": 1,
       "structural": true,
-      "reason": "back matter: reference list"
+      "reason": "back matter: reference list",
+      "marker_id": "obj_00570ceb4078",
+      "span_id": "obj_00570ceb4078"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_95c50ca4c84c",
       "title": "ARTICLE INFO",
       "level": 1,
       "structural": true,
-      "reason": "front matter: publisher metadata"
+      "reason": "front matter: publisher metadata",
+      "marker_id": "obj_95c50ca4c84c",
+      "span_id": "obj_95c50ca4c84c"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_5dcbe99242ea",
       "title": "Keywords:",
       "level": 1,
       "structural": true,
-      "reason": "front matter: metadata block"
+      "reason": "front matter: metadata block",
+      "marker_id": "obj_5dcbe99242ea",
+      "span_id": "obj_5dcbe99242ea"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_4fb030ce13f8",
       "title": "1. Introduction",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_4fb030ce13f8",
+      "span_id": "obj_4fb030ce13f8"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_cad3bc37d2b0",
       "title": "2. Related work",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_cad3bc37d2b0",
+      "span_id": "obj_cad3bc37d2b0"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_0fa26ba03d32",
       "title": "2.1. Comparison with preprocessing approach utilized by SOTorrent to",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_0fa26ba03d32",
+      "span_id": "obj_0fa26ba03d32"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_5afb27b8e6c4",
       "title": "2.1.1. Shared problem space",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_5afb27b8e6c4",
+      "span_id": "obj_5afb27b8e6c4"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_62384e9f7949",
       "title": "2.1.2. Divergent design objectives",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_62384e9f7949",
+      "span_id": "obj_62384e9f7949"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_11a7293a6b98",
       "title": "2.1.3. Schema design",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_11a7293a6b98",
+      "span_id": "obj_11a7293a6b98"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_00d10bb32a18",
       "title": "2.1.4. Data volume and recency",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_00d10bb32a18",
+      "span_id": "obj_00d10bb32a18"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_0e43608fb135",
       "title": "2.1.5. Choice of relational database management system (DBMS)",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_0e43608fb135",
+      "span_id": "obj_0e43608fb135"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_0506dc9fc7f9",
       "title": "2.1.6. Data ingestion methodology",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_0506dc9fc7f9",
+      "span_id": "obj_0506dc9fc7f9"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_aa209f2f9aef",
       "title": "2.1.7. Scalability under dataset growth",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_aa209f2f9aef",
+      "span_id": "obj_aa209f2f9aef"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_32060dd30848",
       "title": "2.1.8. Potential use cases",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_32060dd30848",
+      "span_id": "obj_32060dd30848"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_c3ec4920723f",
       "title": "3. Methods",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_c3ec4920723f",
+      "span_id": "obj_c3ec4920723f"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_4f6968147df9",
       "title": "3.1. Procedural steps involved",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_4f6968147df9",
+      "span_id": "obj_4f6968147df9"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_daa579b9bce1",
       "title": "3.2. Programming languages, tools and operating system used",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_daa579b9bce1",
+      "span_id": "obj_daa579b9bce1"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_016b1d4dcb11",
       "title": "3.3. Database management system",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_016b1d4dcb11",
+      "span_id": "obj_016b1d4dcb11"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_ab0d6e67bc8e",
       "title": "3.4. Procedure",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_ab0d6e67bc8e",
+      "span_id": "obj_ab0d6e67bc8e"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_323046c959cc",
       "title": "3.4.2. Chunking the large XML files to smaller chunks",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_323046c959cc",
+      "span_id": "obj_323046c959cc"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_c8caa443c279",
       "title": "3.4.3. Converting the generated chunks to valid XML files",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_c8caa443c279",
+      "span_id": "obj_c8caa443c279"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_acd39b76dd82",
       "title": "3.4.4. Database and tables creation in MS SQL Server",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_acd39b76dd82",
+      "span_id": "obj_acd39b76dd82"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_1fbbcf57088c",
       "title": "Box 1",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_1fbbcf57088c",
+      "span_id": "obj_1fbbcf57088c"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_e9ccb7d63071",
       "title": "3.4.5. Reading data from small XML files and inserting it into database",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_e9ccb7d63071",
+      "span_id": "obj_e9ccb7d63071"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_c7c3ba300e17",
       "title": "4. Design rationale",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_c7c3ba300e17",
+      "span_id": "obj_c7c3ba300e17"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_26c79cf26eb5",
       "title": "4.1. Operating system (Windows)",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_26c79cf26eb5",
+      "span_id": "obj_26c79cf26eb5"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_76c17decd808",
       "title": "4.2. Database management system (MS SQL Server)",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_76c17decd808",
+      "span_id": "obj_76c17decd808"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_b1c8244dda88",
       "title": "Box 5",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_b1c8244dda88",
+      "span_id": "obj_b1c8244dda88"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_489badd90948",
       "title": "4.3. Programming language (Python)",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_489badd90948",
+      "span_id": "obj_489badd90948"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_eceed81e3c89",
       "title": "4.4. Git bash",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_eceed81e3c89",
+      "span_id": "obj_eceed81e3c89"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_7909599df731",
       "title": "Box 6",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_7909599df731",
+      "span_id": "obj_7909599df731"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_06042d124fb0",
       "title": "Box 7",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_06042d124fb0",
+      "span_id": "obj_06042d124fb0"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_515cf3d3458d",
       "title": "Box 8",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_515cf3d3458d",
+      "span_id": "obj_515cf3d3458d"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_405942adec27",
       "title": "Box 9",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_405942adec27",
+      "span_id": "obj_405942adec27"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_96cbbd5b87b5",
       "title": "4.5. Split by lines (instead of split by bytes)",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_96cbbd5b87b5",
+      "span_id": "obj_96cbbd5b87b5"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_c8250de6b1de",
       "title": "Box 10",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_c8250de6b1de",
+      "span_id": "obj_c8250de6b1de"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_6f1f79000f4b",
       "title": "Box 12",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_6f1f79000f4b",
+      "span_id": "obj_6f1f79000f4b"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_3131264986ef",
       "title": "4.6. Separate databases corresponding to each XML file",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_3131264986ef",
+      "span_id": "obj_3131264986ef"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_25668991d42c",
       "title": "4.7. Anaconda Distribution",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_25668991d42c",
+      "span_id": "obj_25668991d42c"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_949a63a9b444",
       "title": "4.8. Chunk size",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_949a63a9b444",
+      "span_id": "obj_949a63a9b444"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_53a7776268c7",
       "title": "4.9. Addition of automatically incremented primary key",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_53a7776268c7",
+      "span_id": "obj_53a7776268c7"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_dd68fe82c64d",
       "title": "4.10. Step by step procedure (instead of fully automated tool)",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_dd68fe82c64d",
+      "span_id": "obj_dd68fe82c64d"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_5edbab0ca7fb",
       "title": "5. Results and discussion",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_5edbab0ca7fb",
+      "span_id": "obj_5edbab0ca7fb"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_dcff29d93809",
       "title": "5.1. System specifications and software versions",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_dcff29d93809",
+      "span_id": "obj_dcff29d93809"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_49c6f874af31",
       "title": "5.2. Performance",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_49c6f874af31",
+      "span_id": "obj_49c6f874af31"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_9ab5643c85ab",
       "title": "5.3. Portability",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_9ab5643c85ab",
+      "span_id": "obj_9ab5643c85ab"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_9bcd00b688e9",
       "title": "5.4. Scalability",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_9bcd00b688e9",
+      "span_id": "obj_9bcd00b688e9"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_2b66821cd6fd",
       "title": "5.5. Ensuring data quality",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_2b66821cd6fd",
+      "span_id": "obj_2b66821cd6fd"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_11ddeef67eed",
       "title": "5.6. Troubleshooting",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_11ddeef67eed",
+      "span_id": "obj_11ddeef67eed"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_83570253cfe8",
       "title": "5.7. Cross site validation to extend the approach beyond Stack Overflow",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_83570253cfe8",
+      "span_id": "obj_83570253cfe8"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_b9afdf18a2c0",
       "title": "5.8. Limitations and future improvements",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_b9afdf18a2c0",
+      "span_id": "obj_b9afdf18a2c0"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_aeaee1260a50",
       "title": "6. Conclusions",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_aeaee1260a50",
+      "span_id": "obj_aeaee1260a50"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_ae3630ef7966",
       "title": "CRediT authorship contribution statement",
       "level": 1,
       "structural": true,
-      "reason": "back matter: author contributions"
+      "reason": "back matter: author contributions",
+      "marker_id": "obj_ae3630ef7966",
+      "span_id": "obj_ae3630ef7966"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_22a07cdaf600",
       "title": "Box 15",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_22a07cdaf600",
+      "span_id": "obj_22a07cdaf600"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_5f82fb8e7ea1",
       "title": "Box 16",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_5f82fb8e7ea1",
+      "span_id": "obj_5f82fb8e7ea1"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_0b56ba792cb0",
       "title": "Box 17",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_0b56ba792cb0",
+      "span_id": "obj_0b56ba792cb0"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_1cb05363f31d",
       "title": "Box 18",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_1cb05363f31d",
+      "span_id": "obj_1cb05363f31d"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_c6b2253d6218",
       "title": "Box 19",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_c6b2253d6218",
+      "span_id": "obj_c6b2253d6218"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_8afb2809ea9e",
       "title": "Box 20",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_8afb2809ea9e",
+      "span_id": "obj_8afb2809ea9e"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_f8dacb6e7097",
       "title": "Box 21",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_f8dacb6e7097",
+      "span_id": "obj_f8dacb6e7097"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_361396e17830",
       "title": "Box 22",
       "level": 1,
       "structural": true,
-      "reason": "float container: a numbered box, not a topic"
+      "reason": "float container: a numbered box, not a topic",
+      "marker_id": "obj_361396e17830",
+      "span_id": "obj_361396e17830"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_fa5c432ee913",
       "title": "Ethical statement",
       "level": 1,
       "structural": true,
-      "reason": "back matter: ethics statement"
+      "reason": "back matter: ethics statement",
+      "marker_id": "obj_fa5c432ee913",
+      "span_id": "obj_fa5c432ee913"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_d3bcf3f6e52d",
       "title": "Funding",
       "level": 1,
       "structural": true,
-      "reason": "back matter: funding"
+      "reason": "back matter: funding",
+      "marker_id": "obj_d3bcf3f6e52d",
+      "span_id": "obj_d3bcf3f6e52d"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_0ef2ad179457",
       "title": "Declaration of competing interest",
       "level": 1,
       "structural": true,
-      "reason": "back matter: competing interests"
+      "reason": "back matter: competing interests",
+      "marker_id": "obj_0ef2ad179457",
+      "span_id": "obj_0ef2ad179457"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_bd18b8b6aab9",
       "title": "Appendix. Additional Details",
       "level": 1,
       "structural": true,
-      "reason": "back matter: appendix"
+      "reason": "back matter: appendix",
+      "marker_id": "obj_bd18b8b6aab9",
+      "span_id": "obj_bd18b8b6aab9"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_2ba0a5a399b3",
       "title": "Data availability",
       "level": 1,
       "structural": true,
-      "reason": "back matter: data availability"
+      "reason": "back matter: data availability",
+      "marker_id": "obj_2ba0a5a399b3",
+      "span_id": "obj_2ba0a5a399b3"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_2e514f58c7cb",
       "title": "References",
       "level": 1,
       "structural": true,
-      "reason": "back matter: reference list"
+      "reason": "back matter: reference list",
+      "marker_id": "obj_2e514f58c7cb",
+      "span_id": "obj_2e514f58c7cb"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_4fde8ccf3ac1",
       "title": "1 Introduction",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_4fde8ccf3ac1",
+      "span_id": "obj_4fde8ccf3ac1"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_eef3e0b58a28",
       "title": "2 Related Work",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_eef3e0b58a28",
+      "span_id": "obj_eef3e0b58a28"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_d33095d3dcc0",
       "title": "3 Multimodal document retrieval",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_d33095d3dcc0",
+      "span_id": "obj_d33095d3dcc0"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_054c0207ed61",
       "title": "3.1 Data, Knowledge and Features",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_054c0207ed61",
+      "span_id": "obj_054c0207ed61"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_be6190d40f90",
       "title": "3.2 Language Models for Ranking",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_be6190d40f90",
+      "span_id": "obj_be6190d40f90"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_eb91ac15d6a2",
       "title": "Basic LM:",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_eb91ac15d6a2",
+      "span_id": "obj_eb91ac15d6a2"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_a13b4cf34290",
       "title": "Smoothed LM:",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_a13b4cf34290",
+      "span_id": "obj_a13b4cf34290"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_96bc0755b98d",
       "title": "3.3 Feature Weights",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_96bc0755b98d",
+      "span_id": "obj_96bc0755b98d"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_21e168150b1b",
       "title": "3.4 Example",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_21e168150b1b",
+      "span_id": "obj_21e168150b1b"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_b77e34190467",
       "title": "4 Datasets",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_b77e34190467",
+      "span_id": "obj_b77e34190467"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_0ce2ac58cae9",
       "title": "5 Experiments",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_0ce2ac58cae9",
+      "span_id": "obj_0ce2ac58cae9"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_4e9186acf32b",
       "title": "6 Conclusion",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_4e9186acf32b",
+      "span_id": "obj_4e9186acf32b"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_7b9a3f81a132",
       "title": "References",
       "level": 1,
       "structural": true,
-      "reason": "back matter: reference list"
+      "reason": "back matter: reference list",
+      "marker_id": "obj_7b9a3f81a132",
+      "span_id": "obj_7b9a3f81a132"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_b85382223721",
       "title": "Introduction",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_b85382223721",
+      "span_id": "obj_b85382223721"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_4772af8ef165",
       "title": "Preliminaries",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_4772af8ef165",
+      "span_id": "obj_4772af8ef165"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_dcad37e157ad",
       "title": "Interval Indexing",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_dcad37e157ad",
+      "span_id": "obj_dcad37e157ad"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_806a81afc02d",
       "title": "Approximate Intervals",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_806a81afc02d",
+      "span_id": "obj_806a81afc02d"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_ea27a30d9ba4",
       "title": "The Ferrari Reachability Index",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_ea27a30d9ba4",
+      "span_id": "obj_ea27a30d9ba4"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_76710069dfb5",
       "title": "Computing the Optimal Interval Cover",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_76710069dfb5",
+      "span_id": "obj_76710069dfb5"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_6b27f425a2cd",
       "title": "Index Construction",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_6b27f425a2cd",
+      "span_id": "obj_6b27f425a2cd"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_9eb30fa8eeb7",
       "title": "Dynamic Budget Allocation",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_9eb30fa8eeb7",
+      "span_id": "obj_9eb30fa8eeb7"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_e156d057b6ef",
       "title": "Query Processing and Additional Heuristics",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_e156d057b6ef",
+      "span_id": "obj_e156d057b6ef"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_9cf5c82f93da",
       "title": "Seed Based Pruning",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_9cf5c82f93da",
+      "span_id": "obj_9cf5c82f93da"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_65623a9f362f",
       "title": "Pruning Based on Topological Properties",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_65623a9f362f",
+      "span_id": "obj_65623a9f362f"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_60512bc406ca",
       "title": "Related Work",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_60512bc406ca",
+      "span_id": "obj_60512bc406ca"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_e3038b0d9f1a",
       "title": "Direct Reachability Indices",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_e3038b0d9f1a",
+      "span_id": "obj_e3038b0d9f1a"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_f68550530a71",
       "title": "Accelerating Online Search",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_f68550530a71",
+      "span_id": "obj_f68550530a71"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_58acbb7431ca",
       "title": "Experimental Evaluation",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_58acbb7431ca",
+      "span_id": "obj_58acbb7431ca"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_02a76b1891f8",
       "title": "Setup",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_02a76b1891f8",
+      "span_id": "obj_02a76b1891f8"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_063e3e43adbd",
       "title": "Methodology",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_063e3e43adbd",
+      "span_id": "obj_063e3e43adbd"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_c4f38213f109",
       "title": "Datasets",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_c4f38213f109",
+      "span_id": "obj_c4f38213f109"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_75c07005e6ac",
       "title": "Results over Benchmark Graphs",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_75c07005e6ac",
+      "span_id": "obj_75c07005e6ac"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_50ec71fd7067",
       "title": "Evaluation over Web Datasets",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_50ec71fd7067",
+      "span_id": "obj_50ec71fd7067"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_4ea2b746e500",
       "title": "Conclusions & Outlook",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_4ea2b746e500",
+      "span_id": "obj_4ea2b746e500"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_186496f803e7",
       "title": "Additional Experimental Results",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_186496f803e7",
+      "span_id": "obj_186496f803e7"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_b0f3ddd65fdd",
       "title": "Benchmark Datasets",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_b0f3ddd65fdd",
+      "span_id": "obj_b0f3ddd65fdd"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_6851ccc2dbb2",
       "title": "Web Datasets",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_6851ccc2dbb2",
+      "span_id": "obj_6851ccc2dbb2"
     },
     {
       "doc_id": "1310.4843",
-      "section_id": "obj_da9c7e8aca70",
       "title": "Definitions",
       "level": 2,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_da9c7e8aca70",
+      "span_id": "obj_da9c7e8aca70"
     },
     {
       "doc_id": "1310.4843",
-      "section_id": "obj_68f4af7b64a0",
       "title": "Notation",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_68f4af7b64a0",
+      "span_id": "obj_68f4af7b64a0"
     },
     {
       "doc_id": "1310.4843",
-      "section_id": "obj_e677696e9d8f",
       "title": "Ranks and Factorizations",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_e677696e9d8f",
+      "span_id": "obj_e677696e9d8f"
     },
     {
       "doc_id": "1310.4843",
-      "section_id": "obj_d955d12e4b23",
       "title": "Blocks, Convex Hulls, and Factorizations",
       "level": 3,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_d955d12e4b23",
+      "span_id": "obj_d955d12e4b23"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_ce167bc49e8a",
       "title": "Information on the",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_ce167bc49e8a",
+      "span_id": "obj_ce167bc49e8a"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_2e413a8342c3",
       "title": "Introduction",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_2e413a8342c3",
+      "span_id": "obj_2e413a8342c3"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_a3d44a547b23",
       "title": "Your Invoice",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_a3d44a547b23",
+      "span_id": "obj_a3d44a547b23"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_7bb07bf854e1",
       "title": "Table understanding in",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_7bb07bf854e1",
+      "span_id": "obj_7bb07bf854e1"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_165d7bdaa603",
       "title": "More on the data and the annotated structured documents",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_165d7bdaa603",
+      "span_id": "obj_165d7bdaa603"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_02126402e64d",
       "title": "A brief exploration of",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_02126402e64d",
+      "span_id": "obj_02126402e64d"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_2af228a6512b",
       "title": "Using similarity methods",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_2af228a6512b",
+      "span_id": "obj_2af228a6512b"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_bd7eef2aae18",
       "title": "Experimental results of the similarity-based architectures",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_bd7eef2aae18",
+      "span_id": "obj_bd7eef2aae18"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_b97312d9b571",
       "title": "Conclusion",
       "level": 1,
       "structural": false,
-      "reason": ""
+      "reason": "",
+      "marker_id": "obj_b97312d9b571",
+      "span_id": "obj_b97312d9b571"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_6a8c0b730391",
       "title": "Bibliography",
       "level": 1,
       "structural": true,
-      "reason": "back matter: reference list"
+      "reason": "back matter: reference list",
+      "marker_id": "obj_6a8c0b730391",
+      "span_id": "obj_6a8c0b730391"
     },
     {
       "doc_id": "1406.3411",
-      "section_id": "obj_92086bf8b40a",
       "title": "#1",
       "level": 2,
       "structural": true,
-      "reason": "drill artifact: a LaTeX macro parameter, not a section"
+      "reason": "drill artifact: a LaTeX macro parameter, not a section",
+      "marker_id": "obj_92086bf8b40a",
+      "span_id": "obj_92086bf8b40a"
     },
     {
       "doc_id": "1406.3411",
-      "section_id": "obj_ce2782d1ff76",
       "title": "#1",
       "level": 3,
       "structural": true,
-      "reason": "drill artifact: a LaTeX macro parameter, not a section"
+      "reason": "drill artifact: a LaTeX macro parameter, not a section",
+      "marker_id": "obj_ce2782d1ff76",
+      "span_id": "obj_ce2782d1ff76"
     }
-  ]
+  ],
+  "spans": 173
 }

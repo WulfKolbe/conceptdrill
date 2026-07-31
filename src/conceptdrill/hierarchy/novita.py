@@ -21,7 +21,7 @@ from typing import Callable, Optional
 
 from .replyparse import control_corruption, parse_reply
 from .sanitize import sanitize_summary_fields
-from .summarize import SectionSummary, load_prompt
+from .summarize import SpanSummary, load_prompt
 
 DEFAULT_MODEL = "inclusionai/ling-3.0-flash"
 DEFAULT_BASE_URL = "https://api.novita.ai/v3/openai"
@@ -30,7 +30,7 @@ DEFAULT_BASE_URL = "https://api.novita.ai/v3/openai"
 #: a single-threaded run comfortably underneath without needing a token bucket.
 DEFAULT_MIN_INTERVAL = 2.2
 
-#: Chars of section body sent to the model. Enough for a long section, short
+#: Chars of span body sent to the model. Enough for a long span, short
 #: enough to stay cheap; the model is asked for the concept, not a précis.
 #: Model limits, read from the provider rather than assumed.
 #:
@@ -42,13 +42,13 @@ DEFAULT_MIN_INTERVAL = 2.2
 MODEL_CONTEXT_TOKENS = 262_144
 MODEL_MAX_OUTPUT_TOKENS = 32_768
 
-#: Characters of section body handed to the model.
+#: Characters of span body handed to the model.
 #:
 #: MEASURED. This was 6000 -- roughly 2000 tokens against a 262144-token
 #: context, so 0.8% of what the model can read. Across the 10-document arXiv
-#: corpus it silently discarded 172,494 characters from 39 of 203 sections;
-#: the largest section is 26,831 characters and 78% of it never reached the
-#: model. Sections were being summarised from their opening pages.
+#: corpus it silently discarded 172,494 characters from 39 of 203 markers;
+#: the largest span is 26,831 characters and 78% of it never reached the
+#: model. Markers were being summarised from their opening pages.
 #:
 #: 200,000 characters is about 65,000 tokens, which leaves the full output
 #: budget and most of the context free while still bounding a pathological
@@ -59,13 +59,13 @@ DEFAULT_MAX_BODY = 200_000
 #:
 #: MEASURED, not guessed. `inclusionai/ling-3.0-flash` reasons at length before
 #: emitting JSON, and it counts label words aloud because the prompt asks for a
-#: word budget. At 900 and at 2000 every probed section returned reasoning with
+#: word budget. At 900 and at 2000 every probed span returned reasoning with
 #: no JSON at all; at 4000 two of three completed. 8000 was still not enough:
-#: 5 of 203 sections in the arXiv corpus hit it and raised TruncatedReply.
+#: 5 of 203 markers in the arXiv corpus hit it and raised TruncatedReply.
 #:
 #: A ceiling costs nothing unspent -- billing is on tokens produced -- so there
 #: is no reason to sit below the provider's limit and convert a long reply into
-#: a failed section.
+#: a failed span.
 DEFAULT_MAX_TOKENS = MODEL_MAX_OUTPUT_TOKENS
 
 #: How much the model may think before answering.
@@ -73,8 +73,8 @@ DEFAULT_MAX_TOKENS = MODEL_MAX_OUTPUT_TOKENS
 #: `client.models.list()` reports `features: [..., 'reasoning']` for
 #: inclusionai/ling-3.0-flash, and reasoning tokens are spent from the SAME
 #: completion budget as the answer. That is what the max_tokens ladder was
-#: really fighting: at 900, 2000 and 4000 every probed section returned
-#: reasoning and no JSON, and at 8000 five of 203 sections still hit the wall
+#: really fighting: at 900, 2000 and 4000 every probed span returned
+#: reasoning and no JSON, and at 8000 five of 203 markers still hit the wall
 #: (see TruncatedReply in the arXiv corpus). Raising the ceiling treats the
 #: symptom; capping the reasoning treats the cause.
 #:
@@ -207,7 +207,7 @@ class Throttle:
     """Minimum interval between calls.
 
     A plain gate rather than a token bucket: the rate limit is per-minute and
-    the workload is a couple of dozen sections, so spacing calls evenly is both
+    the workload is a couple of dozen markers, so spacing calls evenly is both
     sufficient and easier to reason about.
     """
 
@@ -272,17 +272,17 @@ class NovitaSummarizer:
         """The user message, and how many characters of body were dropped.
 
         Returned rather than discarded. Cutting the input silently is how a
-        section came to be summarised from its opening pages with nothing in
+        span came to be summarised from its opening pages with nothing in
         the record to say so.
         """
         text = body or ""
         dropped = max(0, len(text) - self.max_body)
         return f"TITLE: {title}\n\nBODY:\n{text[:self.max_body]}", dropped
 
-    def summarize(self, section_id: str, title: str, body: str) -> SectionSummary:
-        """One section. Failures are returned as a record, never raised.
+    def summarize(self, span_id: str, title: str, body: str) -> SpanSummary:
+        """One span. Failures are returned as a record, never raised.
 
-        A single unreachable section must not abort a corpus build, so the
+        A single unreachable span must not abort a corpus build, so the
         error travels with the summary and the caller decides what to do.
         """
         self.throttle.wait()
@@ -290,41 +290,41 @@ class NovitaSummarizer:
         body_warnings = ()
         if dropped:
             body_warnings = (f"input truncated: {dropped} characters of the "
-                             f"section body were not sent (max_body="
+                             f"span body were not sent (max_body="
                              f"{self.max_body})",)
         try:
             reply = self._chat(self.prompt, user)
         except Exception as exc:
-            return SectionSummary(
-                section_id=section_id, title=title, model=self.model,
+            return SpanSummary(
+                span_id=span_id, title=title, model=self.model,
                 deterministic=False, warnings=body_warnings,
                 error=f"{type(exc).__name__}: {exc}")
 
         parsed = parse_reply(reply)
         if isinstance(parsed, dict) and isinstance(parsed.get("concepts"), list):
             # One entry per concept. The first is the dominant one and becomes
-            # this SectionSummary; the rest travel in `siblings` so a caller
+            # this SpanSummary; the rest travel in `siblings` so a caller
             # that wants every concept gets them and one that does not is
             # unaffected.
             entries = [e for e in parsed["concepts"] if isinstance(e, dict)]
             if entries:
-                built = [self._build(section_id, title, e, body_warnings)
+                built = [self._build(span_id, title, e, body_warnings)
                          for e in entries]
                 head, rest = built[0], tuple(built[1:])
                 return replace(head, siblings=rest) if rest else head
             parsed = None
         if not parsed:
-            return SectionSummary(
-                section_id=section_id, title=title, model=self.model,
+            return SpanSummary(
+                span_id=span_id, title=title, model=self.model,
                 deterministic=False,
                 error="reply was not JSON",
                 warnings=(f"raw reply: {(reply or '')[:200]}",))
 
-        return self._build(section_id, title, parsed, body_warnings)
+        return self._build(span_id, title, parsed, body_warnings)
 
-    def _build(self, section_id: str, title: str, parsed: dict,
-               body_warnings: tuple = ()) -> SectionSummary:
-        """One concept entry to a `SectionSummary`, sanitised and checked."""
+    def _build(self, span_id: str, title: str, parsed: dict,
+               body_warnings: tuple = ()) -> SpanSummary:
+        """One concept entry to a `SpanSummary`, sanitised and checked."""
         raw_values = {tier: str(parsed.get(tier) or "").strip() for tier in TIERS}
 
         warnings: list[str] = list(body_warnings)
@@ -344,13 +344,13 @@ class NovitaSummarizer:
         values, sanitize_warnings = sanitize_summary_fields(raw_values)
         warnings.extend(sanitize_warnings)
         if not any(values.values()):
-            return SectionSummary(
-                section_id=section_id, title=title, model=self.model,
+            return SpanSummary(
+                span_id=span_id, title=title, model=self.model,
                 deterministic=False, error="reply contained no tier text",
                 warnings=tuple(warnings))
 
-        return SectionSummary(
-            section_id=section_id, title=title,
+        return SpanSummary(
+            span_id=span_id, title=title,
             summary=values["summary"], abstraction=values["abstraction"],
             label=values["label"], model=self.model, deterministic=False,
             warnings=tuple(warnings))

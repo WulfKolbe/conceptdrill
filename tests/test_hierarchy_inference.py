@@ -33,10 +33,10 @@ def basis():
 
 def records_and_vectors():
     recs = [
-        {"sentence_id": "s0", "text": "about alpha", "section_id": "sec1",
+        {"sentence_id": "s0", "text": "about alpha", "span_id": "sec1",
          "document": "doc1",
          "top_concepts": [{"label": "alpha concept", "similarity": 0.9}]},
-        {"sentence_id": "s1", "text": "about beta", "section_id": "sec2",
+        {"sentence_id": "s1", "text": "about beta", "span_id": "sec2",
          "document": "doc2",
          "top_concepts": [{"label": "beta concept", "similarity": 0.9}]},
     ]

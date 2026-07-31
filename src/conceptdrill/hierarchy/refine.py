@@ -18,7 +18,7 @@ This is **different from `basis.py`**, which merges concepts across documents.
 Refinement grows one space downward through a hierarchy; merging fuses spaces
 sideways across a corpus. Both are useful; only this one is from the paper.
 
-## The siblings score is degenerate on a section tree
+## The siblings score is degenerate on a marker tree
 
     sibscore(p, c) = mean over s in siblings(c,p) of
                      |parents(c) & parents(s)| / |parents(c)|
@@ -26,7 +26,7 @@ sideways across a corpus. Both are useful; only this one is from the paper.
 The paper needed this because Wikipedia's category edges are unlabelled and a
 concept has **many** parents, so the overlap says how tightly a child belongs to
 its sibling group. Measured across the 334 drilled documents: **0 of 8695
-sections have more than one parent**. In a tree every sibling shares the single
+markers have more than one parent**. In a tree every sibling shares the single
 parent, every term is |{p}|/|{p}| = 1, and the score is always exactly 1 — it
 cannot rank anything.
 
@@ -54,13 +54,13 @@ DEFAULT_LAMBDA = 1.0
 class ConceptGraph:
     """The ontology Algorithm 2 walks: `G = (V, E)` with depth.
 
-    Deliberately not tied to a section tree. The paper uses Wikipedia
-    categories, this project uses section hierarchies, and a caller may bring
+    Deliberately not tied to a marker tree. The paper uses Wikipedia
+    categories, this project uses span hierarchies, and a caller may bring
     anything with parents, children and a depth.
     """
 
     #: concept id -> its children, in a meaningful order (document order, for
-    #: a section tree). Order is preserved and used as the sibscore tie-break.
+    #: a marker tree). Order is preserved and used as the sibscore tie-break.
     children: dict[str, tuple[str, ...]] = field(default_factory=dict)
     #: concept id -> its parents. A SET in general: an ontology is a DAG.
     parents: dict[str, tuple[str, ...]] = field(default_factory=dict)
@@ -71,7 +71,7 @@ class ConceptGraph:
 
     @classmethod
     def from_section_tree(cls, tree) -> "ConceptGraph":
-        """Build from a `SectionTree`. Children keep document order."""
+        """Build from a `MarkerTree`. Children keep document order."""
         children, parents, labels, depth = {}, {}, {}, {}
         for node in tree.iter_document_order():
             children[node.id] = tuple(node.children)

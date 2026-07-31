@@ -52,7 +52,7 @@ class Point:
     y: float
     label: str = ""
     group: str = ""
-    #: Free-form, e.g. document, section, top concept, similarity.
+    #: Free-form, e.g. document, span, top concept, similarity.
     meta: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -276,7 +276,7 @@ def layout_projections(projections: Sequence[Any], *, backend: str = "pca",
         ids=[p.sentence_id for p in usable],
         labels=[p.text[:80] for p in usable],
         groups=[p.best.label if p.best else "" for p in usable],
-        meta=[{"section_id": p.section_id,
+        meta=[{"span_id": p.span_id,
                "document": document_of(p) if document_of else "",
                "top_similarity": p.best.similarity if p.best else 0.0,
                "margin": p.margin} for p in usable],

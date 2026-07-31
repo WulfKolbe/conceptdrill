@@ -6,9 +6,9 @@
 Runs land in `~/conceptdrill-corpus-llm/current/` by default. Not /tmp: a
 measurement that a reboot can delete is not a record of anything.
 
-Writes `run-<timestamp>-<git-sha>/` per `hierarchy/runlog.py`. Every section in
-every input tree gets a line in `sections.jsonl`, including sections that were
-never summarised and sections that never reached the basis — a run that cannot
+Writes `run-<timestamp>-<git-sha>/` per `hierarchy/runlog.py`. Every span in
+every input tree gets a line in `spans.jsonl`, including spans that were
+never summarised and spans that never reached the basis — a run that cannot
 account for its input is not evidence.
 
 This is the persistence layer only. Input cleaning, tier independence and the
@@ -37,7 +37,7 @@ from conceptdrill.hierarchy.captions import clean_caption_traced  # noqa: E402
 from conceptdrill.hierarchy.docmodel_tree import load_tree        # noqa: E402
 from conceptdrill.hierarchy.runlog import (RunLog,                 # noqa: E402
                                            concept_record)
-from conceptdrill.hierarchy.structural import classify_section    # noqa: E402
+from conceptdrill.hierarchy.structural import classify_marker    # noqa: E402
 from conceptdrill.hierarchy.summarize import (SummaryCache,  # noqa: E402
                                               TitleOnlySummarizer,
                                               check_tier_independence,
@@ -76,7 +76,7 @@ def make_summarizer(kind: str, llm_model: str):
 
 
 def _error_for(summary, basis_text) -> str | None:
-    """Why this section has no basis vector, or None when it has one."""
+    """Why this span has no basis vector, or None when it has one."""
     if summary is None:
         return "no summary produced"
     if summary.error:
@@ -84,7 +84,7 @@ def _error_for(summary, basis_text) -> str | None:
     if not summary.is_usable:
         return "summary produced no usable tier text"
     if basis_text is not None and not basis_text.text:
-        return "cleaning left no text: the section was entirely markup"
+        return "cleaning left no text: the span was entirely markup"
     return None
 
 
@@ -145,7 +145,7 @@ def main() -> int:
         bibkey = path.parent.name
         tree = load_tree(path)
         if not len(tree):
-            continue                       # no sections: nothing to account for
+            continue                       # no spans: nothing to account for
         docs_done += 1
         used_paths.append(str(path))
         for source, n in (tree.math_sources or {}).items():
@@ -159,7 +159,7 @@ def main() -> int:
 
         # Every concept's basis text goes through the one cleaner, whether or
         # not it reaches the basis, so `cleaning_rules_fired` is populated for
-        # concepts that were later dropped. The CONCEPT is the unit: a section
+        # concepts that were later dropped. The CONCEPT is the unit: a span
         # defining three ideas contributes three candidates, not one blend.
         cleaned: dict[tuple[str, int], object] = {}
         for node in nodes:
@@ -173,11 +173,11 @@ def main() -> int:
                     concept.basis_text,
                     title="" if is_ablation else node.title_raw)
 
-        # Dimension zero. Classified before embedding so a structural section
+        # Dimension zero. Classified before embedding so a structural span
         # never competes for a concept row, whatever it looks like in vector
         # space.
         classes: dict[str, tuple] = {
-            node.id: classify_section(node.title,
+            node.id: classify_marker(node.title,
                                       is_appendix=node.is_appendix)
             for node in nodes}
 
@@ -257,9 +257,14 @@ def main() -> int:
                               + [f"tier: {d}" for d in degenerate]),
                     error=_error_for(concept, basis_text)))
 
-            log.add_section(
+            log.add_span(
                 doc_id=bibkey,
-                section_id=node.id,
+                # One marker opens exactly one span, so the ids coincide today.
+                # They are separate fields because they are separate things:
+                # the marker is a DocModel object that never carries text, the
+                # span is the content it opens.
+                span_id=node.id,
+                marker_id=node.id,
                 level=node.level,
                 flow_index=node.flow_index,
                 is_appendix=node.is_appendix,
@@ -288,8 +293,8 @@ def main() -> int:
              "structural": r.row_id == STRUCTURAL_ROW_ID,
              "level": r.level, "documents": list(r.documents),
              "contributing_concepts": sorted(
-                 f"{rec['section_id']}#{c['concept_index']}"
-                 for rec in log._sections for c in (rec["concepts"] or [])
+                 f"{rec['span_id']}#{c['concept_index']}"
+                 for rec in log._spans for c in (rec["concepts"] or [])
                  if c["row_id_assigned"] == r.row_id)}
             for r in basis.ordered_rows()]
 
@@ -312,7 +317,7 @@ def main() -> int:
                "basis_stats": basis.stats()})
 
     stats = basis.stats()
-    print(f"sections: {len(log)}  documents: {docs_done}  "
+    print(f"spans: {len(log)}  documents: {docs_done}  "
           f"concept rows: {stats['rows']}  "
           f"(+1 structural sink, support {(stats['structural_row'] or {}).get('support', 0)})")
     print(f"run -> {root}")

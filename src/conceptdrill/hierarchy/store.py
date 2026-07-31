@@ -10,7 +10,7 @@ convention, so a later tool finds it by looking where everything else is.
         model.docpack.json
         model.ces.json          <- written here
 
-**Per-document only.** The section tree and its summaries belong to one
+**Per-document only.** The marker tree and its summaries belong to one
 document. The cross-document basis matrix does not: it is a property of a
 corpus, not of any single drill folder, and writing it into one would make that
 folder silently authoritative for all the others. It gets a separate corpus
@@ -91,7 +91,7 @@ def build_payload(tree, summaries: Optional[Mapping[str, Any]] = None, *,
                   created_at: str = "") -> dict[str, Any]:
     """Assemble this document's CES artefact.
 
-    The section tree is stored in full: rebuilding it is cheap, but a consumer
+    The marker tree is stored in full: rebuilding it is cheap, but a consumer
     that only wants the concepts should not have to re-parse the docmodel and
     re-derive a hierarchy the DocModel does not actually store.
     """
@@ -118,7 +118,7 @@ def build_payload(tree, summaries: Optional[Mapping[str, Any]] = None, *,
         "bibkey": tree.bibkey,
         "source": source_fingerprint(tree.source_path) if tree.source_path else {},
         "created_at": created_at,
-        "section_tree": {"stats": tree.stats(), "nodes": nodes,
+        "marker_tree": {"stats": tree.stats(), "nodes": nodes,
                          "roots": list(tree.roots),
                          "orphan_paragraph_ids": [p.id for p in tree.orphans]},
     }
@@ -203,12 +203,12 @@ def save(tree, summaries=None, *, summary_stats=None, created_at: str = "",
 
     registered = None
     if register_capability and docmodel_path:
-        stats = payload.get("section_tree", {}).get("stats", {})
+        stats = payload.get("marker_tree", {}).get("stats", {})
         registered = _sidecar.register(
             docmodel_path, ces_path=target,
             params=dict(params or {}),
             evidence={
-                "sections": stats.get("sections"),
+                "markers": stats.get("markers"),
                 "paragraphs": stats.get("paragraphs"),
                 "summaries": len(payload.get("summaries") or {}),
                 "content_hash": payload.get("content_hash"),

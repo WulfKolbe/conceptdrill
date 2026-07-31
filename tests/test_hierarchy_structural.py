@@ -1,6 +1,6 @@
 """Dimension zero: the classifier, and the reserved row it feeds.
 
-The recall-side tests are the ones that matter. A structural section that
+The recall-side tests are the ones that matter. A structural span that
 reaches a concept row contaminates every coordinate derived from it, and unlike
 an over-absorbed concept that damage is invisible in the record afterwards.
 """
@@ -14,7 +14,7 @@ import pytest
 
 from conceptdrill.hierarchy.basis import (STRUCTURAL_LEVEL, STRUCTURAL_ROW_ID,
                                           ConceptBasis)
-from conceptdrill.hierarchy.structural import (classify_section, is_structural,
+from conceptdrill.hierarchy.structural import (classify_marker, is_structural,
                                                normalise_title)
 
 REPO = Path(__file__).resolve().parents[1]
@@ -82,7 +82,7 @@ def test_a_single_letter_ordinal_needs_punctuation_to_be_stripped(raw, want):
     ("Subtasks", "metadata-block"),
 ])
 def test_structural_titles_are_classified(title, expected_class):
-    assert classify_section(title)[0] == expected_class
+    assert classify_marker(title)[0] == expected_class
 
 
 @pytest.mark.parametrize("title", [
@@ -92,7 +92,7 @@ def test_structural_titles_are_classified(title, expected_class):
     "Datasets", "Results over Benchmark Graphs",
 ])
 def test_content_titles_are_left_alone(title):
-    assert classify_section(title) == (None, None)
+    assert classify_marker(title) == (None, None)
 
 
 def test_abstract_is_content_not_structural():
@@ -106,27 +106,27 @@ def test_abstract_is_content_not_structural():
 @pytest.mark.parametrize("title", ["Box 1", "Box 12", "Figure 3", "Table 4",
                                    "Listing 2", "Algorithm 5"])
 def test_numbered_floats_are_absorbed(title):
-    assert classify_section(title) == ("float", "float-container")
+    assert classify_marker(title) == ("float", "float-container")
 
 
 def test_a_float_word_with_a_real_topic_is_not_a_float():
     """`Table understanding in documents` is a topic, not a table."""
-    assert classify_section("Table understanding in documents") == (None, None)
+    assert classify_marker("Table understanding in documents") == (None, None)
 
 
 @pytest.mark.parametrize("title", ["#1", "#12", "3.4.2"])
 def test_drill_artifacts_are_absorbed(title):
-    assert classify_section(title) == ("artifact", "drill-artifact")
+    assert classify_marker(title) == ("artifact", "drill-artifact")
 
 
 def test_a_title_of_only_punctuation_normalises_away_to_untitled():
     """`---` is not an artifact with a name; it has no name at all."""
-    assert classify_section("---") == ("untitled", "untitled-section")
+    assert classify_marker("---") == ("untitled", "untitled-span")
 
 
 def test_an_untitled_section_is_absorbed_rather_than_embedded():
-    assert classify_section("") == ("untitled", "untitled-section")
-    assert classify_section("   ") == ("untitled", "untitled-section")
+    assert classify_marker("") == ("untitled", "untitled-span")
+    assert classify_marker("   ") == ("untitled", "untitled-span")
 
 
 @pytest.mark.parametrize("title", ["Appendix", "Appendix A", "Appendix. Additional Details",
@@ -135,20 +135,20 @@ def test_an_untitled_section_is_absorbed_rather_than_embedded():
 def test_appendix_prefixes_are_absorbed(title):
     """`Appendix. Additional Details` keeps its period through normalisation;
     a space-based prefix test missed it."""
-    assert classify_section(title)[0] == "appendix"
+    assert classify_marker(title)[0] == "appendix"
 
 
 def test_the_docmodel_flag_is_a_safety_net():
-    """False on all 173 sections of the measured corpus, so it must not be the
+    """False on all 173 spans of the measured corpus, so it must not be the
     only path -- but it must still work."""
-    assert classify_section("Measurements", is_appendix=True) == \
+    assert classify_marker("Measurements", is_appendix=True) == \
         ("appendix", "docmodel-is-appendix")
-    assert classify_section("Measurements", is_appendix=False) == (None, None)
+    assert classify_marker("Measurements", is_appendix=False) == (None, None)
 
 
 def test_every_classification_names_a_rule():
     for title in ["References", "Box 1", "#1", "", "Appendix A", "Keywords"]:
-        structural_class, rule = classify_section(title)
+        structural_class, rule = classify_marker(title)
         assert structural_class and rule, title
 
 
@@ -162,7 +162,7 @@ def test_recall_against_the_hand_labels_is_one():
     vocabulary edit cannot quietly lose a category."""
     labels = json.loads(LABELS.read_text())["labels"]
     missed = [l["title"] for l in labels
-              if l["structural"] and classify_section(l["title"])[0] is None]
+              if l["structural"] and classify_marker(l["title"])[0] is None]
     assert missed == []
 
 
@@ -172,7 +172,7 @@ def test_precision_is_reported_not_asserted_at_one():
     is visible rather than silent."""
     labels = json.loads(LABELS.read_text())["labels"]
     fp = [l["title"] for l in labels
-          if not l["structural"] and classify_section(l["title"])[0] is not None]
+          if not l["structural"] and classify_marker(l["title"])[0] is not None]
     assert len(fp) <= 5, f"over-absorption grew: {fp}"
 
 

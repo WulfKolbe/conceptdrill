@@ -114,7 +114,7 @@ class Sentence:
     """One projectable unit, with enough provenance to trace it back."""
     id: str
     text: str
-    section_id: Optional[str]
+    span_id: Optional[str]
     #: Id of the paragraph or formula this came from.
     source_id: str = ""
     #: Position within the document, then within the source.
@@ -137,7 +137,7 @@ def sentences_from_tree(tree, *, levels: Optional[set[int]] = None,
 
     Orphan paragraphs are included by default. They are front matter — usually
     the abstract — which is some of the most concept-dense text in a paper, and
-    excluding it because no section owns it would be a poor trade.
+    excluding it because no span owns it would be a poor trade.
     """
     out: list[Sentence] = []
     seen_sections = set()
@@ -151,7 +151,7 @@ def sentences_from_tree(tree, *, levels: Optional[set[int]] = None,
                 if len(piece) < min_chars:
                     continue
                 out.append(Sentence(
-                    id=f"{para.id}#s{i}", text=piece, section_id=node.id,
+                    id=f"{para.id}#s{i}", text=piece, span_id=node.id,
                     source_id=para.id, flow_index=para.flow_index, ordinal=i))
 
     if include_orphans and levels is None:
@@ -160,7 +160,7 @@ def sentences_from_tree(tree, *, levels: Optional[set[int]] = None,
                 if len(piece) < min_chars:
                     continue
                 out.append(Sentence(
-                    id=f"{para.id}#s{i}", text=piece, section_id=None,
+                    id=f"{para.id}#s{i}", text=piece, span_id=None,
                     source_id=para.id, flow_index=para.flow_index, ordinal=i))
 
     out.sort(key=lambda s: (s.flow_index, s.source_id, s.ordinal))
@@ -176,8 +176,8 @@ def sentence_stats(sentences: Sequence[Sentence]) -> dict[str, Any]:
     return {
         "sentences": len(sentences),
         "sources": len({s.source_id for s in sentences}),
-        "sections": len({s.section_id for s in sentences if s.section_id}),
-        "orphaned": sum(1 for s in sentences if s.section_id is None),
+        "spans": len({s.span_id for s in sentences if s.span_id}),
+        "orphaned": sum(1 for s in sentences if s.span_id is None),
         "words_min": lengths[0],
         "words_median": lengths[len(lengths) // 2],
         "words_max": lengths[-1],

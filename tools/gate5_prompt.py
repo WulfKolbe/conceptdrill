@@ -3,7 +3,7 @@
 
     CONCEPTDRILL_STRICT=1 python3 tools/gate5_prompt.py
 
-Summarises the frozen 20-section fixture and checks the result mechanically.
+Summarises the frozen 20-span fixture and checks the result mechanically.
 Four clauses, all hard:
 
     parse failures                     0
@@ -67,7 +67,7 @@ def main() -> int:
     cache = SummaryCache(args.summary_cache) if args.summary_cache else None
 
     fixture = json.loads(Path(args.fixture).read_text(encoding="utf-8"))
-    wanted = fixture["sections"]
+    wanted = fixture["spans"]
 
     trees: dict[str, object] = {}
     results = []
@@ -79,7 +79,7 @@ def main() -> int:
             trees[doc] = load_tree(Path(args.library) / doc
                                    / "model.docmodel.json")
         tree = trees[doc]
-        node = tree.nodes[entry["section_id"]]
+        node = tree.nodes[entry["marker_id"]]
         title = node.summarizer_title
         body = tree.subtree_text(node.id)
 
@@ -98,7 +98,7 @@ def main() -> int:
         summary_problems = check_summary(summary.summary)
 
         results.append({
-            "doc_id": doc, "section_id": node.id, "title": entry["title"],
+            "doc_id": doc, "span_id": node.id, "title": entry["title"],
             "cached": served_from_cache,
             "parse_failed": bool(summary.error),
             "error": summary.error or None,
@@ -142,7 +142,7 @@ def main() -> int:
 
     report = {
         "gate": "GATE 5 (prompt)", "passed": passed,
-        "model": model, "sections": n,
+        "model": model, "spans": n,
         "prompt_sha256": __import__("hashlib").sha256(
             prompt.encode()).hexdigest()[:16],
         "clauses": {k: {"observed": got, "threshold": want}

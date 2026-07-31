@@ -3,126 +3,146 @@
   "source_run": "run-20260730T185712Z-986b0fb",
   "content_sections_available": 136,
   "count": 20,
-  "sections": [
+  "spans": [
     {
       "doc_id": "0049",
-      "section_id": "obj_0bd26652ac31",
       "title": "1 Introduction",
-      "level": 1
+      "level": 1,
+      "marker_id": "obj_0bd26652ac31",
+      "span_id": "obj_0bd26652ac31"
     },
     {
       "doc_id": "0049",
-      "section_id": "obj_61842957460f",
       "title": "5 Example Dialogue",
-      "level": 1
+      "level": 1,
+      "marker_id": "obj_61842957460f",
+      "span_id": "obj_61842957460f"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_8d99eb98ea78",
       "title": "4.2 Lexical Features",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_8d99eb98ea78",
+      "span_id": "obj_8d99eb98ea78"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_0339195e1f3b",
       "title": "4.4 Linguistic Features",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_0339195e1f3b",
+      "span_id": "obj_0339195e1f3b"
     },
     {
       "doc_id": "03-NTCIR11-TEMPORALIA-BurghartzR",
-      "section_id": "obj_bdfcce424230",
       "title": "6. CONCLUSIONS",
-      "level": 1
+      "level": 1,
+      "marker_id": "obj_bdfcce424230",
+      "span_id": "obj_bdfcce424230"
     },
     {
       "doc_id": "040123",
-      "section_id": "obj_7f4eef7442e5",
       "title": "3.2 Federated Search",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_7f4eef7442e5",
+      "span_id": "obj_7f4eef7442e5"
     },
     {
       "doc_id": "0864",
-      "section_id": "obj_fdf49e3aedb9",
       "title": "3 Hardness of Optimization",
-      "level": 1
+      "level": 1,
+      "marker_id": "obj_fdf49e3aedb9",
+      "span_id": "obj_fdf49e3aedb9"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_cad3bc37d2b0",
       "title": "2. Related work",
-      "level": 1
+      "level": 1,
+      "marker_id": "obj_cad3bc37d2b0",
+      "span_id": "obj_cad3bc37d2b0"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_0506dc9fc7f9",
       "title": "2.1.6. Data ingestion methodology",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_0506dc9fc7f9",
+      "span_id": "obj_0506dc9fc7f9"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_ab0d6e67bc8e",
       "title": "3.4. Procedure",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_ab0d6e67bc8e",
+      "span_id": "obj_ab0d6e67bc8e"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_76c17decd808",
       "title": "4.2. Database management system (MS SQL Server)",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_76c17decd808",
+      "span_id": "obj_76c17decd808"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_949a63a9b444",
       "title": "4.8. Chunk size",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_949a63a9b444",
+      "span_id": "obj_949a63a9b444"
     },
     {
       "doc_id": "1-s2.0-S2590005626001165-main",
-      "section_id": "obj_9bcd00b688e9",
       "title": "5.4. Scalability",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_9bcd00b688e9",
+      "span_id": "obj_9bcd00b688e9"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_eef3e0b58a28",
       "title": "2 Related Work",
-      "level": 1
+      "level": 1,
+      "marker_id": "obj_eef3e0b58a28",
+      "span_id": "obj_eef3e0b58a28"
     },
     {
       "doc_id": "11_Paper",
-      "section_id": "obj_21e168150b1b",
       "title": "3.4 Example",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_21e168150b1b",
+      "span_id": "obj_21e168150b1b"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_806a81afc02d",
       "title": "Approximate Intervals",
-      "level": 2
+      "level": 2,
+      "marker_id": "obj_806a81afc02d",
+      "span_id": "obj_806a81afc02d"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_9cf5c82f93da",
       "title": "Seed Based Pruning",
-      "level": 3
+      "level": 3,
+      "marker_id": "obj_9cf5c82f93da",
+      "span_id": "obj_9cf5c82f93da"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_063e3e43adbd",
       "title": "Methodology",
-      "level": 3
+      "level": 3,
+      "marker_id": "obj_063e3e43adbd",
+      "span_id": "obj_063e3e43adbd"
     },
     {
       "doc_id": "1211.3375",
-      "section_id": "obj_6851ccc2dbb2",
       "title": "Web Datasets",
-      "level": 3
+      "level": 3,
+      "marker_id": "obj_6851ccc2dbb2",
+      "span_id": "obj_6851ccc2dbb2"
     },
     {
       "doc_id": "140105778",
-      "section_id": "obj_a3d44a547b23",
       "title": "Your Invoice",
-      "level": 1
+      "level": 1,
+      "marker_id": "obj_a3d44a547b23",
+      "span_id": "obj_a3d44a547b23"
     }
   ]
 }

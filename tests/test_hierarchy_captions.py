@@ -46,7 +46,7 @@ def test_emph_keeps_its_argument():
 
 def test_inline_math_identifier_is_kept():
     """'the $removeP$ parameter' must not become 'the parameter' — the
-    identifier is the subject of the section."""
+    identifier is the subject of the span."""
     out = clean_caption(REAL_REMOVEP)
     assert "removeP" in out
     assert "$" not in out
@@ -174,7 +174,7 @@ def test_formula_placeholder_becomes_a_word():
 
 
 def test_citation_placeholder_becomes_its_citekey():
-    """The key is real signal: a section citing roberta is partly about it."""
+    """The key is real signal: a span citing roberta is partly about it."""
     out = clean_body_text(REAL_CITATION)
     assert "roberta" in out
     assert "{{" not in out and "REF" not in out

@@ -1,10 +1,10 @@
-"""Build a section tree from a Semantic Compiler `model.docmodel.json`.
+"""Build a marker tree from a Semantic Compiler `model.docmodel.json`.
 
 Verified against `~/pdfdrill-library/2209.00445/`. Three properties of the
 DocModel drive this module, and each cost a debugging session to find:
 
-  * **Section titles live under `props.caption`**, not `props.title`.
-  * **`parent` is `null` on every Section.** The hierarchy is implied by
+  * **Span titles live under `props.caption`**, not `props.title`.
+  * **`parent` is `null` on every Span.** The hierarchy is implied by
     `level` + `flow_index` and must be reconstructed.
   * **Captions carry unresolved LaTeX macros**, cleaned by `captions.py`.
 
@@ -20,11 +20,11 @@ from typing import Any, Optional, Sequence
 from .captions import clean_body_text, clean_caption, lost_macros
 from .mathtext import math_text
 
-SECTION_TYPES = frozenset({"section", "heading"})
+MARKER_TYPES = frozenset({"section", "heading"})
 
 
 @dataclass(frozen=True)
-class RawSection:
+class SectionMarker:
     """One Section object, cleaned but not yet linked into a tree."""
     id: str
     title: str
@@ -41,27 +41,27 @@ class RawSection:
         """True when cleaning cost the title information.
 
         `\\ALG\\ Application` -> `Application` is the real case: the title alone
-        no longer identifies the section, so a summariser should be given the
+        no longer identifies the span, so a summariser should be given the
         raw form as well.
         """
         return bool(self.lost_macros)
 
 
-def read_sections(objects: Sequence[dict[str, Any]]) -> list[RawSection]:
-    """Extract Section records, ordered by `flow_index`.
+def read_markers(objects: Sequence[dict[str, Any]]) -> list[SectionMarker]:
+    """Extract Span records, ordered by `flow_index`.
 
-    Objects without a usable id are skipped — an unidentifiable section cannot
+    Objects without a usable id are skipped — an unidentifiable span cannot
     be linked to paragraphs or referenced by a basis vector.
 
     `flow_index` is the DocModel's document-order key. When absent it falls
     back to the object's position in the input, so ordering stays deterministic
     rather than becoming dict-order dependent.
     """
-    out: list[RawSection] = []
+    out: list[SectionMarker] = []
     for position, obj in enumerate(objects):
         if not isinstance(obj, dict):
             continue
-        if str(obj.get("type") or "").lower() not in SECTION_TYPES:
+        if str(obj.get("type") or "").lower() not in MARKER_TYPES:
             continue
         oid = str(obj.get("id") or "").strip()
         if not oid:
@@ -83,7 +83,7 @@ def read_sections(objects: Sequence[dict[str, Any]]) -> list[RawSection]:
         except (TypeError, ValueError):
             flow = position
 
-        out.append(RawSection(
+        out.append(SectionMarker(
             id=oid,
             title=title,
             title_raw=raw_title,
@@ -98,12 +98,12 @@ def read_sections(objects: Sequence[dict[str, Any]]) -> list[RawSection]:
     return out
 
 
-def link_parents(sections: Sequence[RawSection]) -> dict[str, Optional[str]]:
+def link_parents(markers: Sequence[SectionMarker]) -> dict[str, Optional[str]]:
     """Reconstruct parent links from `level` + document order.
 
-    The DocModel leaves `parent` null on every Section, so the tree is implied
-    rather than stored. Walking sections in `flow_index` order, a section's
-    parent is the nearest preceding section of *strictly lower* level — the
+    The DocModel leaves `parent` null on every Span, so the tree is implied
+    rather than stored. Walking markers in `flow_index` order, a span's
+    parent is the nearest preceding span of *strictly lower* level — the
     standard interpretation of a numbered outline.
 
     Two properties this must respect:
@@ -112,17 +112,17 @@ def link_parents(sections: Sequence[RawSection]) -> dict[str, Optional[str]]:
       then hangs off the L2 rather than becoming a root, because that is where
       it sits in the printed document.
     * **Appendix and body are separate trees.** An appendix subsection must not
-      hang off the last body section merely because it follows it. In the
+      hang off the last body span merely because it follows it. In the
       reference document every appendix entry is L2 so this never fires, but a
       document with appendix subsections would otherwise graft its whole
       appendix onto "Ethics Statement".
 
-    Returns `{section_id: parent_id or None}` for every input section.
+    Returns `{marker_id: parent_id or None}` for every input span.
     """
     parents: dict[str, Optional[str]] = {}
-    stack: list[RawSection] = []
+    stack: list[SectionMarker] = []
 
-    for sec in sections:
+    for sec in markers:
         # Pop until the top is a legal parent: lower level, same tree.
         while stack and (stack[-1].level >= sec.level
                          or stack[-1].is_appendix != sec.is_appendix):
@@ -140,7 +140,7 @@ def link_parents(sections: Sequence[RawSection]) -> dict[str, Optional[str]]:
 #: Across the 10-document set that silently discarded 80 Sidenotes holding
 #: 148,772 characters, 61 Diagrams, 33 Tables, 15 Footnotes and 7 Pictures. In
 #: `0864` alone, 34 of 208 content objects and 25,156 characters never reached
-#: any summariser -- one section, `6 Conclusion`, lost 83% of its text to a
+#: any summariser -- one span, `6 Conclusion`, lost 83% of its text to a
 #: single unread Sidenote.
 #:
 #: `Picture` and `Diagram` read `caption` ONLY. Their `url`, `cdn_url` and
@@ -156,7 +156,7 @@ BODY_PROPS: dict[str, tuple[str, ...]] = {
     "diagram": ("caption",),
 }
 
-#: Object types whose text belongs to the owning section's body.
+#: Object types whose text belongs to the owning span's body.
 BODY_TYPES = frozenset(BODY_PROPS)
 
 #: Types deliberately not read, each with the reason. Recorded per object, not
@@ -200,7 +200,7 @@ _REFERENCE_MIN_ENTRIES = 3
 def reference_tail(text: str) -> int:
     """Offset where a trailing reference list begins, or `len(text)`.
 
-    Drill output merges a section's closing prose with the bibliography that
+    Drill output merges a span's closing prose with the bibliography that
     follows it: one Sidenote in `03-NTCIR11` holds the paper's conclusion and
     then eight numbered references. Dropping the object loses the conclusion;
     keeping it puts author surnames into a concept label. Cutting at the start
@@ -254,10 +254,10 @@ def is_latex_artifact(text: str) -> bool:
 
 @dataclass(frozen=True)
 class Paragraph:
-    """A body text unit, already located within a section."""
+    """A body text unit, already located within a span."""
     id: str
     text: str
-    section_id: Optional[str]
+    marker_id: Optional[str]
     flow_index: int
 
 
@@ -310,7 +310,7 @@ def read_math(objects: Sequence[dict[str, Any]], *,
             flow = position
         out.append(Paragraph(id=str(obj.get("id") or f"math_{position}"),
                              text=text,
-                             section_id=str(parent) if parent else None,
+                             marker_id=str(parent) if parent else None,
                              flow_index=flow))
     out.sort(key=lambda p: (p.flow_index, p.id))
     return out, sources
@@ -320,10 +320,10 @@ def read_content(objects: Sequence[dict[str, Any]]
                  ) -> tuple[list[Paragraph], list[SkippedObject]]:
     """Body text units in document order, plus a reason for everything else.
 
-    `props.parent_section` holds the section id. In the reference document it
+    `props.parent_section` holds the span id. In the reference document it
     is present on 84 of 85 paragraphs; the one without is `flow_index=1`,
-    front matter that precedes the first section. That paragraph gets
-    `section_id=None` rather than being dropped — see `attach_paragraphs`.
+    front matter that precedes the first span. That paragraph gets
+    `marker_id=None` rather than being dropped — see `attach_paragraphs`.
 
     Every object that does not become a `Paragraph` is returned as a
     `SkippedObject` with a reason. Math objects are not skipped here: they go
@@ -345,8 +345,8 @@ def read_content(objects: Sequence[dict[str, Any]]
             continue
         otype = str(obj.get("type") or "").lower()
 
-        if otype in SECTION_TYPES:
-            continue                      # a marker, accounted for as a section
+        if otype in MARKER_TYPES:
+            continue                      # a marker, accounted for as a span
         if otype in MATH_TYPES:
             continue                      # handled by read_math
         if otype in SKIPPED_TYPES:
@@ -375,7 +375,7 @@ def read_content(objects: Sequence[dict[str, Any]]
             skip(obj, position, "caption is only a URL")
             continue
 
-        # Drill output merges a section's closing prose with the bibliography
+        # Drill output merges a span's closing prose with the bibliography
         # that follows it. Cut the trailing entry run, keep the prose.
         cut = reference_tail(raw_text)
         if cut < len(raw_text):
@@ -403,7 +403,7 @@ def read_content(objects: Sequence[dict[str, Any]]
         out.append(Paragraph(
             id=str(obj.get("id") or f"para_{position}"),
             text=text,
-            section_id=str(parent) if parent else None,
+            marker_id=str(parent) if parent else None,
             flow_index=flow,
         ))
     out.sort(key=lambda p: (p.flow_index, p.id))
@@ -416,58 +416,58 @@ def read_paragraphs(objects: Sequence[dict[str, Any]]) -> list[Paragraph]:
 
 
 def assign_by_flow(units: Sequence[Paragraph],
-                   sections: Sequence[RawSection]) -> list[Paragraph]:
-    """Give units without an explicit owner the section they fall under.
+                   markers: Sequence[SectionMarker]) -> list[Paragraph]:
+    """Give units without an explicit owner the span they fall under.
 
     `Formula` and `Equation` objects carry NO `parent_section` -- zero of the
     reference paper's 74 do -- but all carry `flow_index`. Position is the
-    relationship: a formula belongs to the section it is printed under, which is
-    the last section whose `flow_index` precedes it.
+    relationship: a formula belongs to the span it is printed under, which is
+    the last span whose `flow_index` precedes it.
 
     Units that already name a parent keep it: an explicit link always beats an
-    inferred one. Units appearing before the first section stay unowned, which
+    inferred one. Units appearing before the first span stay unowned, which
     is correct -- they are front matter.
     """
-    ordered = sorted(sections, key=lambda s: (s.flow_index, s.id))
+    ordered = sorted(markers, key=lambda s: (s.flow_index, s.id))
     if not ordered:
         return list(units)
 
     boundaries = [s.flow_index for s in ordered]
     out: list[Paragraph] = []
     for unit in units:
-        if unit.section_id:
+        if unit.marker_id:
             out.append(unit)
             continue
         import bisect
         idx = bisect.bisect_right(boundaries, unit.flow_index) - 1
         owner = ordered[idx].id if idx >= 0 else None
         out.append(Paragraph(id=unit.id, text=unit.text,
-                             section_id=owner, flow_index=unit.flow_index))
+                             marker_id=owner, flow_index=unit.flow_index))
     return out
 
 
 def attach_paragraphs(paragraphs: Sequence[Paragraph],
-                      section_ids: Sequence[str],
+                      marker_ids: Sequence[str],
                       ) -> tuple[dict[str, list[Paragraph]], list[Paragraph]]:
-    """Group paragraphs by section. Returns `(by_section, orphans)`.
+    """Group paragraphs by span. Returns `(by_marker, orphans)`.
 
     A paragraph is an orphan when it has no `parent_section`, or names one that
-    is not a known section. **Orphans are returned, never discarded** — front
-    matter (title block, abstract lead) legitimately precedes the first section,
+    is not a known span. **Orphans are returned, never discarded** — front
+    matter (title block, abstract lead) legitimately precedes the first span,
     and a run must be able to account for every paragraph in the document
     rather than quietly losing text before it is ever summarised.
     """
-    known = set(section_ids)
-    by_section: dict[str, list[Paragraph]] = {sid: [] for sid in section_ids}
+    known = set(marker_ids)
+    by_marker: dict[str, list[Paragraph]] = {sid: [] for sid in marker_ids}
     orphans: list[Paragraph] = []
 
     for para in paragraphs:
-        if para.section_id in known:
-            by_section[para.section_id].append(para)
+        if para.marker_id in known:
+            by_marker[para.marker_id].append(para)
         else:
             orphans.append(para)
 
-    return by_section, orphans
+    return by_marker, orphans
 
 
 # --------------------------------------------------------------------------
@@ -475,8 +475,8 @@ def attach_paragraphs(paragraphs: Sequence[Paragraph],
 # --------------------------------------------------------------------------
 
 @dataclass(frozen=True)
-class SectionNode:
-    """A section, linked into the tree and holding its own body text."""
+class MarkerNode:
+    """A span, linked into the tree and holding its own body text."""
     id: str
     title: str
     title_raw: str
@@ -494,7 +494,7 @@ class SectionNode:
 
     @property
     def body_text(self) -> str:
-        """This section's own paragraphs, excluding its subsections."""
+        """This span's own paragraphs, excluding its subsections."""
         return "\n\n".join(p.text for p in self.paragraphs)
 
     @property
@@ -511,11 +511,11 @@ class SectionNode:
 
 
 @dataclass
-class SectionTree:
-    """The section hierarchy of one document, with its body text attached."""
-    nodes: dict[str, SectionNode] = field(default_factory=dict)
+class MarkerTree:
+    """The marker hierarchy of one document, with its body text attached."""
+    nodes: dict[str, MarkerNode] = field(default_factory=dict)
     roots: tuple[str, ...] = ()
-    #: Paragraphs belonging to no known section — front matter, usually.
+    #: Paragraphs belonging to no known span — front matter, usually.
     orphans: tuple[Paragraph, ...] = ()
     bibkey: str = ""
     source_path: Optional[str] = None
@@ -531,24 +531,24 @@ class SectionTree:
     def accounting(self, objects: Sequence[dict[str, Any]]) -> dict[str, Any]:
         """Does this tree account for every object in the docmodel?
 
-        The conservation law, computed rather than asserted: sections, attached
+        The conservation law, computed rather than asserted: markers, attached
         body units, orphans and recorded skips should partition the input with
         no object counted twice and none counted zero times.
         """
         all_ids = [str(o.get("id") or "") for o in objects if isinstance(o, dict)]
-        sections = {n.id for n in self.nodes.values()}
+        markers = {n.id for n in self.nodes.values()}
         attached = {p.id for n in self.nodes.values() for p in n.paragraphs}
         orphans = {p.id for p in self.orphans}
         skipped = {s.object_id for s in self.skipped}
 
         seen: dict[str, int] = {}
-        for group in (sections, attached, orphans, skipped):
+        for group in (markers, attached, orphans, skipped):
             for oid in group:
                 seen[oid] = seen.get(oid, 0) + 1
 
         return {
             "objects": len(all_ids),
-            "sections": len(sections),
+            "markers": len(markers),
             "attached": len(attached),
             "orphans": len(orphans),
             "skipped": len(skipped),
@@ -557,7 +557,7 @@ class SectionTree:
             "accounted_for": len(set(all_ids) & set(seen)),
         }
 
-    def by_level(self, level: int) -> list[SectionNode]:
+    def by_level(self, level: int) -> list[MarkerNode]:
         """Nodes at one level, in document order."""
         return [n for n in self.iter_document_order() if n.level == level]
 
@@ -582,7 +582,7 @@ class SectionTree:
             cur = self.nodes[cur].parent_id
         return depth
 
-    def descendants(self, node_id: str) -> list[SectionNode]:
+    def descendants(self, node_id: str) -> list[MarkerNode]:
         """All nodes beneath this one, in document order."""
         out, stack = [], list(self.nodes[node_id].children)
         seen = set()
@@ -596,7 +596,7 @@ class SectionTree:
         return sorted(out, key=lambda n: (n.flow_index, n.id))
 
     def subtree_text(self, node_id: str) -> str:
-        """This section's text *including* its subsections.
+        """This span's text *including* its subsections.
 
         This is what a level-2 summary needs: summarising "Empirical
         Evaluation" from its own two paragraphs, while ignoring the three
@@ -612,10 +612,10 @@ class SectionTree:
         for node in self.nodes.values():
             counts[node.level] = counts.get(node.level, 0) + 1
         return {
-            "sections": len(self.nodes),
+            "markers": len(self.nodes),
             "roots": len(self.roots),
             "levels": dict(sorted(counts.items())),
-            "appendix_sections": sum(1 for n in self.nodes.values() if n.is_appendix),
+            "appendix_markers": sum(1 for n in self.nodes.values() if n.is_appendix),
             "paragraphs": sum(len(n.paragraphs) for n in self.nodes.values()),
             "orphan_paragraphs": len(self.orphans),
             "degraded_titles": sum(1 for n in self.nodes.values()
@@ -627,10 +627,10 @@ class SectionTree:
 def build_tree(docmodel: dict[str, Any],
                source_path: Optional[str] = None, *,
                include_math: bool = True,
-               speaker=None) -> SectionTree:
-    """Assemble a `SectionTree` from a parsed `model.docmodel.json`.
+               speaker=None) -> MarkerTree:
+    """Assemble a `MarkerTree` from a parsed `model.docmodel.json`.
 
-    Composes the four verified units: read sections, link parents, read
+    Composes the four verified units: read markers, link parents, read
     paragraphs, attach them. Adds only the child lists, which are the inverse
     of the parent map.
     """
@@ -638,8 +638,8 @@ def build_tree(docmodel: dict[str, Any],
     if not isinstance(objects, list):
         objects = []
 
-    sections = read_sections(objects)
-    parents = link_parents(sections)
+    markers = read_markers(objects)
+    parents = link_parents(markers)
     paragraphs, skipped = read_content(objects)
 
     math_sources: dict[str, int] = {}
@@ -655,7 +655,7 @@ def build_tree(docmodel: dict[str, Any],
             and str(o.get("id") or "") not in rendered)
         # Math objects carry no parent_section, so their owner is inferred from
         # position. Done before attaching, or every formula becomes an orphan.
-        math_units = assign_by_flow(math_units, sections)
+        math_units = assign_by_flow(math_units, markers)
         paragraphs = sorted(paragraphs + math_units,
                             key=lambda p: (p.flow_index, p.id))
     else:
@@ -666,31 +666,31 @@ def build_tree(docmodel: dict[str, Any],
             if isinstance(o, dict)
             and str(o.get("type") or "").lower() in MATH_TYPES)
 
-    by_section, orphans = attach_paragraphs(paragraphs, [s.id for s in sections])
+    by_marker, orphans = attach_paragraphs(paragraphs, [s.id for s in markers])
 
     # Children are the inverse of the parent map, kept in document order.
-    children: dict[str, list[str]] = {s.id: [] for s in sections}
-    for sec in sections:
+    children: dict[str, list[str]] = {s.id: [] for s in markers}
+    for sec in markers:
         parent = parents.get(sec.id)
         if parent in children:
             children[parent].append(sec.id)
 
     nodes = {
-        sec.id: SectionNode(
+        sec.id: MarkerNode(
             id=sec.id, title=sec.title, title_raw=sec.title_raw,
             level=sec.level, flow_index=sec.flow_index,
             is_appendix=sec.is_appendix, lost_macros=sec.lost_macros,
             parent_id=parents.get(sec.id),
             children=tuple(children[sec.id]),
-            paragraphs=tuple(by_section.get(sec.id, ())),
+            paragraphs=tuple(by_marker.get(sec.id, ())),
         )
-        for sec in sections
+        for sec in markers
     }
 
     meta = docmodel.get("meta") or {}
-    return SectionTree(
+    return MarkerTree(
         nodes=nodes,
-        roots=tuple(s.id for s in sections if parents.get(s.id) is None),
+        roots=tuple(s.id for s in markers if parents.get(s.id) is None),
         orphans=tuple(orphans),
         bibkey=str(meta.get("bibkey") or "") if isinstance(meta, dict) else "",
         source_path=source_path,
@@ -699,7 +699,7 @@ def build_tree(docmodel: dict[str, Any],
     )
 
 
-def load_tree(path) -> SectionTree:
+def load_tree(path) -> MarkerTree:
     """Read a `model.docmodel.json` from disk. The file is opened read-only."""
     import json
     from pathlib import Path

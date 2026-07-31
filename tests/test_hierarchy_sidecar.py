@@ -163,9 +163,9 @@ def test_registering_twice_does_not_duplicate_the_fact(library_doc):
 
 def test_evidence_is_namespaced(library_doc):
     """CES keys must not collide with another stage's evidence."""
-    register(library_doc, ces_path="m.json", evidence={"sections": 24})
+    register(library_doc, ces_path="m.json", evidence={"spans": 24})
     ev = read_sidecar(find_sidecar(library_doc))["evidence"]
-    assert ev["ces_sections"] == 24
+    assert ev["ces_spans"] == 24
     assert ev["ces_path"] == "m.json"
 
 

@@ -37,8 +37,8 @@ def basis():
     return b
 
 
-def sent(sid, text, section="s1"):
-    return Sentence(id=sid, text=text, section_id=section, source_id="p1")
+def sent(sid, text, span="s1"):
+    return Sentence(id=sid, text=text, span_id=span, source_id="p1")
 
 
 # --------------------------------------------------------------------------
@@ -115,8 +115,8 @@ def test_top_k_is_capped_by_the_basis_size(basis):
 
 def test_provenance_travels_with_the_projection(basis):
     emb = FixedEmbedder({"a": E1})
-    got = project_sentences([sent("s#0", "a", section="sec9")], basis, emb)[0]
-    assert got.section_id == "sec9" and got.source_id == "p1"
+    got = project_sentences([sent("s#0", "a", span="sec9")], basis, emb)[0]
+    assert got.span_id == "sec9" and got.source_id == "p1"
 
 
 def test_basis_version_is_recorded(basis):

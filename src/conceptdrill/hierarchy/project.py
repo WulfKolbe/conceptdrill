@@ -61,7 +61,7 @@ class SentenceProjection:
     """One sentence's CES vector, with everything needed to read it later."""
     sentence_id: str
     text: str
-    section_id: Optional[str]
+    span_id: Optional[str]
     source_id: str
     basis_version: str
     embedding_model: str
@@ -91,7 +91,7 @@ class SentenceProjection:
         out: dict[str, Any] = {
             "sentence_id": self.sentence_id,
             "text": self.text,
-            "section_id": self.section_id,
+            "span_id": self.span_id,
             "source_id": self.source_id,
             "basis_version": self.basis_version,
             "embedding_model": self.embedding_model,
@@ -169,7 +169,7 @@ def project_sentences(sentences: Sequence[Any], basis, embedder, *,
                 ]
             out.append(SentenceProjection(
                 sentence_id=sentence.id, text=sentence.text,
-                section_id=getattr(sentence, "section_id", None),
+                span_id=getattr(sentence, "span_id", None),
                 source_id=getattr(sentence, "source_id", ""),
                 basis_version=version,
                 embedding_model=model, embedding_revision=revision,

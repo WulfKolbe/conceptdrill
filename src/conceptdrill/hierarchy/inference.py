@@ -42,7 +42,7 @@ class Neighbour:
     text: str
     similarity: float
     document: str = ""
-    section_id: Optional[str] = None
+    span_id: Optional[str] = None
     #: Concepts both the query and this sentence rank highly. The explanation
     #: for *why* they matched, which raw cosine cannot give.
     shared_concepts: tuple[str, ...] = ()
@@ -50,7 +50,7 @@ class Neighbour:
     def to_dict(self) -> dict[str, Any]:
         return {"sentence_id": self.sentence_id, "text": self.text,
                 "similarity": self.similarity, "document": self.document,
-                "section_id": self.section_id,
+                "span_id": self.span_id,
                 "shared_concepts": list(self.shared_concepts)}
 
 
@@ -178,7 +178,7 @@ class QueryEngine:
                 text=rec.get("text", ""),
                 similarity=round(float(sims[i]), PRECISION),
                 document=rec.get("document", ""),
-                section_id=rec.get("section_id"),
+                span_id=rec.get("span_id"),
                 shared_concepts=tuple(t for t in theirs if t in wanted),
             ))
         return out

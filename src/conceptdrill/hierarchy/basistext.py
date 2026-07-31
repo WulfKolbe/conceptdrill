@@ -7,8 +7,8 @@ substring.
 
 ## Why this exists
 
-The previous corpus build embedded `\section*{2 Related Work} Prominent
-examples...` for every section of every document. `\section*{` was present in
+The previous corpus build embedded `\span*{2 Related Work} Prominent
+examples...` for every span of every document. `\span*{` was present in
 every label. Two labels sharing a constant prefix are similar because of the
 prefix, so the merge threshold was measuring boilerplate. Nothing in the
 pipeline could have caught it: `captions.clean_caption` cleans titles, and
@@ -16,10 +16,10 @@ pipeline could have caught it: `captions.clean_caption` cleans titles, and
 
 ## The title does not contribute
 
-**Decided: `basis_text` never contains the section title.** A title is
+**Decided: `basis_text` never contains the marker title.** A title is
 document-local navigation text — `1 Introduction`, `3. APPROACH`, `Team Name`.
 Identical titles across papers describe unrelated content, so prepending one
-manufactures cross-document similarity that is about section numbering rather
+manufactures cross-document similarity that is about span numbering rather
 than concepts, which is precisely the failure this module exists to prevent.
 
 `INCLUDE_TITLE` exists so the choice is visible and reversible, not so it can
@@ -43,7 +43,7 @@ from typing import Optional
 from .captions import FORMATTING_MACROS, _SYMBOL_WORDS
 from .sanitize import sanitize_text
 
-#: Does the section title contribute to `basis_text`? See the module docstring.
+#: Does the marker title contribute to `basis_text`? See the module docstring.
 INCLUDE_TITLE = False
 
 #: Characters that may never appear in a basis text. Every one of them is
@@ -51,7 +51,7 @@ INCLUDE_TITLE = False
 FORBIDDEN_CHARS = frozenset("\\{}$%&#~^")
 
 #: Commands whose argument is *not* prose: dropped with the argument.
-#: `\section*{2 Related Work}` is the section title again; `\cite{foo}` is a
+#: `\span*{2 Related Work}` is the marker title again; `\cite{foo}` is a
 #: reference marker; `\label{sec:x}` is an anchor. None of them describe a
 #: concept.
 DROP_WITH_ARGUMENT = frozenset({
@@ -65,7 +65,7 @@ DROP_WITH_ARGUMENT = frozenset({
 })
 
 #: Commands the postcondition names explicitly, for a clearer violation report.
-NAMED_RESIDUE = ("\\section", "\\subsection", "\\label", "\\ref", "\\cite")
+NAMED_RESIDUE = ("\\span", "\\subsection", "\\label", "\\ref", "\\cite")
 
 #: A leading numeric ordinal: `3`, `3.1`, `3.1.4`, with or without a dot.
 _LEADING_NUMBER = re.compile(r"^\(?\d+(?:\.\d+)*\)?[.):]?\s+")
@@ -98,7 +98,7 @@ class BasisText:
 def _read_group(source: str, i: int) -> tuple[Optional[str], int]:
     """Brace-matched group starting at `source[i]`, or `(None, i)`.
 
-    Brace matching rather than a regex: `\\section*{The $f(x)$ case}` nests, and
+    Brace matching rather than a regex: `\\span*{The $f(x)$ case}` nests, and
     a non-greedy regex stops at the first `}` leaving the rest as residue.
     """
     if i >= len(source) or source[i] != "{":
@@ -248,7 +248,7 @@ def check_basis_text(text: str, title: str = "") -> list[str]:
     if title:
         for candidate in (title.strip(), _normalise(title)):
             if candidate and _normalise(text).startswith(_normalise(candidate)):
-                problems.append(f"begins with the section title {candidate!r}")
+                problems.append(f"begins with the marker title {candidate!r}")
                 break
 
     if _LEADING_NUMBER.match(text) or _LEADING_LETTER.match(text):
@@ -258,7 +258,7 @@ def check_basis_text(text: str, title: str = "") -> list[str]:
 
 def clean_basis_text(text: str, *, title: str = "",
                      include_title: bool = INCLUDE_TITLE) -> BasisText:
-    """Section content to embeddable prose. The only producer of `basis_text`.
+    """Span content to embeddable prose. The only producer of `basis_text`.
 
     Raises `BasisTextViolation` when its own output breaks a postcondition —
     a cleaner that silently returns dirty text is worse than no cleaner, since

@@ -90,7 +90,7 @@ def test_cjk_survives():
 
 
 def test_ordinary_ascii_is_untouched():
-    text = "A canonical definition, reusable across documents (see section 2)."
+    text = "A canonical definition, reusable across documents (see span 2)."
     assert sanitize_text(text) == text
 
 

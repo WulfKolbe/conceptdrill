@@ -171,5 +171,5 @@ def test_empty_input_is_empty_output():
     assert clean("") == "" and clean("   ") == ""
 
 
-def test_a_section_that_is_only_markup_becomes_empty():
+def test_a_span_that_is_only_markup_becomes_empty():
     assert clean(r"\label{sec:intro}\ref{fig:1}") == ""

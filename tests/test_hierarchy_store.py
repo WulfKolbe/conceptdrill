@@ -21,7 +21,7 @@ DOC = {"meta": {"bibkey": "2209.00445"}, "objects": [
     {"id": "s1", "type": "Section",
      "props": {"caption": "Method", "level": 2, "flow_index": 1}},
     {"id": "p1", "type": "Paragraph",
-     "props": {"text": "The method embeds each section once.",
+     "props": {"text": "The method embeds each span once.",
                "flow_index": 2, "parent_section": "s1"}},
     {"id": "s2", "type": "Section",
      "props": {"caption": "Scoring", "level": 3, "flow_index": 3}},
@@ -96,14 +96,14 @@ def test_writing_twice_does_not_touch_the_docmodel(drill, tree):
 # Payload contents
 # --------------------------------------------------------------------------
 
-def test_payload_carries_the_section_tree(drill, tree):
+def test_payload_carries_the_marker_tree(drill, tree):
     payload = build_payload(tree)
-    ids = [n["id"] for n in payload["section_tree"]["nodes"]]
+    ids = [n["id"] for n in payload["marker_tree"]["nodes"]]
     assert ids == ["s1", "s2"]
 
 
 def test_payload_records_hierarchy_and_sizes(drill, tree):
-    nodes = {n["id"]: n for n in build_payload(tree)["section_tree"]["nodes"]}
+    nodes = {n["id"]: n for n in build_payload(tree)["marker_tree"]["nodes"]}
     assert nodes["s2"]["parent_id"] == "s1"
     assert nodes["s1"]["children"] == ["s2"]
     assert nodes["s1"]["subtree_chars"] > nodes["s1"]["body_chars"]
@@ -122,7 +122,7 @@ def test_summaries_are_stored_when_given(drill, tree):
     payload = build_payload(tree, run.summaries, summary_stats=run.stats())
     assert set(payload["summaries"]) == {"s1", "s2"}
     assert payload["summaries"]["s1"]["label"]
-    assert payload["summary_stats"]["sections"] == 2
+    assert payload["summary_stats"]["spans"] == 2
 
 
 def test_round_trip_through_disk(drill, tree):
@@ -226,7 +226,7 @@ def test_save_records_counts_as_evidence(drill, tree):
     from conceptdrill.hierarchy import sidecar
     save(tree)
     ev = sidecar.read_sidecar(sidecar.find_sidecar(drill))["evidence"]
-    assert ev["ces_sections"] == 2
+    assert ev["ces_markers"] == 2
     assert ev["ces_path"].endswith("model.ces.json")
 
 

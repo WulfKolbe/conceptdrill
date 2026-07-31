@@ -3,8 +3,8 @@
 Each gate re-derives its answer from the written artefacts rather than from the
 process that produced them. A run directory is checked the same way whether it
 was written a minute ago or a month ago, and the check does not trust the run's
-own summary of itself: gate 1 re-reads the input docmodels and compares section
-ids, because `section_count` is exactly the number a broken run would get wrong.
+own summary of itself: gate 1 re-reads the input docmodels and compares span
+ids, because `span_count` is exactly the number a broken run would get wrong.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .runlog import CONCEPT_FIELDS, MANIFEST_REQUIRED, SECTION_FIELDS
+from .runlog import CONCEPT_FIELDS, MANIFEST_REQUIRED, SPAN_FIELDS
 
 
 @dataclass
@@ -39,21 +39,21 @@ class GateResult:
 
 def read_run(run_dir: str | Path) -> tuple[dict[str, Any], list[dict[str, Any]],
                                            dict[str, Any]]:
-    """`(manifest, section records, basis)` from a run directory."""
+    """`(manifest, span records, basis)` from a run directory."""
     root = Path(run_dir)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
     records = [json.loads(line) for line
-               in (root / "sections.jsonl").read_text(encoding="utf-8").splitlines()
+               in (root / "spans.jsonl").read_text(encoding="utf-8").splitlines()
                if line.strip()]
     basis = json.loads((root / "basis.json").read_text(encoding="utf-8"))
     return manifest, records, basis
 
 
-#: The section contract as it stood before the concept became the unit. A run
+#: The span contract as it stood before the concept became the unit. A run
 #: is valid under the schema that wrote it, so gate 1 checks against whichever
 #: one a record follows rather than rejecting the older shape outright.
 LEGACY_SECTION_FIELDS: tuple[str, ...] = (
-    "doc_id", "section_id", "level", "flow_index", "is_appendix",
+    "doc_id", "span_id", "level", "flow_index", "is_appendix",
     "title_raw", "title_cleaned", "cleaning_rules_fired",
     "structural_class", "structural_rule_fired",
     "tier_label", "tier_abstraction", "tier_summary", "basis_text",
@@ -66,7 +66,7 @@ LEGACY_SECTION_FIELDS: tuple[str, ...] = (
 def schema_of(record: dict[str, Any]) -> tuple[str, tuple[str, ...]]:
     """`(name, expected fields)` for the schema this record follows."""
     if "concepts" in record:
-        return "concept", SECTION_FIELDS
+        return "concept", SPAN_FIELDS
     return "legacy-flat", LEGACY_SECTION_FIELDS
 
 
@@ -78,7 +78,7 @@ _LEGACY_CONCEPT_KEYS = ("tier_label", "tier_abstraction", "tier_summary",
 
 
 def concepts_of(record: dict[str, Any]) -> list[dict[str, Any]]:
-    """Every concept on a section record, whichever schema wrote it.
+    """Every concept on a span record, whichever schema wrote it.
 
     The concept is the unit that becomes a basis row. Records written before
     that change carry exactly one concept in flat fields; reading them as a
@@ -96,7 +96,7 @@ def gate1_persistence(run_dir: str | Path) -> GateResult:
     """Gate 1: the run accounts for its input, in full, with no holes.
 
     Four clauses, each of which a plausible bug would break on its own:
-    the line count matches the manifest; the section ids match the input trees
+    the line count matches the manifest; the span ids match the input trees
     exactly; every record carries every field; the manifest knows what made it.
     """
     from .docmodel_tree import load_tree
@@ -104,15 +104,15 @@ def gate1_persistence(run_dir: str | Path) -> GateResult:
     manifest, records, _ = read_run(run_dir)
     result = GateResult(name="GATE 1 (persistence)", passed=True)
 
-    # 1. line count == manifest section_count
-    declared = manifest.get("section_count")
+    # 1. line count == manifest span_count
+    declared = manifest.get("span_count")
     result.checks["records"] = len(records)
-    result.checks["manifest.section_count"] = declared
+    result.checks["manifest.span_count"] = declared
     if declared != len(records):
         result.failures.append(
-            f"sections.jsonl has {len(records)} lines, manifest says {declared}")
+            f"spans.jsonl has {len(records)} lines, manifest says {declared}")
 
-    # 2. exactly the sections in the input trees, each once
+    # 2. exactly the markers in the input trees, each once
     paths = manifest.get("corpus_paths") or []
     if not paths:
         # Without the inputs there is nothing to compare against, and a clause
@@ -132,7 +132,7 @@ def gate1_persistence(run_dir: str | Path) -> GateResult:
 
     got: dict[tuple[str, str], int] = {}
     for rec in records:
-        key = (rec.get("doc_id"), rec.get("section_id"))
+        key = (rec.get("doc_id"), rec.get("span_id"))
         got[key] = got.get(key, 0) + 1
 
     missing = sorted(expected - set(got))
@@ -143,11 +143,11 @@ def gate1_persistence(run_dir: str | Path) -> GateResult:
     result.checks["unexpected"] = len(extra)
     result.checks["duplicated"] = len(duplicated)
     if missing:
-        result.failures.append(f"sections in the input with no record: {missing[:5]}")
+        result.failures.append(f"markers in the input with no record: {missing[:5]}")
     if extra:
-        result.failures.append(f"records for sections not in the input: {extra[:5]}")
+        result.failures.append(f"records for markers not in the input: {extra[:5]}")
     if duplicated:
-        result.failures.append(f"sections recorded more than once: {duplicated[:5]}")
+        result.failures.append(f"markers recorded more than once: {duplicated[:5]}")
 
     # 3. every field on every record, against the schema that wrote it
     holes: dict[str, int] = {}
@@ -193,9 +193,9 @@ def gate1_persistence(run_dir: str | Path) -> GateResult:
 def gate2_basis_text(run_dir: str | Path) -> GateResult:
     """Gate 2: every `basis_text` in the run satisfies the cleaning contract.
 
-    Zero tolerance by construction — the gate reports each violating section
+    Zero tolerance by construction — the gate reports each violating span
     with the offending substring, because "99% clean" describes a corpus with
-    a constant substring in one section in a hundred, which is exactly the
+    a constant substring in one span in a hundred, which is exactly the
     failure mode this exists to catch.
     """
     from .basistext import check_basis_text
@@ -220,7 +220,7 @@ def gate2_basis_text(run_dir: str | Path) -> GateResult:
             if text is None:
                 continue
             checked += 1
-            where = f"{rec.get('section_id')}#{concept.get('concept_index')}"
+            where = f"{rec.get('span_id')}#{concept.get('concept_index')}"
             title = "" if ablation else (rec.get("title_raw") or "")
             for problem in check_basis_text(text, title):
                 violations.append((rec.get("doc_id"), where, problem))
@@ -229,7 +229,7 @@ def gate2_basis_text(run_dir: str | Path) -> GateResult:
     result.checks["basis_texts_checked"] = checked
     result.checks["records_without_basis_text"] = concepts_seen - checked
     result.checks["violations"] = len(violations)
-    result.checks["sections_violating"] = len({(d, s) for d, s, _ in violations})
+    result.checks["spans_violating"] = len({(d, s) for d, s, _ in violations})
     if checked:
         clean_fraction = 1.0 - len({(d, s) for d, s, _ in violations}) / checked
         result.checks["clean_fraction"] = round(clean_fraction, 6)
@@ -284,7 +284,7 @@ def gate3_tier_independence(run_dir: str | Path,
         for i, left in enumerate(names):
             for right in names[i + 1:]:
                 a, b = present[left], present[right]
-                where = (f"{rec.get('doc_id')}/{rec.get('section_id')}"
+                where = (f"{rec.get('doc_id')}/{rec.get('span_id')}"
                          f"#{concept.get('concept_index')}")
                 if a.startswith(b) or b.startswith(a):
                     prefix_hits.append(f"{where}: {left} and {right} share a prefix")
@@ -318,7 +318,7 @@ def gate3_tier_independence(run_dir: str | Path,
 
 def gate4_structural(run_dir: str | Path,
                      labels_path: str | Path) -> GateResult:
-    """Gate 4: no hand-labelled structural section reaches the concept basis.
+    """Gate 4: no hand-labelled structural span reaches the concept basis.
 
     Recall is the binding constraint and precision is reported only. A concept
     wrongly absorbed is visible in the record and recoverable; a reference list
@@ -329,23 +329,23 @@ def gate4_structural(run_dir: str | Path,
 
     manifest, records, basis = read_run(run_dir)
     truth = json.loads(Path(labels_path).read_text(encoding="utf-8"))
-    want = {(l["doc_id"], l["section_id"]) for l in truth["labels"]
+    want = {(l["doc_id"], l["span_id"]) for l in truth["labels"]
             if l["structural"]}
 
     result = GateResult(name="GATE 4 (structural layer)", passed=True)
-    by_key = {(r["doc_id"], r["section_id"]): r for r in records}
+    by_key = {(r["doc_id"], r["span_id"]): r for r in records}
 
     missing_labels = want - set(by_key)
     if missing_labels:
         result.failures.append(
-            f"labelled sections absent from the run: {sorted(missing_labels)[:5]}")
+            f"labelled markers absent from the run: {sorted(missing_labels)[:5]}")
 
     classified = {k for k, r in by_key.items() if r.get("structural_class")}
     tp = len(want & classified)
     fn = len(want - classified)
     fp = len(classified - want)
 
-    # The binding clause: a structural section must not hold a concept row.
+    # The binding clause: a structural span must not hold a concept row.
     leaked = []
     for key in want:
         rec = by_key.get(key)
@@ -383,7 +383,7 @@ def gate4_structural(run_dir: str | Path,
         result.failures.append(entry)
     if unnamed:
         result.failures.append(
-            f"{len(unnamed)} absorbed sections name no rule: {unnamed[:5]}")
+            f"{len(unnamed)} absorbed markers name no rule: {unnamed[:5]}")
     if len(sink_rows) > 1:
         result.failures.append(f"{len(sink_rows)} structural rows; row 0 is reserved")
     if sink_rows and len(rows) - concept_rows != 1:

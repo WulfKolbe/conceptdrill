@@ -1,6 +1,6 @@
-"""Turning a section into the three basis texts.
+"""Turning a span into the three basis texts.
 
-Each section yields three progressively abstract descriptions, per
+Each span yields three progressively abstract descriptions, per
 `prompts/section-concept.md`:
 
     summary      80-150 words   faithful to this document's terminology
@@ -98,9 +98,9 @@ _SENTENCE = re.compile(r"(?<=[.!?])\s+(?=[A-Z(])")
 
 
 @dataclass(frozen=True)
-class SectionSummary:
-    """Three basis texts for one section, plus how they were produced."""
-    section_id: str
+class SpanSummary:
+    """Three basis texts for one span, plus how they were produced."""
+    span_id: str
     title: str
     summary: str = ""
     abstraction: str = ""
@@ -112,18 +112,18 @@ class SectionSummary:
     #: Populated when the reply looked damaged; see `replyparse.control_corruption`.
     warnings: tuple[str, ...] = ()
     error: str = ""
-    #: The section's OTHER concepts, if it defines more than one.
+    #: The span's OTHER concepts, if it defines more than one.
     #:
-    #: A section covering three ideas used to yield one label -- a compromise
+    #: A span covering three ideas used to yield one label -- a compromise
     #: matching none of them, and one basis row where CES wants three. The
     #: prompt now emits an entry per concept; this record is the dominant one
     #: and the rest live here. Siblings never nest: a sibling's own `siblings`
     #: is always empty.
-    siblings: tuple["SectionSummary", ...] = ()
+    siblings: tuple["SpanSummary", ...] = ()
 
     @property
-    def concepts(self) -> tuple["SectionSummary", ...]:
-        """Every concept this section defines, dominant first."""
+    def concepts(self) -> tuple["SpanSummary", ...]:
+        """Every concept this span defines, dominant first."""
         return (self,) + self.siblings
 
     @property
@@ -163,7 +163,7 @@ def jaccard(left: str, right: str) -> float:
     return len(a & b) / len(a | b)
 
 
-def check_tier_independence(summary: "SectionSummary", *,
+def check_tier_independence(summary: "SpanSummary", *,
                             max_jaccard: float = MAX_TIER_JACCARD) -> list[str]:
     """Every way this summary's tiers fail to be independent derivations.
 
@@ -195,13 +195,13 @@ def check_tier_independence(summary: "SectionSummary", *,
     return problems
 
 
-def assert_tier_independence(summary: "SectionSummary", *,
+def assert_tier_independence(summary: "SpanSummary", *,
                              max_jaccard: float = MAX_TIER_JACCARD) -> None:
     """Raise when the tiers are not independent derivations."""
     problems = check_tier_independence(summary, max_jaccard=max_jaccard)
     if problems:
         raise TierDegeneracy(
-            f"{summary.section_id}: {problems}")
+            f"{summary.span_id}: {problems}")
 
 
 class TierDegeneracy(ValueError):
@@ -210,12 +210,12 @@ class TierDegeneracy(ValueError):
 
 @runtime_checkable
 class Summarizer(Protocol):
-    """Produces the three basis texts for one section."""
+    """Produces the three basis texts for one span."""
 
     name: str
     deterministic: bool
 
-    def summarize(self, section_id: str, title: str, body: str) -> SectionSummary:
+    def summarize(self, span_id: str, title: str, body: str) -> SpanSummary:
         ...
 
 
@@ -257,7 +257,7 @@ class ExtractiveSummarizer:
     prefixes of one raw string and `label` is the title plus a word-prefix of
     that same string, so all three fail `check_tier_independence` by
     construction. Used as a stand-in for a real summariser it produced a corpus
-    in which `\\section*{` appeared in every label, and every number derived
+    in which `\\span*{` appeared in every label, and every number derived
     from that corpus was void.
 
     `measurement_safe = False` keeps it out of measurement runs mechanically
@@ -272,17 +272,17 @@ class ExtractiveSummarizer:
     #: Refused by measurement runners. See the class docstring.
     measurement_safe = False
 
-    def summarize(self, section_id: str, title: str, body: str) -> SectionSummary:
+    def summarize(self, span_id: str, title: str, body: str) -> SpanSummary:
         # Sanitised even though the source is the document rather than a
         # model: drilled text carries OCR and LLM-authored characters too.
         text = re.sub(r"\s+", " ", sanitize_text(body or ""))
         clean_title = re.sub(r"\s+", " ", sanitize_text(title or ""))
 
         if not text:
-            # A section with no body still has a title, which is a weak but
+            # A span with no body still has a title, which is a weak but
             # real concept signal. Better than an empty basis vector.
-            return SectionSummary(
-                section_id=section_id, title=clean_title,
+            return SpanSummary(
+                span_id=span_id, title=clean_title,
                 summary=clean_title, abstraction=clean_title, label=clean_title,
                 model=self.name, deterministic=True,
                 warnings=("empty body: title used as the basis text",))
@@ -294,14 +294,14 @@ class ExtractiveSummarizer:
         lead = _words(text, max(0, TIER_WORDS["label"][1] - len(clean_title.split())))
         label = f"{clean_title}. {lead}".strip(". ").strip()
 
-        return SectionSummary(
-            section_id=section_id, title=clean_title,
+        return SpanSummary(
+            span_id=span_id, title=clean_title,
             summary=summary, abstraction=abstraction, label=label,
             model=self.name, deterministic=True)
 
 
 class TitleOnlySummarizer:
-    """The ablation arm: the cleaned section title, and nothing else.
+    """The ablation arm: the cleaned marker title, and nothing else.
 
     Not a degraded summariser — a deliberate baseline. If a run using real
     summaries is not clearly distinguishable from this one, the summarisation
@@ -319,12 +319,12 @@ class TitleOnlySummarizer:
     #: A baseline to compare against, never a stand-in for a summariser.
     is_ablation = True
 
-    def summarize(self, section_id: str, title: str, body: str) -> SectionSummary:
+    def summarize(self, span_id: str, title: str, body: str) -> SpanSummary:
         clean = re.sub(r"\s+", " ", sanitize_text(title or "")).strip()
-        return SectionSummary(
-            section_id=section_id, title=clean, label=clean,
+        return SpanSummary(
+            span_id=span_id, title=clean, label=clean,
             model=self.name, deterministic=True,
-            warnings=() if clean else ("section has no title",))
+            warnings=() if clean else ("span has no title",))
 
 
 # --------------------------------------------------------------------------
@@ -376,21 +376,21 @@ class SummaryCache:
         return self
 
     @staticmethod
-    def _revive(raw: dict[str, Any]) -> "SectionSummary":
+    def _revive(raw: dict[str, Any]) -> "SpanSummary":
         """Rebuild a summary from JSON.
 
         `asdict` flattens nested summaries to dicts and tuples to lists, so a
-        naive `SectionSummary(**raw)` returns siblings as a list of dicts --
+        naive `SpanSummary(**raw)` returns siblings as a list of dicts --
         objects with no `.label`, which every consumer would then fail on.
         """
         siblings = tuple(
             SummaryCache._revive(s) if isinstance(s, dict) else s
             for s in raw.get("siblings", ()) or ())
-        return SectionSummary(**{**raw,
+        return SpanSummary(**{**raw,
                                  "warnings": tuple(raw.get("warnings", ()) or ()),
                                  "siblings": siblings})
 
-    def get(self, key: str) -> Optional[SectionSummary]:
+    def get(self, key: str) -> Optional[SpanSummary]:
         self.load()
         raw = self._entries.get(key)
         if not raw:
@@ -400,7 +400,7 @@ class SummaryCache:
         except TypeError:
             return None
 
-    def put(self, key: str, summary: SectionSummary) -> None:
+    def put(self, key: str, summary: SpanSummary) -> None:
         self.load()
         self._entries[key] = summary.to_dict()
         self._dirty = True
@@ -426,18 +426,18 @@ class SummaryCache:
 
 @dataclass
 class SummaryRun:
-    """Every section's basis texts, plus how the run went."""
-    summaries: dict[str, SectionSummary] = field(default_factory=dict)
+    """Every span's basis texts, plus how the run went."""
+    summaries: dict[str, SpanSummary] = field(default_factory=dict)
     model: str = ""
     deterministic: bool = True
     cached: int = 0
     generated: int = 0
     failed: tuple[str, ...] = ()
-    #: Sections with no paragraphs of their own, so nothing to summarise.
-    #: Recorded rather than dropped: a run must account for every section.
+    #: Markers with no paragraphs of their own, so nothing to summarise.
+    #: Recorded rather than dropped: a run must account for every span.
     empty: tuple[str, ...] = ()
 
-    def usable(self) -> dict[str, SectionSummary]:
+    def usable(self) -> dict[str, SpanSummary]:
         return {sid: s for sid, s in self.summaries.items() if s.is_usable}
 
     def stats(self) -> dict[str, Any]:
@@ -445,9 +445,9 @@ class SummaryRun:
         for summary in self.summaries.values():
             fits[summary.tier_fit()[BASIS_TIER]] = \
                 fits.get(summary.tier_fit()[BASIS_TIER], 0) + 1
-        warned = [s.section_id for s in self.summaries.values() if s.warnings]
+        warned = [s.span_id for s in self.summaries.values() if s.warnings]
         return {
-            "sections": len(self.summaries),
+            "spans": len(self.summaries),
             "usable": len(self.usable()),
             "cached": self.cached,
             "generated": self.generated,
@@ -465,14 +465,14 @@ def summarize_tree(tree, summarizer: Summarizer, *,
                    levels: Optional[set[int]] = None,
                    prompt: Optional[str] = None,
                    progress=None) -> SummaryRun:
-    r"""Summarise every section of a `SectionTree`.
+    r"""Summarise every span of a `MarkerTree`.
 
     Two choices here are load-bearing:
 
     * **`body_text`, not `subtree_text`.** The unit is the smallest set of
       paragraphs that belongs to one heading. Given
 
-          \section{A}    paragraph P0
+          \span{A}    paragraph P0
           \subsection{B} paragraphs P1
           \subsection{C} paragraphs P2
 
@@ -484,7 +484,7 @@ def summarize_tree(tree, summarizer: Summarizer, *,
       all of it duplication -- and it made parent and child summaries share
       source text, which manufactures parent-child merges in `basis.py`.
 
-      A section whose own extent is empty -- a heading running straight into
+      A span whose own extent is empty -- a heading running straight into
       its first subsection -- is not summarised at all. There is nothing there
       to summarise, and a title is not a concept. 10 of the corpus's 36 parents
       are like this; they are recorded, not silently skipped.
@@ -492,8 +492,8 @@ def summarize_tree(tree, summarizer: Summarizer, *,
       macro the cleaned title can be meaningless — `\\ALG\\ Application` becomes
       `Application` — so the raw form is restored for the model.
 
-    A section that fails is recorded and the run continues; one unreachable
-    section must not cost a whole corpus.
+    A span that fails is recorded and the run continues; one unreachable
+    span must not cost a whole corpus.
     """
     prompt_text = prompt if prompt is not None else load_prompt()
     run = SummaryRun(model=getattr(summarizer, "name", "?"),

@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from conceptdrill.hierarchy.summarize import (MAX_TIER_JACCARD, ExtractiveSummarizer,
-                                              SectionSummary, TierDegeneracy,
+                                              SpanSummary, TierDegeneracy,
                                               TitleOnlySummarizer,
                                               assert_tier_independence,
                                               check_tier_independence, jaccard,
@@ -60,9 +60,9 @@ def test_jaccard_with_an_empty_side_is_zero():
 # --------------------------------------------------------------------------
 
 def summary(**kw):
-    base = dict(section_id="s1", title="T")
+    base = dict(span_id="s1", title="T")
     base.update(kw)
-    return SectionSummary(**base)
+    return SpanSummary(**base)
 
 
 def test_independent_tiers_pass():
@@ -159,7 +159,7 @@ def test_the_ablation_arm_ignores_the_body_entirely():
 def test_a_titleless_section_says_so_rather_than_inventing_one():
     got = TitleOnlySummarizer().summarize("s1", "", BODY)
     assert got.label == ""
-    assert got.warnings == ("section has no title",)
+    assert got.warnings == ("span has no title",)
 
 
 # --------------------------------------------------------------------------
@@ -224,7 +224,7 @@ def test_a_single_concept_yields_no_siblings():
 
 
 def test_several_concepts_become_several_summaries():
-    """A section defining three ideas used to yield one label -- a compromise
+    """A span defining three ideas used to yield one label -- a compromise
     matching none of them, and one basis row where CES wants three."""
     got = summarize(reply_with(entry("first phrase"), entry("second phrase"),
                                entry("third phrase")))
@@ -266,7 +266,7 @@ def test_each_concept_is_independently_usable():
     got = summarize(reply_with(entry("first phrase"), entry("second phrase")))
     for c in got.concepts:
         assert c.is_usable
-        assert c.section_id == "s1"
+        assert c.span_id == "s1"
 
 
 def test_the_flat_single_object_reply_still_parses():
@@ -298,7 +298,7 @@ from conceptdrill.hierarchy.novita import (DEFAULT_MAX_BODY,  # noqa: E402
 
 def test_the_completion_ceiling_is_the_models_own_maximum():
     """A ceiling costs nothing unspent, so sitting below the provider limit
-    only converts long replies into failed sections."""
+    only converts long replies into failed spans."""
     assert DEFAULT_MAX_TOKENS == MODEL_MAX_OUTPUT_TOKENS == 32_768
 
 
@@ -317,7 +317,7 @@ def test_a_body_within_the_cap_reports_nothing_dropped():
 
 
 def test_a_body_over_the_cap_reports_how_much_was_dropped():
-    """Cutting the input silently is how a section came to be summarised from
+    """Cutting the input silently is how a span came to be summarised from
     its opening pages with nothing in the record to say so."""
     s = NovitaSummarizer(lambda a, b: "{}", model="stub", max_body=100)
     prompt, dropped = s.build_user_prompt_traced("T", "x" * 250)

@@ -164,7 +164,7 @@ def test_serialisation_can_omit_points():
 
 def _proj(sid, vector, version="v1", label="concept"):
     return SentenceProjection(
-        sentence_id=sid, text=f"text for {sid}", section_id="s1",
+        sentence_id=sid, text=f"text for {sid}", span_id="s1",
         source_id="p1", basis_version=version,
         embedding_model="m", embedding_revision="r",
         top_concepts=(ConceptHit("row_1", label, 2, 0.5, 1),),

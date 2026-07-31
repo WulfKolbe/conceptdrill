@@ -8,7 +8,7 @@ import pytest
 from conceptdrill.hierarchy.summarize import (BASIS_TIER,
                                               EMBEDDING_TOKEN_WINDOW,
                                               ExtractiveSummarizer,
-                                              SectionSummary, SummaryCache,
+                                              SpanSummary, SummaryCache,
                                               TIER_WORDS, TOKENS_PER_WORD,
                                               load_prompt, summary_key)
 
@@ -161,40 +161,40 @@ def test_whitespace_is_normalised(summarizer):
 
 
 # --------------------------------------------------------------------------
-# SectionSummary
+# SpanSummary
 # --------------------------------------------------------------------------
 
 def test_basis_text_is_the_label_tier():
-    s = SectionSummary("s1", "T", summary="s", abstraction="a", label="l")
+    s = SpanSummary("s1", "T", summary="s", abstraction="a", label="l")
     assert BASIS_TIER == "label" and s.basis_text == "l"
 
 
 def test_basis_text_falls_back_when_the_label_is_missing():
     """A missing label must not yield an empty basis vector."""
-    s = SectionSummary("s1", "T", summary="s", abstraction="a", label="")
+    s = SpanSummary("s1", "T", summary="s", abstraction="a", label="")
     assert s.basis_text == "a"
-    assert SectionSummary("s1", "T", summary="s").basis_text == "s"
+    assert SpanSummary("s1", "T", summary="s").basis_text == "s"
 
 
 def test_a_summary_with_an_error_is_not_usable():
-    assert not SectionSummary("s1", "T", label="l", error="timeout").is_usable
+    assert not SpanSummary("s1", "T", label="l", error="timeout").is_usable
 
 
 def test_an_empty_summary_is_not_usable():
-    assert not SectionSummary("s1", "T").is_usable
+    assert not SpanSummary("s1", "T").is_usable
 
 
 def test_tier_fit_reports_under_ok_and_over():
-    short = SectionSummary("s1", "T", label="one two")
-    good = SectionSummary("s1", "T", label=" ".join(["w"] * 35))
-    long = SectionSummary("s1", "T", label=" ".join(["w"] * 99))
+    short = SpanSummary("s1", "T", label="one two")
+    good = SpanSummary("s1", "T", label=" ".join(["w"] * 35))
+    long = SpanSummary("s1", "T", label=" ".join(["w"] * 99))
     assert short.tier_fit()["label"] == "under"
     assert good.tier_fit()["label"] == "ok"
     assert long.tier_fit()["label"] == "over"
 
 
 def test_word_counts_are_reported():
-    s = SectionSummary("s1", "T", label="a b c")
+    s = SpanSummary("s1", "T", label="a b c")
     assert s.word_counts()["label"] == 3
 
 
@@ -222,7 +222,7 @@ def test_key_changes_with_the_prompt():
 
 def test_cache_round_trips(tmp_path):
     cache = SummaryCache(tmp_path / "s.json")
-    s = SectionSummary("s1", "T", summary="x", abstraction="y", label="z")
+    s = SpanSummary("s1", "T", summary="x", abstraction="y", label="z")
     cache.put("k", s)
     cache.flush()
     assert SummaryCache(tmp_path / "s.json").get("k") == s
@@ -242,7 +242,7 @@ def test_cache_write_is_atomic(tmp_path):
     """A crash mid-write must not leave a half-file that poisons later runs."""
     path = tmp_path / "s.json"
     cache = SummaryCache(path)
-    cache.put("k", SectionSummary("s1", "T", label="z"))
+    cache.put("k", SpanSummary("s1", "T", label="z"))
     cache.flush()
     assert json.loads(path.read_text())["k"]["label"] == "z"
     assert not path.with_name(path.name + ".tmp").exists()
@@ -276,7 +276,7 @@ def _par(pid, text, flow, parent):
 def tree():
     return build_tree({"meta": {"bibkey": "t"}, "objects": [
         _sec("s1", "Method", 2, 1),
-        _par("p1", "The method embeds each section once.", 2, "s1"),
+        _par("p1", "The method embeds each span once.", 2, "s1"),
         _sec("s2", "Scoring", 3, 3),
         _par("p2", "Scoring combines structural weight and coverage.", 4, "s2"),
     ]})
@@ -295,7 +295,7 @@ def test_level_filter_restricts_the_run(tree, summarizer):
 def test_a_parent_is_summarised_from_its_own_paragraphs_only(tree, summarizer):
     """The unit is the smallest set of paragraphs under one heading.
 
-    Given `\\section{A} P0 \\subsection{B} P1`, A is P0 -- not P0+P1. Sending
+    Given `\\span{A} P0 \\subsection{B} P1`, A is P0 -- not P0+P1. Sending
     the subtree summarised every child's text twice, once under itself and
     once under its parent, and made parent and child share source text, which
     manufactures parent-child merges in the basis.
@@ -355,7 +355,7 @@ def test_failures_are_recorded_and_do_not_stop_the_run(tree):
         name, deterministic = "broken", False
 
         def summarize(self, sid, title, body):
-            return SectionSummary(sid, title, error="boom")
+            return SpanSummary(sid, title, error="boom")
 
     run = summarize_tree(tree, Broken())
     assert len(run.summaries) == 2
@@ -368,7 +368,7 @@ def test_unusable_summaries_are_not_cached(tree, tmp_path):
         name, deterministic = "broken", False
 
         def summarize(self, sid, title, body):
-            return SectionSummary(sid, title, error="boom")
+            return SpanSummary(sid, title, error="boom")
 
     cache = SummaryCache(tmp_path / "c.json")
     summarize_tree(tree, Broken(), cache=cache)
@@ -377,7 +377,7 @@ def test_unusable_summaries_are_not_cached(tree, tmp_path):
 
 def test_stats_report_the_basis_word_budget(tree, summarizer):
     stats = summarize_tree(tree, summarizer).stats()
-    assert stats["sections"] == 2
+    assert stats["spans"] == 2
     assert "label_word_budget" in stats
 
 
@@ -415,11 +415,11 @@ def test_budgets_stay_inside_the_window():
 
 def test_cache_revives_sibling_concepts_as_objects(tmp_path):
     """asdict flattens nested summaries to dicts and tuples to lists. A naive
-    SectionSummary(**raw) returns siblings as dicts -- objects with no .label
+    SpanSummary(**raw) returns siblings as dicts -- objects with no .label
     that every consumer then fails on."""
     from conceptdrill.hierarchy.summarize import SummaryCache
-    inner = SectionSummary(section_id="s1", title="T", label="second phrase")
-    outer = SectionSummary(section_id="s1", title="T", label="first phrase",
+    inner = SpanSummary(span_id="s1", title="T", label="second phrase")
+    outer = SpanSummary(span_id="s1", title="T", label="first phrase",
                            siblings=(inner,))
     cache = SummaryCache(tmp_path / "c.json")
     cache.put("k", outer)
@@ -428,5 +428,5 @@ def test_cache_revives_sibling_concepts_as_objects(tmp_path):
     reread = SummaryCache(tmp_path / "c.json").get("k")
     assert reread == outer
     assert isinstance(reread.siblings, tuple)
-    assert isinstance(reread.siblings[0], SectionSummary)
+    assert isinstance(reread.siblings[0], SpanSummary)
     assert [c.label for c in reread.concepts] == ["first phrase", "second phrase"]

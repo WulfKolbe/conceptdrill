@@ -1,6 +1,6 @@
 """Unit tests for Algorithm 2 (hierarchical refinement).
 
-Includes the DAG case the siblings score was designed for, which a section
+Includes the DAG case the siblings score was designed for, which a span
 tree never exercises.
 """
 from __future__ import annotations
@@ -65,7 +65,7 @@ def test_sibscore_of_an_only_child_is_one():
 
 def test_sibscore_is_always_one_on_a_tree():
     """Every sibling shares the single parent: |{p}|/|{p}| = 1 for every term.
-    Measured: 0 of 8695 real sections have more than one parent."""
+    Measured: 0 of 8695 real spans have more than one parent."""
     g = tree_graph()
     assert g.sibscore("a", "a1") == 1.0
     assert g.sibscore("a", "a2") == 1.0
@@ -280,7 +280,7 @@ needs_deep = pytest.mark.skipif(not DEEP_DOC.exists(),
 
 @needs_deep
 def test_a_real_nested_document_has_room_to_refine():
-    """2105.00377 (MathBERT): 5 roots, 19 sections, three levels."""
+    """2105.00377 (MathBERT): 5 roots, 19 spans, three levels."""
     from conceptdrill.hierarchy.docmodel_tree import load_tree
     g = ConceptGraph.from_section_tree(load_tree(DEEP_DOC))
     assert len(g.top_level()) == 5
@@ -314,7 +314,7 @@ def test_refinement_descends_two_levels_on_a_real_document():
 def test_expansion_order_is_not_document_order():
     """The point of the algorithm: emphasis comes from the text, not the
     outline. On 2105.00377 'Experiment' expands last despite being the fourth
-    section, because the context does not project onto it."""
+    span, because the context does not project onto it."""
     from conceptdrill.hierarchy.docmodel_tree import load_tree
     tree = load_tree(DEEP_DOC)
     g = ConceptGraph.from_section_tree(tree)

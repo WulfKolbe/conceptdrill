@@ -1,6 +1,6 @@
-"""Cleaning LaTeX residue out of DocModel section captions.
+"""Cleaning LaTeX residue out of DocModel span captions.
 
-The Semantic Compiler ingests LaTeX and stores section titles under
+The Semantic Compiler ingests LaTeX and stores marker titles under
 `props.caption`, but it does not expand macros. Real examples from
 `2209.00445/model.docmodel.json`:
 
@@ -14,7 +14,7 @@ signs tokenize into noise and would pollute every basis vector derived from the
 title.
 
 `clean_caption` is pure text-in/text-out. It knows nothing about the DocModel,
-sections, or files.
+markers, or files.
 """
 from __future__ import annotations
 
@@ -136,7 +136,7 @@ _PLACEHOLDER = re.compile(r"\{\{\s*([^{}|]*?)\s*\|\|\s*([A-Z]+)\s*\}\}")
 #: What each placeholder kind becomes. `FO` marks a formula slot: naming it
 #: keeps the sentence grammatical where deleting it would leave "Let be a space
 #: of textual objects". `CIT` is different — the citekey is real signal, since a
-#: section citing roberta or glove is partly *about* those things.
+#: span citing roberta or glove is partly *about* those things.
 _PLACEHOLDER_WORDS = {"FO": "formula", "TAB": "table", "FIG": "figure",
                       "ALG": "algorithm", "EQ": "equation"}
 

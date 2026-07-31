@@ -10,7 +10,7 @@ import pytest
 from conceptdrill.hierarchy.novita import (DEFAULT_MODEL, NovitaSummarizer,
                                            Throttle, resolve_api_key)
 
-GOOD_REPLY = ('{"summary": "A faithful summary of the section.", '
+GOOD_REPLY = ('{"summary": "A faithful summary of the span.", '
               '"abstraction": "The underlying idea.", '
               '"label": "A canonical reusable concept definition."}')
 
@@ -82,7 +82,7 @@ def test_model_name_is_recorded():
 
 def test_section_id_and_title_are_carried():
     got = summarizer(GOOD_REPLY).summarize("s7", "Concept Scoring", "b")
-    assert got.section_id == "s7" and got.title == "Concept Scoring"
+    assert got.span_id == "s7" and got.title == "Concept Scoring"
 
 
 def test_fenced_reply_is_accepted():
@@ -120,7 +120,7 @@ def test_system_prompt_is_the_packaged_one():
 # --------------------------------------------------------------------------
 
 def test_transport_error_becomes_a_record_not_an_exception():
-    """One unreachable section must not abort a corpus build."""
+    """One unreachable span must not abort a corpus build."""
     got = summarizer(ConnectionError("down")).summarize("s1", "T", "b")
     assert got.error and "ConnectionError" in got.error
     assert not got.is_usable
@@ -276,7 +276,7 @@ def test_missing_dotenv_is_not_an_error(monkeypatch, tmp_path):
 def test_reasoning_effort_is_sent_and_in_the_cache_key(monkeypatch):
     """Reasoning tokens come out of the SAME completion budget as the answer,
     which is what the max_tokens ladder (900 -> 2000 -> 4000 -> 8000) was
-    really fighting; 5 of 203 arXiv sections still hit 8000. Capping the
+    really fighting; 5 of 203 arXiv spans still hit 8000. Capping the
     reasoning treats the cause. Measured on the provider: 3931 completion
     tokens at default effort, 2553 at minimal (-35%)."""
     from conceptdrill.hierarchy import novita as nv

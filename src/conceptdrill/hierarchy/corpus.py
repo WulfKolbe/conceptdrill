@@ -1,7 +1,7 @@
 """Persisting the corpus-level basis and its CES vectors.
 
 This is the one artefact that deliberately does **not** live in a drill folder.
-A section tree belongs to one document; a shared basis is a property of the
+A marker tree belongs to one document; a shared basis is a property of the
 corpus, and writing it beside one document would make that document silently
 authoritative for every other.
 
@@ -146,7 +146,7 @@ class CorpusStore:
             records.append({
                 "sentence_id": p.sentence_id,
                 "text": p.text,
-                "section_id": p.section_id,
+                "span_id": p.span_id,
                 "source_id": p.source_id,
                 "document": document_of(p) if document_of else "",
                 "top_concepts": [h.to_dict() for h in p.top_concepts],

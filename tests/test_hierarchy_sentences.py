@@ -174,7 +174,7 @@ def tree():
 
 def test_sentences_carry_their_section(tree):
     got = sentences_from_tree(tree)
-    assert {s.section_id for s in got} == {"s1", "s2"}
+    assert {s.span_id for s in got} == {"s1", "s2"}
 
 
 def test_sentences_carry_their_source_paragraph(tree):
@@ -203,7 +203,7 @@ def test_a_paragraph_yields_several_sentences(tree):
 
 def test_level_filter_restricts_extraction(tree):
     got = sentences_from_tree(tree, levels={2})
-    assert {s.section_id for s in got} == {"s1"}
+    assert {s.span_id for s in got} == {"s1"}
 
 
 def test_short_fragments_are_dropped(tree):
@@ -219,7 +219,7 @@ def test_orphans_are_included_by_default():
     """Front matter is usually the abstract -- concept-dense text."""
     t = build_tree({"objects": [_par("p0", LONG_A, 1), _sec("s1", "M", 2, 5)]})
     got = sentences_from_tree(t)
-    assert any(s.section_id is None for s in got)
+    assert any(s.span_id is None for s in got)
 
 
 def test_orphans_can_be_excluded():
@@ -233,7 +233,7 @@ def test_empty_tree_yields_nothing():
 
 def test_stats_describe_the_set(tree):
     st = sentence_stats(sentences_from_tree(tree))
-    assert st["sentences"] == 3 and st["sections"] == 2
+    assert st["sentences"] == 3 and st["spans"] == 2
     assert st["words_min"] <= st["words_median"] <= st["words_max"]
 
 
