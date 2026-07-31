@@ -68,6 +68,25 @@ DEFAULT_MAX_BODY = 200_000
 #: a failed section.
 DEFAULT_MAX_TOKENS = MODEL_MAX_OUTPUT_TOKENS
 
+#: How much the model may think before answering.
+#:
+#: `client.models.list()` reports `features: [..., 'reasoning']` for
+#: inclusionai/ling-3.0-flash, and reasoning tokens are spent from the SAME
+#: completion budget as the answer. That is what the max_tokens ladder was
+#: really fighting: at 900, 2000 and 4000 every probed section returned
+#: reasoning and no JSON, and at 8000 five of 203 sections still hit the wall
+#: (see TruncatedReply in the arXiv corpus). Raising the ceiling treats the
+#: symptom; capping the reasoning treats the cause.
+#:
+#: PROBED against the provider -- `max_tokens`, `max_completion_tokens`, both
+#: together, and `reasoning_effort` in ("low", "minimal") are all accepted.
+#: Note the provider returns `completion_tokens_details = None`, so the split
+#: between reasoning and answer tokens is NOT observable here; the effort cap
+#: is the only lever.
+#:
+#: Set to None to omit the parameter for a provider that rejects it.
+DEFAULT_REASONING_EFFORT = "minimal"
+
 #: Fields the prompt asks for.
 TIERS = ("summary", "abstraction", "label")
 
@@ -122,6 +141,7 @@ def make_openai_chat(*, api_key: Optional[str] = None,
                      model: str = DEFAULT_MODEL,
                      temperature: float = 0.2,
                      max_tokens: int = DEFAULT_MAX_TOKENS,
+                     reasoning_effort: Optional[str] = DEFAULT_REASONING_EFFORT,
                      max_retries: int = 4) -> ChatFn:
     """Build a chat callable backed by the `openai` client.
 
@@ -147,10 +167,12 @@ def make_openai_chat(*, api_key: Optional[str] = None,
                     max_retries=max_retries)
 
     def chat(system: str, user: str) -> str:
+        extra = {"reasoning_effort": reasoning_effort} if reasoning_effort else {}
         reply = client.chat.completions.create(
             model=model, temperature=temperature, max_tokens=max_tokens,
             messages=[{"role": "system", "content": system},
-                      {"role": "user", "content": user}])
+                      {"role": "user", "content": user}],
+            **extra)
         choice = reply.choices[0]
         if choice.finish_reason == "length":
             # A truncated reply is a budget failure, not a malformed one.
@@ -168,8 +190,12 @@ def make_openai_chat(*, api_key: Optional[str] = None,
     # does: at 900 this model returned truncated reasoning, at 8000 it returns
     # JSON with correctly-sized labels. Without this the cache served the
     # truncated generation's answers into a run that had already fixed it.
+    # reasoning_effort belongs here for the same reason max_tokens does: it
+    # changes the generation, so a cache built at one setting must not serve a
+    # run made at another.
     chat.params = {"model": model, "temperature": temperature,
-                   "max_tokens": max_tokens}
+                   "max_tokens": max_tokens,
+                   "reasoning_effort": reasoning_effort}
     return chat
 
 

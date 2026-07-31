@@ -271,3 +271,56 @@ def test_missing_dotenv_is_not_an_error(monkeypatch, tmp_path):
     from conceptdrill.hierarchy.novita import load_dotenv
     monkeypatch.chdir(tmp_path)
     assert load_dotenv() == {}
+
+
+def test_reasoning_effort_is_sent_and_in_the_cache_key(monkeypatch):
+    """Reasoning tokens come out of the SAME completion budget as the answer,
+    which is what the max_tokens ladder (900 -> 2000 -> 4000 -> 8000) was
+    really fighting; 5 of 203 arXiv sections still hit 8000. Capping the
+    reasoning treats the cause. Measured on the provider: 3931 completion
+    tokens at default effort, 2553 at minimal (-35%)."""
+    from conceptdrill.hierarchy import novita as nv
+
+    seen = {}
+
+    class _Msg:
+        content = '{"summary": "s", "abstraction": "a", "label": "l"}'
+
+    class _Choice:
+        finish_reason = "stop"
+        message = _Msg()
+
+    class _Reply:
+        choices = [_Choice()]
+        usage = None
+
+    class _Completions:
+        def create(self, **kw):
+            seen.update(kw)
+            return _Reply()
+
+    class _Chat:
+        completions = _Completions()
+
+    class _Client:
+        chat = _Chat()
+
+        def __init__(self, **kw):
+            pass
+
+    import openai
+    monkeypatch.setattr(openai, "OpenAI", _Client)
+    monkeypatch.setenv("NOVITA_API_KEY", "k")
+
+    chat = nv.make_openai_chat(max_tokens=256)
+    chat("sys", "usr")
+    assert seen["reasoning_effort"] == "minimal"
+    # must be in the cache key: a cache built at one effort must not serve a
+    # run made at another, exactly as for max_tokens
+    assert chat.params["reasoning_effort"] == "minimal"
+
+    seen.clear()
+    off = nv.make_openai_chat(max_tokens=256, reasoning_effort=None)
+    off("sys", "usr")
+    assert "reasoning_effort" not in seen, "None must omit the parameter entirely"
+    assert off.params["reasoning_effort"] is None
