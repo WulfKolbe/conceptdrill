@@ -1,0 +1,1835 @@
+{
+  "note": "Hand labels for GATE 4 on the arXiv corpus. NOT a blind test: the structural vocabulary already existed when these were judged, so recall here measures whether a vocabulary built from ten unrelated PDF-derived documents generalises to ten LaTeX arXiv papers it has never seen. That is useful, but it is a different claim from the original blind labelling at 986b0fb.\n\nOnly 6 of 203 markers are structural, against 37 of 173 in the old corpus. arXiv LaTeX documents carry far less front and back matter as markers, and notably none of these ten has a References marker: references are Reference objects, not markers, and are already skipped.\n\nJudgement calls, recorded rather than hidden: 'Extended Theory' (1903.04829) and the children of 'Appendix' (1808.06356) are labelled CONTENT. They sit in appendix position but their titles name subject matter -- proofs, theory -- and the docmodel does not flag them is_appendix. The same call was made for 1211.3375 in the old corpus, so it is at least consistent. The 'a. Textual features' style run-in headings in 2003.03155 are content sub-headings, and three of them are empty spans.",
+  "corpus": "corpus-arxiv-10.json",
+  "markers": 203,
+  "structural": 6,
+  "labels": [
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_950e3ee5d5a8",
+      "span_id": "obj_950e3ee5d5a8",
+      "title": "Introduction",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_c090b3fe83ee",
+      "span_id": "obj_c090b3fe83ee",
+      "title": "Preliminaries",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_c62d8dd6a651",
+      "span_id": "obj_c62d8dd6a651",
+      "title": "Notation",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_d0c94cb30248",
+      "span_id": "obj_d0c94cb30248",
+      "title": "Kolmogorov Complexity, a brief primer",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_aaaf12fc326d",
+      "span_id": "obj_aaaf12fc326d",
+      "title": "MDL, a brief primer",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_6fadf76e30ad",
+      "span_id": "obj_6fadf76e30ad",
+      "title": "Causal Inference by Compression",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_e94d3d71e50c",
+      "span_id": "obj_e94d3d71e50c",
+      "title": "Causal Inference by Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_278dec9cb1a4",
+      "span_id": "obj_278dec9cb1a4",
+      "title": "Causal Inference by MDL",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_7b791385b0f3",
+      "span_id": "obj_7b791385b0f3",
+      "title": "Normalized Causal Indicator",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_f5d94ec58c7c",
+      "span_id": "obj_f5d94ec58c7c",
+      "title": "MDL for Tree Models",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_6e38f7404089",
+      "span_id": "obj_6e38f7404089",
+      "title": "The Algorithm",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_16c72a9470fd",
+      "span_id": "obj_16c72a9470fd",
+      "title": "Related Work",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_6d30ce6f46fe",
+      "span_id": "obj_6d30ce6f46fe",
+      "title": "Experiments",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_ae02c24f1c16",
+      "span_id": "obj_ae02c24f1c16",
+      "title": "Synthetic data",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_fbb2dd42a85e",
+      "span_id": "obj_fbb2dd42a85e",
+      "title": "Real world data",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_4afef49deba4",
+      "span_id": "obj_4afef49deba4",
+      "title": "Conclusion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_d0c2b6bfd21f",
+      "span_id": "obj_d0c2b6bfd21f",
+      "title": "Acknowledgements",
+      "level": 2,
+      "structural": true,
+      "reason": "back matter"
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_2f0d9116e8a7",
+      "span_id": "obj_2f0d9116e8a7",
+      "title": "Introduction",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_b37576fa786e",
+      "span_id": "obj_b37576fa786e",
+      "title": "Preliminaries",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_58e8620540c4",
+      "span_id": "obj_58e8620540c4",
+      "title": "Kolmogorov Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_031d26286c70",
+      "span_id": "obj_031d26286c70",
+      "title": "Causal Inference by Complexity",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_062e32d68d8a",
+      "span_id": "obj_062e32d68d8a",
+      "title": "Causal Inference by Compression",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_9a3a7f744374",
+      "span_id": "obj_9a3a7f744374",
+      "title": "Minimum Description Length Principle",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_9bdfa3f9ef2b",
+      "span_id": "obj_9bdfa3f9ef2b",
+      "title": "Stochastic Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_8ff02d5cd69b",
+      "span_id": "obj_8ff02d5cd69b",
+      "title": "Causal Inference by Stochastic Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_6f7f279a98a3",
+      "span_id": "obj_6f7f279a98a3",
+      "title": "Multinomial Stochastic Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_e9a45a80a6b8",
+      "span_id": "obj_e9a45a80a6b8",
+      "title": "Computing Conditional Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_b72ac0a11323",
+      "span_id": "obj_b72ac0a11323",
+      "title": "Related Work",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_85945ca8a525",
+      "span_id": "obj_85945ca8a525",
+      "title": "Experiments",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_e27c4bd6474d",
+      "span_id": "obj_e27c4bd6474d",
+      "title": "Synthetic Data",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_12493cc8fd1a",
+      "span_id": "obj_12493cc8fd1a",
+      "title": "Benchmark Data",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_b75d6fca6656",
+      "span_id": "obj_b75d6fca6656",
+      "title": "Qualitative Case Studies",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_f8cde8d54ca2",
+      "span_id": "obj_f8cde8d54ca2",
+      "title": "Discussion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06776",
+      "marker_id": "obj_7770819c5c72",
+      "span_id": "obj_7770819c5c72",
+      "title": "Conclusion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_aceba01e9e0a",
+      "span_id": "obj_aceba01e9e0a",
+      "title": "Introduction",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_bf009eb0f106",
+      "span_id": "obj_bf009eb0f106",
+      "title": "Preliminaries",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_38fd46883963",
+      "span_id": "obj_38fd46883963",
+      "title": "Kolmogorov Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_6b5f88b058da",
+      "span_id": "obj_6b5f88b058da",
+      "title": "Minimum Description Length Principle",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_a20f938ae034",
+      "span_id": "obj_a20f938ae034",
+      "title": "Information Theoretic Causal Inference",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_636a26544711",
+      "span_id": "obj_636a26544711",
+      "title": "Causal Inference by Kolmogorov Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_0f62f9c7dfd7",
+      "span_id": "obj_0f62f9c7dfd7",
+      "title": "Causal Inference by MDL",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_f42a40f53a68",
+      "span_id": "obj_f42a40f53a68",
+      "title": "The Algorithm",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_d5ef9d84e18e",
+      "span_id": "obj_d5ef9d84e18e",
+      "title": "Calculating the Conditional Scores",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_3d487103844f",
+      "span_id": "obj_3d487103844f",
+      "title": "Causal Direction and Confidence",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_9617ea7db26f",
+      "span_id": "obj_9617ea7db26f",
+      "title": "Computational Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_28731a729ec0",
+      "span_id": "obj_28731a729ec0",
+      "title": "Related Work",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_32867ad1815f",
+      "span_id": "obj_32867ad1815f",
+      "title": "Experiments",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_fa024fa113eb",
+      "span_id": "obj_fa024fa113eb",
+      "title": "Synthetic Data",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_b116d3310781",
+      "span_id": "obj_b116d3310781",
+      "title": "Real World Data",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_35baeb71fb20",
+      "span_id": "obj_35baeb71fb20",
+      "title": "Case Study: Octet Binary Semi Conductors",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_d12c77f467a5",
+      "span_id": "obj_d12c77f467a5",
+      "title": "Runtime",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_57079446c473",
+      "span_id": "obj_57079446c473",
+      "title": "Discussion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_e1722fd558e6",
+      "span_id": "obj_e1722fd558e6",
+      "title": "Conclusion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1709.08915",
+      "marker_id": "obj_36acc473fc5f",
+      "span_id": "obj_36acc473fc5f",
+      "title": "Acknowledgment",
+      "level": 2,
+      "structural": true,
+      "reason": "back matter"
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_3e0c84c45443",
+      "span_id": "obj_3e0c84c45443",
+      "title": "Introduction",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_75357ece1453",
+      "span_id": "obj_75357ece1453",
+      "title": "Preliminaries",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_11f3da7947ba",
+      "span_id": "obj_11f3da7947ba",
+      "title": "Bayesian Networks",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_9909d712dc7a",
+      "span_id": "obj_9909d712dc7a",
+      "title": "Markov Blankets",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_a1a6a89a8f10",
+      "span_id": "obj_a1a6a89a8f10",
+      "title": "Kolmogorov Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_0e6e9200b42e",
+      "span_id": "obj_0e6e9200b42e",
+      "title": "The Minimum Description Length Principle",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_38974c6262b4",
+      "span_id": "obj_38974c6262b4",
+      "title": "Stochastic Complexity for Multinomials",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_0726ddb67b34",
+      "span_id": "obj_0726ddb67b34",
+      "title": "Related Work",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_9cf1e630daa5",
+      "span_id": "obj_9cf1e630daa5",
+      "title": "Independence Testing using Stochastic Complexity",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_9ac29b22e9e6",
+      "span_id": "obj_9ac29b22e9e6",
+      "title": "Causal Markov Blankets",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_17af76ca5840",
+      "span_id": "obj_17af76ca5840",
+      "title": "Telling apart Parents and Children",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_a99d315c1e41",
+      "span_id": "obj_a99d315c1e41",
+      "title": "The Climb Algorithm",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_23a2722236d2",
+      "span_id": "obj_23a2722236d2",
+      "title": "Deciding between Markov equivalent DAGs",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_e0634df8effe",
+      "span_id": "obj_e0634df8effe",
+      "title": "Experiments",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_6f5b754f3667",
+      "span_id": "obj_6f5b754f3667",
+      "title": "Independence Testing",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_58f9a91f3298",
+      "span_id": "obj_58f9a91f3298",
+      "title": "Plug and Play with",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_c15087b5b4d9",
+      "span_id": "obj_c15087b5b4d9",
+      "title": "Telling apart Parents and Children",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_4895b9eb266e",
+      "span_id": "obj_4895b9eb266e",
+      "title": "Finding Causal Markov Blankets",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_ce859a1896a0",
+      "span_id": "obj_ce859a1896a0",
+      "title": "Causal Discovery",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_95d9a7b949c5",
+      "span_id": "obj_95d9a7b949c5",
+      "title": "Conclusion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_c59601fd5fca",
+      "span_id": "obj_c59601fd5fca",
+      "title": "Acknowledgment",
+      "level": 2,
+      "structural": true,
+      "reason": "back matter"
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_5a6aa7f556c0",
+      "span_id": "obj_5a6aa7f556c0",
+      "title": "Appendix",
+      "level": 2,
+      "structural": true,
+      "reason": "back matter"
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_ce332c41b2ad",
+      "span_id": "obj_ce332c41b2ad",
+      "title": "Proof of log-concavity of the regret term",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1808.06356",
+      "marker_id": "obj_9874d9bff513",
+      "span_id": "obj_9874d9bff513",
+      "title": "fulfills the Zero-Baseline Property",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_ba5bdc772177",
+      "span_id": "obj_ba5bdc772177",
+      "title": "Introduction",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_d5b92f17050a",
+      "span_id": "obj_d5b92f17050a",
+      "title": "Conditional Independence Testing",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_56470a8caacf",
+      "span_id": "obj_56470a8caacf",
+      "title": "Algorithmic Independence",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_c621df7e73e3",
+      "span_id": "obj_c621df7e73e3",
+      "title": "Stochastic Complexity for Multinomials",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_df5e83349a6e",
+      "span_id": "obj_df5e83349a6e",
+      "title": "Conditional Stochastic Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_9c6b554ae344",
+      "span_id": "obj_9c6b554ae344",
+      "title": "Stochastic Complexity based Conditional Independence",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_dcbffe317ae4",
+      "span_id": "obj_dcbffe317ae4",
+      "title": "Factorized SCI",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_738660f81f46",
+      "span_id": "obj_738660f81f46",
+      "title": "Properties of SCI",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_12b7036ccdee",
+      "span_id": "obj_12b7036ccdee",
+      "title": "Link to Gamma Distribution",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_cd27bf62c0bc",
+      "span_id": "obj_cd27bf62c0bc",
+      "title": "Empirical Sample Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_b18eeaa72960",
+      "span_id": "obj_b18eeaa72960",
+      "title": "Discussion",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_78569f35fd30",
+      "span_id": "obj_78569f35fd30",
+      "title": "Experiments",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_7120a119188a",
+      "span_id": "obj_7120a119188a",
+      "title": "Identifying d-Separation",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_ec2a17059a79",
+      "span_id": "obj_ec2a17059a79",
+      "title": "Changing the Domain Size",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_dc792a137268",
+      "span_id": "obj_dc792a137268",
+      "title": "Plug and Play with SCI",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_55d46044a9e6",
+      "span_id": "obj_55d46044a9e6",
+      "title": "Conclusion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_b50911711b9a",
+      "span_id": "obj_b50911711b9a",
+      "title": "Extended Theory",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_73651ce714d1",
+      "span_id": "obj_73651ce714d1",
+      "title": "Proof of Lemma <ref>",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_23042b3c6107",
+      "span_id": "obj_23042b3c6107",
+      "title": "Quotient SCI",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_d2d73c92fdbc",
+      "span_id": "obj_d2d73c92fdbc",
+      "title": "Alternative Symmetry Correction for Factorized SCI",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_1d6ba4d74dfc",
+      "span_id": "obj_1d6ba4d74dfc",
+      "title": "Experiments",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_b633b5dc0a81",
+      "span_id": "obj_b633b5dc0a81",
+      "title": "TPR and FPR for d-Separation",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_ba07532e7c81",
+      "span_id": "obj_ba07532e7c81",
+      "title": "Identifying the Parents",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1903.04829",
+      "marker_id": "obj_69ff925ed553",
+      "span_id": "obj_69ff925ed553",
+      "title": "Empirical Sample Complexity",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_bf34dbf64d38",
+      "span_id": "obj_bf34dbf64d38",
+      "title": "INTRODUCTION",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_cf40d935b832",
+      "span_id": "obj_cf40d935b832",
+      "title": "DAGS AND INDEPENDENCE",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_0b2d23dd25ed",
+      "span_id": "obj_0b2d23dd25ed",
+      "title": "Causal Graphs",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_425c1d86d61e",
+      "span_id": "obj_425c1d86d61e",
+      "title": "Independence and Separation",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_03d5f6cc838a",
+      "span_id": "obj_03d5f6cc838a",
+      "title": "ADJACENCY FAITHFULNESS AND WHEN IT IS VIOLATED",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_6035395a0992",
+      "span_id": "obj_6035395a0992",
+      "title": "Xor-Type Relations",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_c13778010e07",
+      "span_id": "obj_c13778010e07",
+      "title": "Cancelling Paths",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_3d333b25a993",
+      "span_id": "obj_3d333b25a993",
+      "title": "Weaker Assumptions",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_c51864e26b70",
+      "span_id": "obj_c51864e26b70",
+      "title": "UNFAITHFUL TRIPLES",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_63c6e7ec9fa1",
+      "span_id": "obj_63c6e7ec9fa1",
+      "title": "2-ADJACENCY FAITHFULNESS",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_200621c1b9fd",
+      "span_id": "obj_200621c1b9fd",
+      "title": "ORIENTATION",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_2c301269d117",
+      "span_id": "obj_2c301269d117",
+      "title": "Failures of 2-Orientation Faithfulness",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_a11b85527404",
+      "span_id": "obj_a11b85527404",
+      "title": "IMPLEMENTATION",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_3469ae2b54be",
+      "span_id": "obj_3469ae2b54be",
+      "title": "TOWARDS CAUSAL NETWORK INFERENCE",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_1d60bb0b43a7",
+      "span_id": "obj_1d60bb0b43a7",
+      "title": "CONCLUSION",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_0a1f6b0d152c",
+      "span_id": "obj_0a1f6b0d152c",
+      "title": "SUPPLEMENTARY MATERIAL",
+      "level": 2,
+      "structural": true,
+      "reason": "back matter"
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_3a9db9622feb",
+      "span_id": "obj_3a9db9622feb",
+      "title": "Example 2 in Detail",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_28d3735ce822",
+      "span_id": "obj_28d3735ce822",
+      "title": "2-Orientation Faithfulness and Sparsest Markov Representation",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2010.14265",
+      "marker_id": "obj_37515b2db6f1",
+      "span_id": "obj_37515b2db6f1",
+      "title": "Proofs",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_a13f07b9b3bb",
+      "span_id": "obj_a13f07b9b3bb",
+      "title": "Introduction",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_3719766b3ec5",
+      "span_id": "obj_3719766b3ec5",
+      "title": "Related Work",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_2f6f6c508498",
+      "span_id": "obj_2f6f6c508498",
+      "title": "Problem Definition",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_e5f1f4c3c93b",
+      "span_id": "obj_e5f1f4c3c93b",
+      "title": "Design Space and Architecture",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_088bd049bf5b",
+      "span_id": "obj_088bd049bf5b",
+      "title": "Set Predicate Identification",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_2606ea771198",
+      "span_id": "obj_2606ea771198",
+      "title": "Enumerating Predicates",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_d2d8de673ea9",
+      "span_id": "obj_d2d8de673ea9",
+      "title": "a. Textual features",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_d5aa883e4f09",
+      "span_id": "obj_d5aa883e4f09",
+      "title": "b. Type information",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_e4d98944fe1b",
+      "span_id": "obj_e4d98944fe1b",
+      "title": "c. KB statistics",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_f8ff9af4f44d",
+      "span_id": "obj_f8ff9af4f44d",
+      "title": "Counting Predicates",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_a21e5c443144",
+      "span_id": "obj_a21e5c443144",
+      "title": "a. Textual features",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_a9b6e5d89b42",
+      "span_id": "obj_a9b6e5d89b42",
+      "title": "b. Type information",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_433790ae0589",
+      "span_id": "obj_433790ae0589",
+      "title": "c. KB statistics",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_b88ed0f1307d",
+      "span_id": "obj_b88ed0f1307d",
+      "title": "Heuristic Predicate Alignment",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_de029d338574",
+      "span_id": "obj_de029d338574",
+      "title": "Experiments",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_e0a3f4e57dd5",
+      "span_id": "obj_e0a3f4e57dd5",
+      "title": "KBs used",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_3446a8ef6c2f",
+      "span_id": "obj_3446a8ef6c2f",
+      "title": "Preprocessing",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_25bb576c004a",
+      "span_id": "obj_25bb576c004a",
+      "title": "Training and evaluation data",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_2d57275c929a",
+      "span_id": "obj_2d57275c929a",
+      "title": "Classifier models",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_38d7c34e05d8",
+      "span_id": "obj_38d7c34e05d8",
+      "title": "Results",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_9f5633309f44",
+      "span_id": "obj_9f5633309f44",
+      "title": "Use Cases",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_3067f17abf7d",
+      "span_id": "obj_3067f17abf7d",
+      "title": "Discussion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2003.03155",
+      "marker_id": "obj_093236466bc3",
+      "span_id": "obj_093236466bc3",
+      "title": "Conclusion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_359f0d3e0476",
+      "span_id": "obj_359f0d3e0476",
+      "title": "Introduction",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_0a75e05afc2e",
+      "span_id": "obj_0a75e05afc2e",
+      "title": "Model and Architecture",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_667a0781935c",
+      "span_id": "obj_667a0781935c",
+      "title": "KG representation",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_9c1bfa83b9e4",
+      "span_id": "obj_9c1bfa83b9e4",
+      "title": "ConvQA concepts",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_8ad84ebf0a86",
+      "span_id": "obj_8ad84ebf0a86",
+      "title": "System overview",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_55d85690ddd0",
+      "span_id": "obj_55d85690ddd0",
+      "title": "Detecting context entities",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_802db7cd31bf",
+      "span_id": "obj_802db7cd31bf",
+      "title": "Learning from reformulations",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_9c6df36a49b3",
+      "span_id": "obj_9c6df36a49b3",
+      "title": "RL Model",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_57699ad62664",
+      "span_id": "obj_57699ad62664",
+      "title": "RL Training",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_eed8231aa5fb",
+      "span_id": "obj_eed8231aa5fb",
+      "title": "Predicting reformulations",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_e45091061efb",
+      "span_id": "obj_e45091061efb",
+      "title": "Generating answers",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_46dda387a0c2",
+      "span_id": "obj_46dda387a0c2",
+      "title": "Benchmark with Reformulations",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_5063192c83f5",
+      "span_id": "obj_5063192c83f5",
+      "title": "Experimental framework",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_0a1dce6cc12e",
+      "span_id": "obj_0a1dce6cc12e",
+      "title": "Setup",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_eef8c43ef2ad",
+      "span_id": "obj_eef8c43ef2ad",
+      "title": "configurations",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_37b8996c418c",
+      "span_id": "obj_37b8996c418c",
+      "title": "Baseline",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_8768f33696ef",
+      "span_id": "obj_8768f33696ef",
+      "title": "Metrics",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_dd8928d9e7e7",
+      "span_id": "obj_dd8928d9e7e7",
+      "title": "Results and insights",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_2625b09d235d",
+      "span_id": "obj_2625b09d235d",
+      "title": "Key findings",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_93c29f4d7b0f",
+      "span_id": "obj_93c29f4d7b0f",
+      "title": "In-depth analysis",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_0c7193fc6a09",
+      "span_id": "obj_0c7193fc6a09",
+      "title": "Related Work",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2105.04850",
+      "marker_id": "obj_d322d824343c",
+      "span_id": "obj_d322d824343c",
+      "title": "Conclusion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_e1cf38a157c6",
+      "span_id": "obj_e1cf38a157c6",
+      "title": "Introduction",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_aaf25140a106",
+      "span_id": "obj_aaf25140a106",
+      "title": "Concepts and Notation",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_c631609a4386",
+      "span_id": "obj_c631609a4386",
+      "title": "KB representation and storage",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_28a11ced1138",
+      "span_id": "obj_28a11ced1138",
+      "title": "The Method",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_63da9475f4ff",
+      "span_id": "obj_63da9475f4ff",
+      "title": "Retrieving candidate KB items per term",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_c1b5c349e409",
+      "span_id": "obj_c1b5c349e409",
+      "title": "Computing relevance signals for each item",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_1023136605e6",
+      "span_id": "obj_1023136605e6",
+      "title": "Finding top-k across sorted lists",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_5af8ecbf1dad",
+      "span_id": "obj_5af8ecbf1dad",
+      "title": "Pruning facts of highly frequent KB items",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_e5315a6c4d26",
+      "span_id": "obj_e5315a6c4d26",
+      "title": "Automatic setting of k and p",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_101e64e8245f",
+      "span_id": "obj_101e64e8245f",
+      "title": "Experimental setup",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_619058a22b51",
+      "span_id": "obj_619058a22b51",
+      "title": "Results and insights",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_dcf65cf75676",
+      "span_id": "obj_dcf65cf75676",
+      "title": "Key findings",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_3600737290cf",
+      "span_id": "obj_3600737290cf",
+      "title": "In-depth analysis",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_e530e6a635d1",
+      "span_id": "obj_e530e6a635d1",
+      "title": "Effect of fact-based KB indexing",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_dffc5a69899c",
+      "span_id": "obj_dffc5a69899c",
+      "title": "Discussion",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_4d3c797ec17a",
+      "span_id": "obj_4d3c797ec17a",
+      "title": "Related work",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_680da934de03",
+      "span_id": "obj_680da934de03",
+      "title": "Conclusions and future work",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2108.08597",
+      "marker_id": "obj_538636f02762",
+      "span_id": "obj_538636f02762",
+      "title": "Acknowledgments",
+      "level": 2,
+      "structural": true,
+      "reason": "back matter"
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_b2f004386320",
+      "span_id": "obj_b2f004386320",
+      "title": "Introduction",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_c4a41ffb046a",
+      "span_id": "obj_c4a41ffb046a",
+      "title": "Concepts and notation",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_aa1e7af52ae6",
+      "span_id": "obj_aa1e7af52ae6",
+      "title": "Constructing answer graphs",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_1e55c38fa287",
+      "span_id": "obj_1e55c38fa287",
+      "title": "Finding question-relevant KG facts",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_2bd8d2d7f75f",
+      "span_id": "obj_2bd8d2d7f75f",
+      "title": "Computing compact subgraphs",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_6b56e1689024",
+      "span_id": "obj_6b56e1689024",
+      "title": "Augmenting subgraphs with temporal facts",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_39d7259cbd00",
+      "span_id": "obj_39d7259cbd00",
+      "title": "Predicting answers with R-GCN",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_66561606768b",
+      "span_id": "obj_66561606768b",
+      "title": "Question representation",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_eac5bd746254",
+      "span_id": "obj_eac5bd746254",
+      "title": "Entity representation",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_232fa4cfd31b",
+      "span_id": "obj_232fa4cfd31b",
+      "title": "Answer prediction",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_7450fbb60740",
+      "span_id": "obj_7450fbb60740",
+      "title": "Experimental Setup",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_91f822d2e86d",
+      "span_id": "obj_91f822d2e86d",
+      "title": "Benchmark",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_e26cb7b59814",
+      "span_id": "obj_e26cb7b59814",
+      "title": "Baselines",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_6ec158a9d437",
+      "span_id": "obj_6ec158a9d437",
+      "title": "Metrics",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_29566236ae75",
+      "span_id": "obj_29566236ae75",
+      "title": "Initialization",
+      "level": 3,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_80215620441b",
+      "span_id": "obj_80215620441b",
+      "title": "Key findings",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_94cf510ebd21",
+      "span_id": "obj_94cf510ebd21",
+      "title": "In-depth analysis",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_20c03f560d61",
+      "span_id": "obj_20c03f560d61",
+      "title": "Related Work",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "2109.08935",
+      "marker_id": "obj_ee90b837d090",
+      "span_id": "obj_ee90b837d090",
+      "title": "Conclusions",
+      "level": 2,
+      "structural": false,
+      "reason": ""
+    }
+  ]
+}

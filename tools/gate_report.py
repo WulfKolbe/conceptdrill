@@ -26,22 +26,46 @@ from conceptdrill.hierarchy.gates import (gate1_persistence,      # noqa: E402
                                           gate3_tier_independence,
                                           gate4_structural)
 
-LABELS = (Path(__file__).resolve().parents[1] / "docs" / "measurements"
-          / "structural-labels-10docs.json")
+MEASUREMENTS = Path(__file__).resolve().parents[1] / "docs" / "measurements"
+
+
+def labels_for(run: Path) -> Path | None:
+    """The hand labels whose documents match this run's.
+
+    Picking the wrong file makes gate 4 fail for the wrong reason -- every
+    labelled span "absent from the run" -- which reads like a pipeline defect
+    and is not one.
+    """
+    import json as _json
+    manifest = _json.loads((run / "manifest.json").read_text())
+    docs = {Path(p).parent.name for p in manifest.get("corpus_paths") or []}
+    best, best_overlap = None, 0
+    for candidate in sorted(MEASUREMENTS.glob("structural-labels-*.json")):
+        labelled = {l["doc_id"] for l in
+                    _json.loads(candidate.read_text())["labels"]}
+        overlap = len(docs & labelled)
+        if overlap > best_overlap:
+            best, best_overlap = candidate, overlap
+    return best if best_overlap == len(docs) else None
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_dir", nargs="?",
                     default=str(Path.home() / "conceptdrill-corpus-llm" / "current"))
-    ap.add_argument("--labels", default=str(LABELS))
+    ap.add_argument("--labels", default="")
     args = ap.parse_args()
 
     run = Path(args.run_dir)
     results = [gate1_persistence(run), gate2_basis_text(run),
                gate3_tier_independence(run)]
-    if Path(args.labels).exists():
-        results.append(gate4_structural(run, args.labels))
+    labels = Path(args.labels) if args.labels else labels_for(run)
+    if labels and labels.exists():
+        print(f"structural labels: {labels.name}\n")
+        results.append(gate4_structural(run, labels))
+    else:
+        print("structural labels: none cover this run's documents; "
+              "GATE 4 not run\n")
 
     payload = {
         "run_dir": str(run),
