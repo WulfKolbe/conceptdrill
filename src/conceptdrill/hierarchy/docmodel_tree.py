@@ -761,11 +761,11 @@ def build_tree(docmodel: dict[str, Any],
     )
 
 
-def load_tree(path) -> MarkerTree:
+def load_tree(path, *, speaker=None) -> MarkerTree:
     """Read a `model.docmodel.json` from disk. The file is opened read-only."""
     import json
     from pathlib import Path
 
     p = Path(path)
     with p.open(encoding="utf-8") as fh:
-        return build_tree(json.load(fh), source_path=str(p))
+        return build_tree(json.load(fh), source_path=str(p), speaker=speaker)

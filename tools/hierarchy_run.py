@@ -109,6 +109,10 @@ def main() -> int:
     ap.add_argument("--llm-model", default="")
     ap.add_argument("--tau", type=float, default=None)
     ap.add_argument("--summary-cache", default=".conceptdrill_cache/summaries.json")
+    ap.add_argument("--speech", default="",
+                    help="path to the la2speech project; renders maths through "
+                         "SRE instead of the coarse fallback. Loaded by path, "
+                         "never imported.")
     ap.add_argument("--name", default="current",
                     help="directory name under --out. Fixed by default so the "
                          "current run is findable without knowing a timestamp; "
@@ -117,6 +121,14 @@ def main() -> int:
 
     strict = os.environ.get("CONCEPTDRILL_STRICT", "") == "1"
     nlp_backend = os.environ.get("CONCEPTDRILL_NLP_BACKEND")
+
+    speaker = None
+    speech_info = None
+    if args.speech:
+        from conceptdrill.hierarchy.speech import describe, load_speaker
+        speaker = load_speaker(args.speech)     # raises rather than degrading
+        speech_info = describe(speaker)
+        print(f"spoken maths: {speech_info}")
 
     library = Path(args.library)
     if args.docs:
@@ -145,7 +157,7 @@ def main() -> int:
         if not args.docs and docs_done >= args.limit:
             break
         bibkey = path.parent.name
-        tree = load_tree(path)
+        tree = load_tree(path, speaker=speaker)
         if not len(tree):
             continue                       # no spans: nothing to account for
         docs_done += 1
@@ -349,6 +361,7 @@ def main() -> int:
                "is_ablation": is_ablation,
                "tier_violations": tier_violations,
                "basis_text_tokens": token_stats,
+               "speech_backend": speech_info,
                "basis_version": basis.basis_version(),
                "basis_stats": basis.stats()})
 

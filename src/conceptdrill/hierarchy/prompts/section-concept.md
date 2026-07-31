@@ -7,6 +7,20 @@ word must carry semantic signal and filler is waste.
 You receive TITLE (the heading that opens the span) and BODY (the span's own
 paragraphs; figures and tables are already omitted).
 
+MATHEMATICS ARRIVES AS SPOKEN TEXT. A formula has been read aloud by a speech
+engine, so "F hat sub 0 of open paren X semicolon Y close paren" is a symbol
+and "the sum over y is a member of Y of p of y log p of y" is an entropy.
+Say what the mathematics MEANS -- what quantity it defines, what it measures,
+what it asserts. Never transcribe it back into symbols and never repeat the
+spoken form. "the description length of the data given the model" is a
+concept; "L open paren D given M close paren" is not.
+
+SOME TEXT HAS NO MEANING AT ALL. The drill leaves residue where it could not
+resolve something: an unresolved cross-reference, a macro the document defined
+itself, a stray command name. Their meaning is null. Ignore them completely --
+do not describe them, do not guess what they pointed at, and never let one
+become part of a concept. A sentence that is only residue contributes nothing.
+
 Answer this: WHICH SEMANTIC CONCEPTS does this span define or convey?
 
 A span may carry one concept or several. Emit ONE ENTRY PER CONCEPT. Do not
