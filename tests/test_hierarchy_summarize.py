@@ -430,3 +430,18 @@ def test_cache_revives_sibling_concepts_as_objects(tmp_path):
     assert isinstance(reread.siblings, tuple)
     assert isinstance(reread.siblings[0], SpanSummary)
     assert [c.label for c in reread.concepts] == ["first phrase", "second phrase"]
+
+
+def test_noop_macros_are_stripped_before_speaking():
+    r"""SRE read `\ensuremath{X \rightarrow Y}\xspace` as "X right arrow Y
+    backslash xspace": a spacing macro became two words inside the corpus's
+    central claim."""
+    from conceptdrill.hierarchy.mathtext import strip_noop_macros
+    assert strip_noop_macros(r"\ensuremath{X \rightarrow Y}\xspace") == r"X \rightarrow Y"
+    assert strip_noop_macros(r"A \quad B") == "A B"
+    assert strip_noop_macros(r"\mbox{text} here") == "text here"
+
+
+def test_stripping_leaves_real_macros_alone():
+    from conceptdrill.hierarchy.mathtext import strip_noop_macros
+    assert strip_noop_macros(r"\sum_{i} \alpha_i") == r"\sum_{i} \alpha_i"

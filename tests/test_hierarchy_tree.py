@@ -521,12 +521,15 @@ def test_real_tree_accounts_for_every_paragraph():
     """84 of 85 paragraphs carry parent_section; the 85th is front matter."""
     tree = load_tree(REAL_DOCMODEL)
     stats = tree.stats()
-    # 84 prose units + 60 math units rendered to text. The other 14 math
-    # objects are single symbols like T and k, dropped as signal-free.
-    # Unchanged by the Abstract deferral: the Abstract was an orphan, never
-    # attached to a marker, so it was never in this count.
-    assert stats["paragraphs"] == 144
-    assert stats["math_sources"] == {"fallback": 60, "none": 14}
+    # 84 prose units + the display equations. Down from 144 because inline
+    # formulas are no longer units of their own: a formula cited from inside a
+    # sentence is now resolved into that sentence, which is where it means
+    # something. The Abstract was always an orphan and never in this count.
+    assert stats["paragraphs"] == 85
+    # One display equation reaches the standalone math pass. The other 73
+    # formulas were cited from inside sentences and are inlined there, so they
+    # never appear as units and never reach this tally.
+    assert stats["math_sources"] == {"fallback": 1}
     # Nothing before the first marker now: the Abstract that used to sit
     # there is deferred to its own prompt, and the other candidate was a
     # Paragraph whose entire text is `\\maketitle`, dropped as a LaTeX
@@ -962,3 +965,72 @@ def test_a_real_reference_word_survives():
 def test_stripping_reports_how_many_it_removed():
     _, n = strip_dangling_refs("Fig. (ref) and Eq. (ref) and Sec. (ref)")
     assert n == 3
+
+
+# --------------------------------------------------------------------------
+# A formula cited inside a sentence is a symbol, not a unit
+# --------------------------------------------------------------------------
+
+from conceptdrill.hierarchy.docmodel_tree import inline_resolver  # noqa: E402
+
+
+def _formula(oid, latex, flow):
+    return {"id": oid, "type": "Formula",
+            "props": {"latex": latex, "flow_index": flow}}
+
+
+def test_a_referenced_formula_is_inlined_into_the_sentence():
+    """MEASURED: replacing the placeholder with the word "formula" turned the
+    corpus's central claim into "between a pair of random variables formula
+    and formula", which states nothing."""
+    objs = [span("m0", "Intro", 1, 1),
+            _formula("f1", "X", 2), _formula("f2", "Y", 3),
+            para("p1", "variables {{d_FO0001||FO}} and {{d_FO0002||FO}} differ",
+                 4, None)]
+    tree = build_tree({"objects": objs})
+    text = tree.nodes["m0"].body_text
+    assert "variables X and Y differ" in text
+    assert "formula and formula" not in text
+
+
+def test_an_inlined_formula_is_not_also_a_standalone_unit():
+    objs = [span("m0", "Intro", 1, 1), _formula("f1", "X", 2),
+            para("p1", "variable {{d_FO0001||FO}} matters", 3, None)]
+    tree = build_tree({"objects": objs})
+    assert [p.id for p in tree.nodes["m0"].paragraphs] == ["p1"]
+    assert any(s.object_id == "f1" and "inlined" in s.reason
+               for s in tree.skipped)
+
+
+def test_an_inlined_formula_is_still_accounted_for():
+    objs = [span("m0", "Intro", 1, 1), _formula("f1", "X", 2),
+            para("p1", "variable {{d_FO0001||FO}} matters", 3, None)]
+    tree = build_tree({"objects": objs})
+    account = tree.accounting(objs)
+    assert account["unaccounted"] == [] and account["double_counted"] == []
+
+
+def test_a_single_symbol_is_kept_inline_though_dropped_standalone():
+    """`X` is noise on its own and the paper's subject inside a sentence.
+    min_latex_chars applies to the standalone pass only."""
+    objs = [span("m0", "Intro", 1, 1), _formula("f1", "X", 2),
+            _formula("f2", "Z", 9),
+            para("p1", "variable {{d_FO0001||FO}} matters", 3, None)]
+    tree = build_tree({"objects": objs})
+    text = tree.nodes["m0"].body_text
+    assert "variable X matters" in text
+    assert "Z" not in text, "an unreferenced single symbol stays dropped"
+
+
+def test_an_unresolvable_ordinal_falls_back_to_the_neutral_word():
+    objs = [span("m0", "Intro", 1, 1), _formula("f1", "X", 2),
+            para("p1", "see {{d_FO0099||FO}} here", 3, None)]
+    tree = build_tree({"objects": objs})
+    assert "formula" in tree.nodes["m0"].body_text
+
+
+def test_the_resolver_only_answers_for_formula_placeholders():
+    resolve = inline_resolver([_formula("f1", "X", 1)])
+    assert resolve("FO", "d_FO0001") == "X"
+    assert resolve("CIT", "d_REF_smith") is None
+    assert resolve("TAB", "d_TAB0001") is None

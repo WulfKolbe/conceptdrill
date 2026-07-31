@@ -168,6 +168,41 @@ def latex_from_props(props: Mapping[str, Any]) -> str:
     return ""
 
 
+#: Macros that render as nothing and mean nothing, but which a speech engine
+#: reads aloud. `\ensuremath{X \rightarrow Y}\xspace` came back from SRE as
+#: "X right arrow Y backslash xspace": the spacing macro became two words in
+#: the middle of the corpus's central claim.
+_NOOP_WRAPPERS = re.compile(r"\\(?:ensuremath|protect|mbox|hbox|text)\s*\{")
+_NOOP_MACROS = re.compile(r"\\(?:xspace|,|;|!|quad|qquad|thinspace|/|@)"
+                          r"(?![A-Za-z])")
+
+
+def strip_noop_macros(tex: str) -> str:
+    r"""Remove macros that occupy no meaning. `\ensuremath{..}` keeps its
+    argument; `\xspace` and friends go entirely.
+    """
+    out = tex or ""
+    for _ in range(4):                     # bounded: nesting is shallow
+        match = _NOOP_WRAPPERS.search(out)
+        if not match:
+            break
+        start = match.end() - 1            # at the opening brace
+        depth, i = 0, start
+        while i < len(out):
+            if out[i] == "{":
+                depth += 1
+            elif out[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        if i >= len(out):
+            break
+        out = out[:match.start()] + out[start + 1:i] + out[i + 1:]
+    out = _NOOP_MACROS.sub(" ", out)
+    return re.sub(r"\s+", " ", out).strip()
+
+
 def math_text(props: Mapping[str, Any], *,
               speaker: Optional[SpeechBackend] = None,
               protect: bool = True,
@@ -192,7 +227,8 @@ def math_text(props: Mapping[str, Any], *,
 
     if speaker is not None:
         try:
-            source_tex = protect_identifiers(latex) if protect else latex
+            source_tex = strip_noop_macros(latex)
+            source_tex = protect_identifiers(source_tex) if protect else source_tex
             said = (speaker.speak_math(source_tex) or "").strip()
             if said:
                 return said, "speech"

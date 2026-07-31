@@ -289,7 +289,8 @@ class SkippedObject:
 
 
 def read_math(objects: Sequence[dict[str, Any]], *,
-              speaker=None, min_latex_chars: int = 3
+              speaker=None, min_latex_chars: int = 3,
+              skip_ids: Optional[set] = None
               ) -> tuple[list[Paragraph], dict[str, int]]:
     """Math objects rendered to prose, plus a tally of where the text came from.
 
@@ -304,6 +305,8 @@ def read_math(objects: Sequence[dict[str, Any]], *,
             continue
         if str(obj.get("type") or "").lower() not in MATH_TYPES:
             continue
+        if skip_ids and str(obj.get("id") or "") in skip_ids:
+            continue          # already inlined into the paragraph that cites it
         props = obj.get("props") or {}
         if not isinstance(props, dict):
             continue
@@ -325,7 +328,55 @@ def read_math(objects: Sequence[dict[str, Any]], *,
     return out, sources
 
 
-def read_content(objects: Sequence[dict[str, Any]]
+#: `{{<bibkey>_FO0001||FO}}` -> the ordinal 1. MEASURED: the FO placeholder
+#: count equals the Formula count exactly in every corpus document (325/325,
+#: 349/349, 404/404, 400/400), and FO0001 is the first Formula in flow order.
+#: Equation objects are never referenced this way -- they stand alone.
+_PLACEHOLDER_ORDINAL = re.compile(r"_([A-Z]+)(\d+)$")
+
+
+def inline_resolver(objects: Sequence[dict[str, Any]], *, speaker=None,
+                    consumed: Optional[set] = None):
+    r"""A `clean_body_text` resolver that inlines referenced formulas.
+
+    A `Formula` referenced from inside a sentence is not a unit of its own: it
+    is a symbol in that sentence. Emitting it separately produced 1533 stray
+    one-character units across the corpus -- `X`, `Y`, `Z`, `k`, `n` -- which
+    `min_latex_chars` then dropped as noise. They are noise standing alone and
+    the paper's subject inside the sentence.
+
+    Ids of formulas inlined here are added to `consumed`, so the caller can
+    keep them out of the standalone math pass and still account for them.
+    """
+    ordered = sorted(
+        (o for o in objects
+         if isinstance(o, dict) and str(o.get("type") or "").lower() == "formula"),
+        key=lambda o: (int((o.get("props") or {}).get("flow_index", 0)),
+                       str(o.get("id") or "")))
+
+    def resolve(kind: str, ident: str) -> Optional[str]:
+        if kind != "FO":
+            return None
+        match = _PLACEHOLDER_ORDINAL.search(ident or "")
+        if not match:
+            return None
+        index = int(match.group(2))
+        if not 1 <= index <= len(ordered):
+            return None
+        obj = ordered[index - 1]
+        # min_latex_chars=0: a single symbol is the point when it is inline.
+        said, _ = math_text(obj.get("props") or {}, speaker=speaker,
+                            min_latex_chars=0)
+        if not said:
+            return None
+        if consumed is not None:
+            consumed.add(str(obj.get("id") or ""))
+        return said
+
+    return resolve
+
+
+def read_content(objects: Sequence[dict[str, Any]], *, resolve=None
                  ) -> tuple[list[Paragraph], list[SkippedObject]]:
     """Body text units in document order, plus a reason for everything else.
 
@@ -400,7 +451,7 @@ def read_content(objects: Sequence[dict[str, Any]]
 
         # Strip DocModel placeholders before the text reaches a summariser or
         # an embedder; 55% of paragraphs in the reference document carry them.
-        text = clean_body_text(raw_text)
+        text = clean_body_text(raw_text, resolve=resolve)
         if not text:
             skip(obj, position, "placeholder cleaning left no text")
             continue
@@ -702,12 +753,22 @@ def build_tree(docmodel: dict[str, Any],
 
     markers = read_markers(objects)
     parents = link_parents(markers)
-    paragraphs, skipped = read_content(objects)
+
+    # A formula cited from inside a sentence is a symbol in that sentence, not
+    # a unit of its own. Resolve it there and record it as consumed.
+    consumed: set[str] = set()
+    resolver = inline_resolver(objects, speaker=speaker, consumed=consumed)
+    paragraphs, skipped = read_content(objects, resolve=resolver)
+    skipped.extend(
+        SkippedObject(oid, "Formula",
+                      "inlined into the paragraph that references it")
+        for oid in sorted(consumed))
 
     math_sources: dict[str, int] = {}
     if include_math:
-        math_units, math_sources = read_math(objects, speaker=speaker)
-        rendered = {u.id for u in math_units}
+        math_units, math_sources = read_math(objects, speaker=speaker,
+                                             skip_ids=consumed)
+        rendered = {u.id for u in math_units} | consumed
         skipped.extend(
             SkippedObject(str(o.get("id") or ""), str(o.get("type") or ""),
                           "math object rendered to no prose")

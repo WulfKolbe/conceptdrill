@@ -176,16 +176,39 @@ def strip_dangling_refs(text: str) -> tuple[str, int]:
     return cleaned, n
 
 
-def clean_body_text(text: str) -> str:
-    """Strip DocModel placeholders out of paragraph text.
+def clean_body_text(text: str, resolve=None) -> str:
+    r"""Strip DocModel placeholders out of paragraph text.
 
-    Formula and float references become a neutral word; citation references
-    become their citekey, which carries meaning. Everything else in the text is
-    left alone — this is body prose, not a caption, and aggressive LaTeX
-    stripping here would do more harm than good.
+    `resolve(kind, ident)` may return the text a placeholder stands for. When
+    it does, that text is inlined; otherwise the old neutral-word substitution
+    applies.
+
+    This matters more than it sounds. `{{..._FO0001||FO}}` marks where a
+    formula sat INSIDE a sentence, and replacing it with the word "formula"
+    turned
+
+        tell cause from effect between a pair of random variables
+        {{FO0001}} and {{FO0002}} ... which of {{FO0003}} or {{FO0004}} is
+        the most likely causal direction
+
+    into "between a pair of random variables formula and formula ... which of
+    formula or formula", which states nothing. Resolved, it reads "between a
+    pair of random variables X and Y ... which of X right arrow Y or Y right
+    arrow X", which is the paper's central claim.
+
+    Citation placeholders keep their citekey: a span citing `roberta` is partly
+    about that, which is a deliberate choice recorded in the design.
     """
     if not text:
         return ""
+    if resolve is not None:
+        def _resolved(match: re.Match) -> str:
+            ident, kind = match.group(1), match.group(2)
+            said = resolve(kind, ident)
+            return f" {said} " if said else _placeholder_text(match)
+        out = _PLACEHOLDER.sub(_resolved, text)
+        out, _ = strip_dangling_refs(out)
+        return re.sub(r"[ \t]+", " ", out).strip()
     out = _PLACEHOLDER.sub(_placeholder_text, text)
     out, _ = strip_dangling_refs(out)
     return re.sub(r"[ \t]+", " ", out).strip()
