@@ -82,6 +82,21 @@ MODEL_SPECS: dict[str, ModelSpec] = {
     "codebert": ModelSpec(
         "codebert", "microsoft/codebert-base",
         max_length=512, note="source listings and algorithms"),
+    # A direct upgrade from all-MiniLM-L6-v2, chosen so that NOTHING but the
+    # checkpoint changes: it is mean-pooled, which is what `_encode_batch`
+    # already does.
+    #
+    # The two obvious candidates are not drop-ins. `answerdotai/ModernBERT-base`
+    # is ModernBertForMaskedLM, a masked language model rather than a sentence
+    # embedder. `BAAI/bge-m3` is a real embedder but uses CLS pooling, so
+    # mean-pooling it would measure a misused model. This is the
+    # ModernBERT-family model actually trained for sentence similarity.
+    #
+    # 8192-token window against MiniLM's 256, and 768 dimensions against 384.
+    "modernbert": ModelSpec(
+        "modernbert", "nomic-ai/modernbert-embed-base",
+        max_length=8192,
+        note="ModernBERT-family sentence embedder, mean-pooled, 8192 window"),
 }
 
 
