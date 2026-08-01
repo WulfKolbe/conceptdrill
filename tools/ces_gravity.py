@@ -70,6 +70,17 @@ def main() -> int:
                          f"{len(row_ids)} row_ids: refusing to guess")
 
     embedder = get_embedder(args.model, cache=True)
+    # The basis was built by some embedder; projecting with a different one is
+    # meaningless even when the shapes happen to agree, and a raw broadcast
+    # error when they do not says nothing about why.
+    built_by = manifest.get("embedder_backend")
+    if built_by and built_by != args.model:
+        raise SystemExit(
+            f"this basis was built with {built_by!r} but --model is "
+            f"{args.model!r}. A CES coordinate is a similarity to a row in the "
+            f"model that produced it; projecting with another model compares "
+            f"vectors from two different spaces. Re-run with "
+            f"--model {built_by}.")
 
     # Sentences, from the same documents the run used.
     texts, origins = [], []
