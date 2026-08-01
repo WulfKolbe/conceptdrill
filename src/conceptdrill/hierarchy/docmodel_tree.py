@@ -288,12 +288,24 @@ class SkippedObject:
                 "reason": self.reason}
 
 
-#: Author-defined macros the drill could not expand. `props.macros_unresolved`
-#: is meant to name them, but MEASURED on 2003.03155 it is empty on all 138
-#: objects while `\revision` (8) and `\triple` (5) survive in `props.latex`
-#: and reach `props.spoken` as the literal words "backslash revision". So the
-#: field is recorded AND the spoken text is checked independently.
+#: A macro name read aloud, which means it survived expansion. Both signals
+#: are kept because they disagree: `props.macros_unresolved` names only what
+#: the drill knows it failed on.
+#:
+#: MEASURED on the 10-document corpus after the full re-drill: 56 of 3918
+#: spoken texts leak a macro. `macros_unresolved` names 39 of them
+#: (`\independenT`); the other 17 are `\triple`, `\circMaybe|Yes|No|Do`,
+#: `\midM`, `\floor`, `\l`.
+#:
+#: `\midM` is not an author macro at all: `\mid\ensuremath{M}` is being
+#: tokenised as one command by the expansion pass. A standard command and an
+#: adjacent group, so nothing could have listed it as unresolved.
 _BACKSLASH_IN_SPEECH = re.compile(r"\bbackslash\b", re.IGNORECASE)
+
+#: `\backslash` is a real LaTeX command -- the set-difference symbol -- and a
+#: speech engine SHOULD say "backslash" for it. Counting those as leaks
+#: inflated the figure from 56 to 92, and I reported the inflated one.
+_LITERAL_BACKSLASH = re.compile(r"\\backslash\b")
 
 
 def _note_residue(obj: dict[str, Any], residue: dict[str, Any]) -> None:
@@ -307,8 +319,18 @@ def _note_residue(obj: dict[str, Any], residue: dict[str, Any]) -> None:
                 residue["macros_named"].get(str(macro), 0) + 1
     spoken = str(props.get("spoken") or "")
     if spoken and _BACKSLASH_IN_SPEECH.search(spoken):
-        residue["spoken_with_backslash"] = \
-            residue.get("spoken_with_backslash", 0) + 1
+        if _LITERAL_BACKSLASH.search(str(props.get("latex") or "")):
+            residue["spoken_backslash_literal"] = \
+                residue.get("spoken_backslash_literal", 0) + 1
+        else:
+            residue["spoken_macro_leak"] = \
+                residue.get("spoken_macro_leak", 0) + 1
+            for name in _BACKSLASH_IN_SPEECH.split(spoken)[1:]:
+                word = name.strip().split(" ")[0] if name.strip() else ""
+                if word:
+                    residue.setdefault("leaked_macros", {})
+                    residue["leaked_macros"][word] = \
+                        residue["leaked_macros"].get(word, 0) + 1
     residue["math_objects"] = residue.get("math_objects", 0) + 1
 
 

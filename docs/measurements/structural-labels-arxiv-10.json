@@ -1,13 +1,13 @@
 {
-  "note": "Hand labels for GATE 4 on the arXiv corpus. NOT a blind test: the structural vocabulary already existed when these were judged, so recall here measures whether a vocabulary built from ten unrelated PDF-derived documents generalises to ten LaTeX arXiv papers it has never seen. That is useful, but it is a different claim from the original blind labelling at 986b0fb.\n\nOnly 6 of 203 markers are structural, against 37 of 173 in the old corpus. arXiv LaTeX documents carry far less front and back matter as markers, and notably none of these ten has a References marker: references are Reference objects, not markers, and are already skipped.\n\nJudgement calls, recorded rather than hidden: 'Extended Theory' (1903.04829) and the children of 'Appendix' (1808.06356) are labelled CONTENT. They sit in appendix position but their titles name subject matter -- proofs, theory -- and the docmodel does not flag them is_appendix. The same call was made for 1211.3375 in the old corpus, so it is at least consistent. The 'a. Textual features' style run-in headings in 2003.03155 are content sub-headings, and three of them are empty spans.",
+  "note": "Hand labels for GATE 4 on the arXiv corpus. NOT a blind test: the structural vocabulary already existed when these were judged, so recall here measures whether a vocabulary built from ten unrelated PDF-derived documents generalises to ten LaTeX arXiv papers it has never seen. That is useful, but it is a different claim from the original blind labelling at 986b0fb.\n\nOnly 6 of 203 markers are structural, against 37 of 173 in the old corpus. arXiv LaTeX documents carry far less front and back matter as markers, and notably none of these ten has a References marker: references are Reference objects, not markers, and are already skipped.\n\nJudgement calls, recorded rather than hidden: 'Extended Theory' (1903.04829) and the children of 'Appendix' (1808.06356) are labelled CONTENT. They sit in appendix position but their titles name subject matter -- proofs, theory -- and the docmodel does not flag them is_appendix. The same call was made for 1211.3375 in the old corpus, so it is at least consistent. The 'a. Textual features' style run-in headings in 2003.03155 are content sub-headings, and three of them are empty spans.\n\nRE-RESOLVED after the 2026-08-01 re-drill: 17 labels pointed at marker ids that no longer existed (1702.06385 was re-drilled twice that day and its ids changed), 0 could not be matched by title, 8 markers new to the run were added as content. Gate 4 matches on (doc_id, span_id), so a stale id makes the labelled marker look missing AND its live twin look like a false positive -- one marker counted as two errors.",
   "corpus": "corpus-arxiv-10.json",
-  "markers": 203,
+  "markers": 211,
   "structural": 6,
   "labels": [
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_950e3ee5d5a8",
-      "span_id": "obj_950e3ee5d5a8",
+      "marker_id": "obj_720d4dbe6114",
+      "span_id": "obj_720d4dbe6114",
       "title": "Introduction",
       "level": 2,
       "structural": false,
@@ -15,8 +15,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_c090b3fe83ee",
-      "span_id": "obj_c090b3fe83ee",
+      "marker_id": "obj_d68e074893fc",
+      "span_id": "obj_d68e074893fc",
       "title": "Preliminaries",
       "level": 2,
       "structural": false,
@@ -24,8 +24,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_c62d8dd6a651",
-      "span_id": "obj_c62d8dd6a651",
+      "marker_id": "obj_6e7a10688bb8",
+      "span_id": "obj_6e7a10688bb8",
       "title": "Notation",
       "level": 3,
       "structural": false,
@@ -33,8 +33,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_d0c94cb30248",
-      "span_id": "obj_d0c94cb30248",
+      "marker_id": "obj_42324f476a93",
+      "span_id": "obj_42324f476a93",
       "title": "Kolmogorov Complexity, a brief primer",
       "level": 3,
       "structural": false,
@@ -42,8 +42,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_aaaf12fc326d",
-      "span_id": "obj_aaaf12fc326d",
+      "marker_id": "obj_bc05d1b4987d",
+      "span_id": "obj_bc05d1b4987d",
       "title": "MDL, a brief primer",
       "level": 3,
       "structural": false,
@@ -51,8 +51,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_6fadf76e30ad",
-      "span_id": "obj_6fadf76e30ad",
+      "marker_id": "obj_548c22b32821",
+      "span_id": "obj_548c22b32821",
       "title": "Causal Inference by Compression",
       "level": 2,
       "structural": false,
@@ -60,8 +60,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_e94d3d71e50c",
-      "span_id": "obj_e94d3d71e50c",
+      "marker_id": "obj_d4c776b468ff",
+      "span_id": "obj_d4c776b468ff",
       "title": "Causal Inference by Complexity",
       "level": 3,
       "structural": false,
@@ -69,8 +69,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_278dec9cb1a4",
-      "span_id": "obj_278dec9cb1a4",
+      "marker_id": "obj_86b2817f4725",
+      "span_id": "obj_86b2817f4725",
       "title": "Causal Inference by MDL",
       "level": 3,
       "structural": false,
@@ -78,8 +78,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_7b791385b0f3",
-      "span_id": "obj_7b791385b0f3",
+      "marker_id": "obj_5174c3cd8adb",
+      "span_id": "obj_5174c3cd8adb",
       "title": "Normalized Causal Indicator",
       "level": 3,
       "structural": false,
@@ -87,8 +87,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_f5d94ec58c7c",
-      "span_id": "obj_f5d94ec58c7c",
+      "marker_id": "obj_45ecf90b8fd7",
+      "span_id": "obj_45ecf90b8fd7",
       "title": "MDL for Tree Models",
       "level": 2,
       "structural": false,
@@ -96,8 +96,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_6e38f7404089",
-      "span_id": "obj_6e38f7404089",
+      "marker_id": "obj_99baec8c6b13",
+      "span_id": "obj_99baec8c6b13",
       "title": "The Algorithm",
       "level": 2,
       "structural": false,
@@ -105,8 +105,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_16c72a9470fd",
-      "span_id": "obj_16c72a9470fd",
+      "marker_id": "obj_f0bf1e8725e1",
+      "span_id": "obj_f0bf1e8725e1",
       "title": "Related Work",
       "level": 2,
       "structural": false,
@@ -114,8 +114,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_6d30ce6f46fe",
-      "span_id": "obj_6d30ce6f46fe",
+      "marker_id": "obj_dbf3239271b5",
+      "span_id": "obj_dbf3239271b5",
       "title": "Experiments",
       "level": 2,
       "structural": false,
@@ -123,8 +123,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_ae02c24f1c16",
-      "span_id": "obj_ae02c24f1c16",
+      "marker_id": "obj_d8da69176be5",
+      "span_id": "obj_d8da69176be5",
       "title": "Synthetic data",
       "level": 3,
       "structural": false,
@@ -132,8 +132,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_fbb2dd42a85e",
-      "span_id": "obj_fbb2dd42a85e",
+      "marker_id": "obj_b3ae22bcaf6b",
+      "span_id": "obj_b3ae22bcaf6b",
       "title": "Real world data",
       "level": 3,
       "structural": false,
@@ -141,8 +141,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_4afef49deba4",
-      "span_id": "obj_4afef49deba4",
+      "marker_id": "obj_c68b704601c1",
+      "span_id": "obj_c68b704601c1",
       "title": "Conclusion",
       "level": 2,
       "structural": false,
@@ -150,8 +150,8 @@
     },
     {
       "doc_id": "1702.06385",
-      "marker_id": "obj_d0c2b6bfd21f",
-      "span_id": "obj_d0c2b6bfd21f",
+      "marker_id": "obj_b8d2c5a50038",
+      "span_id": "obj_b8d2c5a50038",
       "title": "Acknowledgements",
       "level": 2,
       "structural": true,
@@ -1828,6 +1828,78 @@
       "span_id": "obj_ee90b837d090",
       "title": "Conclusions",
       "level": 2,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_ef614b3550f2",
+      "span_id": "obj_ef614b3550f2",
+      "title": "Cost of a Tree",
+      "level": 4,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_1394ceefa216",
+      "span_id": "obj_1394ceefa216",
+      "title": "Cost of a Single Split",
+      "level": 4,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_7c007ee231a0",
+      "span_id": "obj_7c007ee231a0",
+      "title": "Costs of a Multiway split",
+      "level": 4,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_99529d6decca",
+      "span_id": "obj_99529d6decca",
+      "title": "Cost of Regressing",
+      "level": 4,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_7c551b7e2a09",
+      "span_id": "obj_7c551b7e2a09",
+      "title": "Cost of a Nominal Leaf",
+      "level": 4,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_4b44d986839d",
+      "span_id": "obj_4b44d986839d",
+      "title": "Cost of a Numerical Leaf",
+      "level": 4,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_a6a72c964907",
+      "span_id": "obj_a6a72c964907",
+      "title": "Greedy algorithm",
+      "level": 4,
+      "structural": false,
+      "reason": ""
+    },
+    {
+      "doc_id": "1702.06385",
+      "marker_id": "obj_037a63f3d5f0",
+      "span_id": "obj_037a63f3d5f0",
+      "title": "Causal Inference with",
+      "level": 4,
       "structural": false,
       "reason": ""
     }

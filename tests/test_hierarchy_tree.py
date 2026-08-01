@@ -1035,3 +1035,48 @@ def test_the_resolver_only_answers_for_formula_placeholders():
     assert resolve("FO", "d_FO0001") == "X"
     assert resolve("CIT", "d_REF_smith") is None
     assert resolve("TAB", "d_TAB0001") is None
+
+
+# --------------------------------------------------------------------------
+# Macro residue: two signals, because they disagree
+# --------------------------------------------------------------------------
+
+def _math(oid, latex, flow=2, **props):
+    return {"id": oid, "type": "Formula",
+            "props": {"latex": latex, "flow_index": flow, **props}}
+
+
+def test_a_leaked_macro_read_aloud_is_counted():
+    r"""`\independenT` survives expansion and SRE reads its name."""
+    tree = build_tree({"objects": [
+        span("m0", "A", 1, 1),
+        _math("f1", r"X \protect\independenT Y",
+              spoken="X backslash independenT perpendicular Y")]})
+    assert tree.math_residue["spoken_macro_leak"] == 1
+    assert tree.math_residue["leaked_macros"]["independenT"] == 1
+
+
+def test_a_literal_backslash_command_is_not_a_leak():
+    r"""`\backslash` is the set-difference symbol and SHOULD be read as
+    "backslash". Counting it inflated the leak figure from 56 to 92."""
+    tree = build_tree({"objects": [
+        span("m0", "A", 1, 1),
+        _math("f1", r"A \backslash B", spoken="A backslash B")]})
+    assert tree.math_residue.get("spoken_macro_leak", 0) == 0
+    assert tree.math_residue["spoken_backslash_literal"] == 1
+
+
+def test_clean_speech_counts_as_neither():
+    tree = build_tree({"objects": [
+        span("m0", "A", 1, 1),
+        _math("f1", r"\sum_i x_i", spoken="the sum over i of x sub i")]})
+    assert tree.math_residue.get("spoken_macro_leak", 0) == 0
+    assert tree.math_residue.get("spoken_backslash_literal", 0) == 0
+    assert tree.math_residue["math_objects"] == 1
+
+
+def test_the_drills_own_list_is_recorded_too():
+    tree = build_tree({"objects": [
+        span("m0", "A", 1, 1),
+        _math("f1", r"X \foo Y", macros_unresolved=[r"\foo"])]})
+    assert tree.math_residue["macros_named"][r"\foo"] == 1
