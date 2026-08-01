@@ -25,8 +25,13 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_dir", nargs="?",
                     default=str(Path.home() / "conceptdrill-corpus-llm" / "current"))
-    ap.add_argument("--source-chars", type=int, default=700,
-                    help="how much span text to show beside the concepts")
+    ap.add_argument("--source-chars", type=int, default=0,
+                    help="truncate span text to this many characters; 0 shows "
+                         "all of it, which is the point of the report")
+    ap.add_argument("--library", default=str(Path.home() / "pdfdrill-library"),
+                    help="where to re-read the spans' full text from")
+    ap.add_argument("--speech", default=str(Path.home() / "la2speech"),
+                    help="render maths the same way the run did")
     ap.add_argument("--out", default="")
     args = ap.parse_args()
 
@@ -35,6 +40,27 @@ def main() -> int:
     spans = [json.loads(line)
              for line in (run / "spans.jsonl").read_text(encoding="utf-8").splitlines()
              if line.strip()]
+
+    # spans.jsonl keeps only the first and last 200 characters of each input --
+    # enough to prove what the model saw, not enough to read. A reader looking
+    # for a specific equation found "…" where it should have been. Re-derive
+    # the full text from the documents the run recorded.
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+    from conceptdrill.hierarchy.docmodel_tree import load_tree
+    speaker = None
+    if manifest.get("speech_backend") and args.speech:
+        try:
+            from conceptdrill.hierarchy.speech import load_speaker
+            speaker = load_speaker(args.speech)
+        except Exception as exc:
+            print(f"note: rendering maths without a speech backend ({exc})")
+    full: dict[tuple[str, str], str] = {}
+    for path in manifest.get("corpus_paths") or []:
+        tree = load_tree(Path(path), speaker=speaker)
+        doc = Path(path).parent.name
+        for node in tree.iter_document_order():
+            full[(doc, node.id)] = node.body_text
 
     bands = manifest.get("tier_bands") or {}
     out = [f"# Concepts — {manifest['run_id']}", "",
@@ -69,12 +95,16 @@ def main() -> int:
                         "content_", ""]
                 continue
 
-            source = " ".join((span.get("input_text_first_200") or "").split())
-            tail = " ".join((span.get("input_text_last_200") or "").split())
-            shown = source
-            if span["own_text_chars"] > 400:
-                shown = f"{source} … …{tail}"
-            out += [f"> {shown}", "",
+            body = full.get((span["doc_id"], span["span_id"]))
+            if body is None:
+                head = " ".join((span.get("input_text_first_200") or "").split())
+                tail = " ".join((span.get("input_text_last_200") or "").split())
+                shown = f"{head} … …{tail}" if span["own_text_chars"] > 400 else head
+            else:
+                shown = body if not args.source_chars else body[:args.source_chars]
+            quoted = "\n".join(f"> {line}" if line.strip() else ">"
+                                for line in shown.splitlines())
+            out += [quoted, "",
                     f"_{span['own_text_chars']} chars, "
                     f"{span['extent_object_count']} objects, "
                     f"{span['concept_count']} concepts_", ""]

@@ -450,3 +450,59 @@ def test_noop_macros_are_stripped_before_speaking():
 def test_stripping_leaves_real_macros_alone():
     from conceptdrill.hierarchy.mathtext import strip_noop_macros
     assert strip_noop_macros(r"\sum_{i} \alpha_i") == r"\sum_{i} \alpha_i"
+
+
+# --------------------------------------------------------------------------
+# What reaches the speech engine
+# --------------------------------------------------------------------------
+
+def test_structural_arguments_are_never_protected():
+    r"""`\begin{cases}` became `\begin{\text{cases}}`, invalid LaTeX. SRE
+    failed on it, la2speech returned "[unspoken math]", and a whole display
+    equation reached the corpus as that literal string."""
+    from conceptdrill.hierarchy.mathtext import protect_identifiers
+    out = protect_identifiers(r"x = \begin{cases} alpha \end{cases}")
+    assert r"\begin{cases}" in out and r"\end{cases}" in out
+    assert r"\begin{\text{cases}}" not in out
+
+
+def test_ordinary_identifiers_are_still_protected():
+    from conceptdrill.hierarchy.mathtext import protect_identifiers
+    assert r"\text{values}" in protect_identifiers(r"count = values + 1")
+
+
+@pytest.mark.parametrize("marker", ["[unspoken math]", "[UNSPOKEN MATH]",
+                                    "[math]", "[error]", "", "   "])
+def test_a_backend_failure_marker_is_not_speech(marker):
+    from conceptdrill.hierarchy.mathtext import is_speech_failure
+    assert is_speech_failure(marker)
+
+
+def test_real_speech_is_not_mistaken_for_a_failure():
+    from conceptdrill.hierarchy.mathtext import is_speech_failure
+    assert not is_speech_failure("the sum over y is a member of Y of p of y")
+
+
+def test_a_failing_backend_falls_back_instead_of_embedding_its_placeholder():
+    from conceptdrill.hierarchy.mathtext import math_text
+
+    class Broken:
+        def speak_math(self, tex, display=False):
+            return "[unspoken math]"
+
+    said, source = math_text({"latex": r"\alpha + \beta"}, speaker=Broken())
+    assert source == "fallback"
+    assert "unspoken" not in said
+
+
+def test_text_wrappers_survive_because_they_mark_words():
+    r"""Stripping `\text{if nominal}` made SRE spell it: "i f n o m i n a l"."""
+    from conceptdrill.hierarchy.mathtext import strip_noop_macros
+    assert strip_noop_macros(r"x &\text{if nominal}") == r"x &\text{if nominal}"
+
+
+def test_nested_text_wrappers_are_collapsed():
+    r"""SRE reads one level and fails on two: `\text{\textit{binary}}` came
+    back as "backslash textit open brace binary close brace"."""
+    from conceptdrill.hierarchy.mathtext import strip_noop_macros
+    assert strip_noop_macros(r"\text{\textit{binary}}") == r"\text{binary}"

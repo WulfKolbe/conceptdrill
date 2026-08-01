@@ -63,17 +63,38 @@ class SpeechBackend(Protocol):
         ...
 
 
-def protect_identifiers(latex: str) -> str:
-    """Wrap multi-letter identifiers so a speech engine reads them as words.
+#: Structural arguments that must never be wrapped: `\begin{cases}` becoming
+#: `\begin{\text{cases}}` is invalid LaTeX, SRE fails on it, and la2speech
+#: returns "[unspoken math]". That is exactly what happened to the domain-size
+#: definition in 1702.06385: a whole display equation reached the corpus as a
+#: placeholder string.
+_STRUCTURAL_ARG = re.compile(r"\\(?:begin|end|label|ref|eqref|cite)\s*\{[^{}]*\}")
 
-    Skips text that already contains `\\text{}`-style wrappers, so applying
-    this twice is harmless.
+
+def protect_identifiers(latex: str) -> str:
+    r"""Wrap multi-letter identifiers so a speech engine reads them as words.
+
+    Skips text that already contains `\text{}`-style wrappers, so applying
+    this twice is harmless, and never touches the argument of a structural
+    command -- see `_STRUCTURAL_ARG`.
     """
     if not latex:
         return ""
     if _KNOWN_COMMANDS.search(latex):
         return latex
-    return _MULTI_LETTER.sub(lambda m: r"\text{" + m.group(1) + "}", latex)
+
+    # Hold structural arguments aside, protect the rest, put them back.
+    held: list[str] = []
+
+    def _hold(match: re.Match) -> str:
+        held.append(match.group(0))
+        return f"\x00{len(held) - 1}\x00"
+
+    guarded = _STRUCTURAL_ARG.sub(_hold, latex)
+    out = _MULTI_LETTER.sub(lambda m: r"\text{" + m.group(1) + "}", guarded)
+    for i, original in enumerate(held):
+        out = out.replace(f"\x00{i}\x00", original)
+    return out
 
 
 # --------------------------------------------------------------------------
@@ -168,11 +189,40 @@ def latex_from_props(props: Mapping[str, Any]) -> str:
     return ""
 
 
+#: Markers a speech backend emits when it could not read the input. They are
+#: NOT speech, and accepting one puts the literal string "[unspoken math]"
+#: into a span where an equation was -- which is what happened to the
+#: `\begin{cases}` definition in 1702.06385.
+SPEECH_FAILURE_MARKERS = ("[unspoken math]", "[unspoken", "[math]",
+                          "[no speech]", "[error]")
+
+
+def is_speech_failure(said: str) -> bool:
+    """True when the backend returned a placeholder rather than speech."""
+    text = (said or "").strip().lower()
+    if not text:
+        return True
+    return any(text.startswith(m) or text == m.strip()
+               for m in (m.lower() for m in SPEECH_FAILURE_MARKERS))
+
+
 #: Macros that render as nothing and mean nothing, but which a speech engine
 #: reads aloud. `\ensuremath{X \rightarrow Y}\xspace` came back from SRE as
 #: "X right arrow Y backslash xspace": the spacing macro became two words in
 #: the middle of the corpus's central claim.
-_NOOP_WRAPPERS = re.compile(r"\\(?:ensuremath|protect|mbox|hbox|text)\s*\{")
+#: Wrappers that carry no meaning and can be unwrapped. `\text` and its
+#: relatives are NOT here on purpose: inside maths they are what tells a
+#: speech engine "these are words". Removing `\text{if type(a) is nominal}`
+#: made SRE spell it out letter by letter -- "i f o f t y p e" -- which is
+#: worse than leaving it alone.
+_NOOP_WRAPPERS = re.compile(r"\\(?:ensuremath|protect|mbox|hbox)\s*\{")
+
+#: A text wrapper immediately inside another. SRE reads one level correctly
+#: and fails on two: `\text{\textit{binary}}` came back as "backslash textit
+#: open brace binary close brace". Collapsed to a single wrapper.
+_NESTED_TEXT = re.compile(
+    r"\\(text|textit|textbf|textrm|texttt|textsc|emph|mathit)\s*\{\s*"
+    r"\\(?:text|textit|textbf|textrm|texttt|textsc|emph|mathit)\s*\{([^{}]*)\}\s*\}")
 _NOOP_MACROS = re.compile(r"\\(?:xspace|,|;|!|quad|qquad|thinspace|/|@)"
                           r"(?![A-Za-z])")
 
@@ -199,6 +249,11 @@ def strip_noop_macros(tex: str) -> str:
         if i >= len(out):
             break
         out = out[:match.start()] + out[start + 1:i] + out[i + 1:]
+    for _ in range(4):
+        collapsed = _NESTED_TEXT.sub(r"\\\1{\2}", out)
+        if collapsed == out:
+            break
+        out = collapsed
     out = _NOOP_MACROS.sub(" ", out)
     return re.sub(r"\s+", " ", out).strip()
 
@@ -230,7 +285,7 @@ def math_text(props: Mapping[str, Any], *,
             source_tex = strip_noop_macros(latex)
             source_tex = protect_identifiers(source_tex) if protect else source_tex
             said = (speaker.speak_math(source_tex) or "").strip()
-            if said:
+            if said and not is_speech_failure(said):
                 return said, "speech"
         except Exception:
             # A speech backend failure must cost quality, not the run.
