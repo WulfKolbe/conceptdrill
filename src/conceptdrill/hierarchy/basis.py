@@ -48,10 +48,36 @@ import numpy as np
 #: related-but-differently-worded concepts around 0.6, not 0.85; 0.85 is a
 #: near-paraphrase threshold and the wrong scale for this job.
 #:
-#: 0.65 is the compromise: high enough that unrelated concepts stay apart, low
-#: enough that cross-document sharing is reachable. It is still a default, not
-#: a law -- use `calibrate` on your own corpus.
-DEFAULT_TAU = 0.65
+#: **THE THRESHOLD DOES NOT TRAVEL BETWEEN ENCODERS.** 0.65 was that
+#: compromise for all-MiniLM-L6-v2, whose off-diagonal cosines had median
+#: 0.18. Under nomic-ai/modernbert-embed-base the same 0.65 merged 482
+#: concepts into 25 rows: a different encoder puts the whole similarity scale
+#: somewhere else, and a number measured against one says nothing about the
+#: other.
+#:
+#: 0.75 is measured for the current default encoder, by two independent
+#: criteria that agree:
+#:
+#:   * `calibrate` suggests 0.746 from the p99 cross-document point.
+#:   * Re-integrating 474 real concepts at a range of thresholds
+#:     (`tools/rebuild_basis.py`) maximises cross-document sharing at 0.75.
+#:
+#:       tau   rows  merge%  shared_across_documents
+#:       0.65    16   96.6%    8
+#:       0.75   137   70.6%   29   <- maximum
+#:       0.80   271   41.8%   25
+#:       0.85   403   13.5%   21
+#:       0.95   462    0.9%    3
+#:
+#: Sharing is NOT monotone in tau, which is why a pairwise distribution alone
+#: cannot choose it: too low and everything collapses into buckets that share
+#: nothing meaningful, too high and nothing merges at all. Integration compares
+#: a candidate against its NEAREST row, so fewer merges leaves more rows and
+#: makes the next nearest closer -- feedback a pairwise percentile cannot see.
+#:
+#: Still a default, not a law. Re-run `tools/calibrate_tau.py` and
+#: `tools/rebuild_basis.py` on your own corpus and encoder.
+DEFAULT_TAU = 0.75
 
 #: Levels are grouped contiguously by the row order, so a per-level split is a
 #: slicing decision rather than a reordering one.

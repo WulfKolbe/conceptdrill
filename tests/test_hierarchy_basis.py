@@ -318,10 +318,17 @@ def test_stats_report_sharing():
 from conceptdrill.hierarchy.basis import calibrate, similarity_profile  # noqa: E402
 
 
-def test_default_tau_is_the_measured_value():
-    """0.85 produced zero merges across three related papers; the highest
-    cross-document similarity observed was 0.647."""
-    assert DEFAULT_TAU == 0.65
+def test_default_tau_is_the_measured_value_for_the_default_encoder():
+    """The threshold belongs to the encoder, not to the project.
+
+    0.65 was measured for all-MiniLM-L6-v2. Under the current default,
+    nomic-ai/modernbert-embed-base, that same 0.65 merged 482 concepts into
+    25 rows. 0.75 is measured for THIS encoder by two criteria that agree:
+    calibrate suggests 0.746 from the p99 cross-document point, and
+    re-integrating 474 real concepts maximises cross-document sharing at 0.75
+    (29 shared rows, against 8 at 0.65 and 3 at 0.95).
+    """
+    assert DEFAULT_TAU == 0.75
 
 
 def test_profile_separates_within_from_cross():

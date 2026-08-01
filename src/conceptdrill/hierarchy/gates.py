@@ -254,6 +254,13 @@ def gate3_tier_independence(run_dir: str | Path,
     from .summarize import TIER_WORDS, jaccard
 
     manifest, records, _ = read_run(run_dir)
+    # Judge each run against the bands IT asked for. The package default is
+    # whatever the current ceiling is; using it meant a run at --token-ceiling
+    # 35 had all 482 of its labels reported "under budget" against a band it
+    # was never given.
+    declared = manifest.get("tier_bands") or {}
+    bands = {tier: tuple(declared[tier]) if tier in declared else TIER_WORDS[tier]
+             for tier in TIER_WORDS}
     result = GateResult(name="GATE 3 (tier independence)", passed=True)
 
     tier_field = {tier: f"tier_{tier}" for tier in TIER_WORDS}
@@ -273,7 +280,7 @@ def gate3_tier_independence(run_dir: str | Path,
             if text:
                 present[tier] = text
                 n = len(text.split())
-                lo, hi = TIER_WORDS[tier]
+                lo, hi = bands[tier]
                 fit = "under" if n < lo else "over" if n > hi else "ok"
                 budgets[tier][fit] = budgets[tier].get(fit, 0) + 1
 
@@ -301,6 +308,7 @@ def gate3_tier_independence(run_dir: str | Path,
     result.checks["prefix_relations"] = len(prefix_hits)
     result.checks["jaccard_above_threshold"] = len(jaccard_hits)
     result.checks["worst_jaccard"] = round(worst, 4)
+    result.checks["tier_bands"] = {t: list(v) for t, v in bands.items()}
     result.checks["tier_word_budgets"] = {t: dict(sorted(v.items()))
                                           for t, v in budgets.items()}
     result.checks["summarizer_class"] = manifest.get("summarizer_class")
