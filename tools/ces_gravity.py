@@ -52,7 +52,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_dir", nargs="?",
                     default=str(Path.home() / "conceptdrill-corpus-llm" / "current"))
-    ap.add_argument("--model", default="sentencebert")
+    ap.add_argument("--model", default="modernbert")
     ap.add_argument("--top", type=int, default=30, help="how many to print")
     ap.add_argument("--out", default="")
     args = ap.parse_args()

@@ -229,9 +229,57 @@ class Summarizer(Protocol):
         ...
 
 
+def bands_for(ceiling: int) -> dict[str, tuple[int, int]]:
+    """Word bands that fit `ceiling` tokens, at the measured 1.441 tokens/word.
+
+    The three tiers sit at descending fractions of the ceiling so that the
+    most document-faithful one gets the most room. Rounded to whole words,
+    since the model is asked to count them.
+    """
+    words = ceiling / TOKENS_PER_WORD
+    return {
+        "summary": (round(words * 0.80), round(words * 0.97)),
+        "abstraction": (round(words * 0.69), round(words * 0.86)),
+        "label": (round(words * 0.63), round(words * 0.80)),
+    }
+
+
+def render_prompt(ceiling: Optional[int] = None) -> str:
+    """The span-concept prompt with its word bands filled in.
+
+    The bands are a template rather than fixed text so the token ceiling can
+    be swept without editing the prompt by hand and losing track of which
+    numbers produced which run.
+    """
+    template = PROMPT_PATH.read_text(encoding="utf-8")
+    if ceiling is None:
+        ceiling = EMBEDDING_TOKEN_WINDOW[1]
+    bands = bands_for(ceiling)
+    lo, hi = bands["label"]
+    values = {
+        "ceiling": str(ceiling),
+        "ceiling_words": str(round(ceiling / TOKENS_PER_WORD)),
+        "summary": f"{bands['summary'][0]}-{bands['summary'][1]}",
+        "abstraction": f"{bands['abstraction'][0]}-{bands['abstraction'][1]}",
+        "label": f"{lo}-{hi}",
+        "label_low_fail": str(max(1, lo - 6)),
+        "label_high_fail": str(hi + 4),
+    }
+    # Substitution by name, not str.format: the prompt contains literal braces
+    # ("your reply must begin with the character {"), which format() reads as
+    # fields and dies on.
+    out = template
+    for name, value in values.items():
+        out = out.replace("{" + name + "}", value)
+    leftover = re.findall(r"\{(" + "|".join(values) + r")\}", out)
+    if leftover:
+        raise ValueError(f"prompt still holds placeholders: {sorted(set(leftover))}")
+    return out
+
+
 def load_prompt() -> str:
-    """The section-concept prompt shipped with the package."""
-    return PROMPT_PATH.read_text(encoding="utf-8")
+    """The prompt at the package's own ceiling. See `render_prompt`."""
+    return render_prompt()
 
 
 def _words(text: str, limit: int) -> str:

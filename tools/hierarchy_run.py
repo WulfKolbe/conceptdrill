@@ -101,13 +101,18 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=3)
     ap.add_argument("--docs", nargs="*", default=None,
                     help="explicit bibkeys; overrides --limit")
-    ap.add_argument("--model", default="sentencebert")
+    ap.add_argument("--model", default="modernbert")
     ap.add_argument("--summarizer", default="novita",
                     choices=["novita", "title-only"],
                     help="'novita' is arm A; 'title-only' is the arm B "
                          "ablation. ExtractiveSummarizer is a test fixture and "
                          "is refused here.")
     ap.add_argument("--llm-model", default="")
+    ap.add_argument("--token-ceiling", type=int, default=None,
+                    help="tokens each tier must fit. Word bands are derived "
+                         "from it at the measured 1.441 tokens/word and "
+                         "substituted into the prompt, so a sweep never needs "
+                         "the prompt edited by hand.")
     ap.add_argument("--temperature", type=float, default=0.2,
                     help="decoding temperature. Part of the cache signature, "
                          "so changing it is a cache miss by construction.")
@@ -149,6 +154,13 @@ def main() -> int:
     is_ablation = bool(getattr(summarizer, "is_ablation", False))
     cache = SummaryCache(args.summary_cache) if args.summary_cache else None
     basis = ConceptBasis() if args.tau is None else ConceptBasis(tau=args.tau)
+    from conceptdrill.hierarchy.summarize import bands_for, render_prompt
+    prompt_text = render_prompt(args.token_ceiling)
+    if args.token_ceiling and summarizer is not None:
+        # The summariser carries its own prompt for the cache signature and
+        # for the call itself; both must be the rendered one.
+        summarizer.prompt = prompt_text
+
     log = RunLog.open(args.out, name=args.name)
     print(f"building in {log.root} -> {log.final_root} on success")
 
@@ -174,8 +186,8 @@ def main() -> int:
         nodes = list(tree.iter_document_order())
         ordered_markers = sorted(nodes, key=lambda n: (n.flow_index, n.id))
         log.expect(len(nodes))
-
-        run = summarize_tree(tree, summarizer, cache=cache)
+        run = summarize_tree(tree, summarizer, cache=cache,
+                             prompt=prompt_text)
 
         # Every concept's basis text goes through the one cleaner, whether or
         # not it reaches the basis, so `cleaning_rules_fired` is populated for
@@ -368,6 +380,9 @@ def main() -> int:
                "basis_text_tokens": token_stats,
                "speech_backend": speech_info,
                "temperature": args.temperature,
+               "token_ceiling": args.token_ceiling,
+               "tier_bands": {k: list(v) for k, v in
+                              bands_for(args.token_ceiling or 50).items()},
                "summary_cache": args.summary_cache or None,
                "basis_version": basis.basis_version(),
                "basis_stats": basis.stats()})
