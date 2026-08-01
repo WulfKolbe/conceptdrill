@@ -526,10 +526,11 @@ def test_real_tree_accounts_for_every_paragraph():
     # sentence is now resolved into that sentence, which is where it means
     # something. The Abstract was always an orphan and never in this count.
     assert stats["paragraphs"] == 85
-    # One display equation reaches the standalone math pass. The other 73
-    # formulas were cited from inside sentences and are inlined there, so they
-    # never appear as units and never reach this tally.
-    assert stats["math_sources"] == {"fallback": 1}
+    # One display equation reaches the standalone math pass; the other 73 are
+    # cited from inside sentences and inlined there. Its source is `docmodel`
+    # now, not `fallback`: pdfdrill's `speak` writes props["spoken"] and
+    # math_text prefers it, so the local SRE adapter never runs.
+    assert stats["math_sources"] == {"docmodel": 1}
     # Nothing before the first marker now: the Abstract that used to sit
     # there is deferred to its own prompt, and the other candidate was a
     # Paragraph whose entire text is `\\maketitle`, dropped as a LaTeX

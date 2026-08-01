@@ -288,9 +288,34 @@ class SkippedObject:
                 "reason": self.reason}
 
 
+#: Author-defined macros the drill could not expand. `props.macros_unresolved`
+#: is meant to name them, but MEASURED on 2003.03155 it is empty on all 138
+#: objects while `\revision` (8) and `\triple` (5) survive in `props.latex`
+#: and reach `props.spoken` as the literal words "backslash revision". So the
+#: field is recorded AND the spoken text is checked independently.
+_BACKSLASH_IN_SPEECH = re.compile(r"\bbackslash\b", re.IGNORECASE)
+
+
+def _note_residue(obj: dict[str, Any], residue: dict[str, Any]) -> None:
+    """Tally what the maths carried that it should not have."""
+    props = obj.get("props") or {}
+    named = props.get("macros_unresolved")
+    if isinstance(named, (list, tuple)):
+        for macro in named:
+            residue.setdefault("macros_named", {})
+            residue["macros_named"][str(macro)] = \
+                residue["macros_named"].get(str(macro), 0) + 1
+    spoken = str(props.get("spoken") or "")
+    if spoken and _BACKSLASH_IN_SPEECH.search(spoken):
+        residue["spoken_with_backslash"] = \
+            residue.get("spoken_with_backslash", 0) + 1
+    residue["math_objects"] = residue.get("math_objects", 0) + 1
+
+
 def read_math(objects: Sequence[dict[str, Any]], *,
               speaker=None, min_latex_chars: int = 3,
-              skip_ids: Optional[set] = None
+              skip_ids: Optional[set] = None,
+              residue: Optional[dict[str, Any]] = None
               ) -> tuple[list[Paragraph], dict[str, int]]:
     """Math objects rendered to prose, plus a tally of where the text came from.
 
@@ -300,11 +325,13 @@ def read_math(objects: Sequence[dict[str, Any]], *,
     """
     out: list[Paragraph] = []
     sources: dict[str, int] = {}
+    residue = residue if residue is not None else {}
     for position, obj in enumerate(objects):
         if not isinstance(obj, dict):
             continue
         if str(obj.get("type") or "").lower() not in MATH_TYPES:
             continue
+        _note_residue(obj, residue)
         if skip_ids and str(obj.get("id") or "") in skip_ids:
             continue          # already inlined into the paragraph that cites it
         props = obj.get("props") or {}
@@ -633,6 +660,12 @@ class MarkerTree:
     source_path: Optional[str] = None
     #: How each math object's text was obtained: docmodel | speech | fallback | none.
     math_sources: dict[str, int] = field(default_factory=dict)
+    #: What the maths carried that it should not have: macros the drill named
+    #: as unresolved, and spoken text still containing the word "backslash".
+    #: Both are recorded because they disagree -- MEASURED on 2003.03155,
+    #: macros_unresolved was empty on all 138 objects while 10 of their spoken
+    #: texts read "backslash revision".
+    math_residue: dict[str, Any] = field(default_factory=dict)
     #: Every object that did not become body text, with a reason. A run must be
     #: able to account for its whole input; see `accounting`.
     skipped: tuple[SkippedObject, ...] = ()
@@ -765,9 +798,11 @@ def build_tree(docmodel: dict[str, Any],
         for oid in sorted(consumed))
 
     math_sources: dict[str, int] = {}
+    math_residue: dict[str, Any] = {}
     if include_math:
         math_units, math_sources = read_math(objects, speaker=speaker,
-                                             skip_ids=consumed)
+                                             skip_ids=consumed,
+                                             residue=math_residue)
         rendered = {u.id for u in math_units} | consumed
         skipped.extend(
             SkippedObject(str(o.get("id") or ""), str(o.get("type") or ""),
@@ -818,6 +853,7 @@ def build_tree(docmodel: dict[str, Any],
         bibkey=str(meta.get("bibkey") or "") if isinstance(meta, dict) else "",
         source_path=source_path,
         math_sources=math_sources,
+        math_residue=math_residue,
         skipped=tuple(skipped),
     )
 

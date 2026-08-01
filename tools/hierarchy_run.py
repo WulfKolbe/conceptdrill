@@ -168,6 +168,7 @@ def main() -> int:
     tier_violations = 0
     token_stats: dict[str, int] = {}
     math_sources: dict[str, int] = {}
+    math_residue: dict = {}
     docs_done = 0
 
     for path in paths:
@@ -181,6 +182,13 @@ def main() -> int:
         used_paths.append(str(path))
         for source, n in (tree.math_sources or {}).items():
             math_sources[source] = math_sources.get(source, 0) + n
+        for key, value in (tree.math_residue or {}).items():
+            if isinstance(value, dict):
+                bucket = math_residue.setdefault(key, {})
+                for name, count in value.items():
+                    bucket[name] = bucket.get(name, 0) + count
+            else:
+                math_residue[key] = math_residue.get(key, 0) + value
 
         # Every node in the tree, in document order. This list is the ledger.
         nodes = list(tree.iter_document_order())
@@ -379,6 +387,7 @@ def main() -> int:
                "tier_violations": tier_violations,
                "basis_text_tokens": token_stats,
                "speech_backend": speech_info,
+               "math_residue": math_residue,
                "temperature": args.temperature,
                "token_ceiling": args.token_ceiling,
                "tier_bands": {k: list(v) for k, v in
