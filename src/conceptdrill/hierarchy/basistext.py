@@ -74,7 +74,14 @@ _LEADING_NUMBER = re.compile(r"^\(?\d+(?:\.\d+)*\)?[.):]?\s+")
 #: `A framework for...` would lose its article.
 _LEADING_LETTER = re.compile(r"^\(?(?:[IVXLCDM]+|[A-Za-z])\)?[.):]\s+")
 
-_WORD = re.compile(r"[^a-z0-9]+")
+#: Everything that is not a letter or digit IN ANY SCRIPT. `[^a-z0-9]` threw
+#: away Greek, Cyrillic, CJK and Coptic, so a title in one of those normalised
+#: to the empty string -- and `text.startswith("")` is always true, so every
+#: concept in such a document "began with its marker title" and the
+#: postcondition raised. Two chunks of the overnight run died on it.
+#: `sanitize.py` deliberately preserves those scripts as content; this has to
+#: agree with it.
+_WORD = re.compile(r"[^\w]+", re.UNICODE)
 
 
 class BasisTextViolation(AssertionError):
@@ -247,7 +254,12 @@ def check_basis_text(text: str, title: str = "") -> list[str]:
 
     if title:
         for candidate in (title.strip(), _normalise(title)):
-            if candidate and _normalise(text).startswith(_normalise(candidate)):
+            wanted = _normalise(candidate)
+            # An empty normalisation matches everything. A title of pure
+            # punctuation -- `\({` was one -- must not condemn every text.
+            if not wanted:
+                continue
+            if _normalise(text).startswith(wanted):
                 problems.append(f"begins with the marker title {candidate!r}")
                 break
 

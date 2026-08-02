@@ -173,3 +173,42 @@ def test_empty_input_is_empty_output():
 
 def test_a_span_that_is_only_markup_becomes_empty():
     assert clean(r"\label{sec:intro}\ref{fig:1}") == ""
+
+
+# --------------------------------------------------------------------------
+# Titles that are not Latin, or not words at all
+# --------------------------------------------------------------------------
+
+def test_a_non_latin_title_does_not_condemn_every_text():
+    """`[^a-z0-9]` normalised a Coptic title to the empty string, and
+    `text.startswith("")` is always true -- so every concept in that document
+    "began with its marker title". Two chunks of the overnight run died here."""
+    title = "ΠετηαΝογογ. Μπεο-οογ ΝΑΚιΜ ΑΝ ΩΜΠεφΗϊ"
+    assert check_basis_text("neural network training for Coptic recognition",
+                            title) == []
+
+
+def test_a_title_of_pure_punctuation_matches_nothing():
+    assert check_basis_text("geometric text-line model with a baseline",
+                            r"\({") == []
+
+
+def test_non_latin_scripts_survive_normalisation():
+    from conceptdrill.hierarchy.basistext import _normalise
+    assert _normalise("ΠετηαΝογογ") == "πετηανογογ"
+    assert _normalise("Причинность") == "причинность"
+    assert _normalise("因果推論") == "因果推論"
+
+
+def test_a_non_latin_title_is_still_stripped_when_it_leads():
+    """Widening the alphabet must not lose the rule it exists for."""
+    title = "ΠετηαΝογογ"
+    out = clean_basis_text(f"{title} the model recognises characters",
+                           title=title).text
+    assert out.startswith("the model recognises")
+
+
+def test_a_latin_title_is_still_caught():
+    assert any("marker title" in p for p in
+               check_basis_text("2 Related Work. Prominent examples",
+                                "2 Related Work"))
