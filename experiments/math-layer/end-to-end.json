@@ -1,0 +1,49 @@
+{
+  "stages": [
+    {
+      "stage": 1,
+      "name": "SECTION  (text, spoken mathematics, exact LaTeX)",
+      "status": "ok",
+      "reason": "SRE available; spoken form generated"
+    },
+    {
+      "stage": 2,
+      "name": "CES  (project the section into the corpus concept space)",
+      "status": "ok",
+      "reason": "projected; top-1 0.674 -- and see stage 6 for why that number must not be used to rank anything"
+    },
+    {
+      "stage": 3,
+      "name": "MathConcept  (extract concepts from the section)",
+      "status": "ok",
+      "reason": "3 concepts extracted by inclusionai/ling-3.0-flash, all schema-valid"
+    },
+    {
+      "stage": 4,
+      "name": "LEAN ANCHORS  (propose Mathlib names for the extracted concepts)",
+      "status": "ok",
+      "reason": "4 names proposed, all `unverified`"
+    },
+    {
+      "stage": 5,
+      "name": "LOOGLE  (verify every anchor against the live service)",
+      "status": "ok",
+      "reason": "4 supported, 0 rejected []"
+    },
+    {
+      "stage": 6,
+      "name": "SEMANTIC NEIGHBOURHOOD  (what CES puts near this mathematics)",
+      "status": "ok",
+      "reason": "measured; 4 of 13 probes share one top-1 row, so this is reported and NOT used as a signal"
+    },
+    {
+      "stage": 7,
+      "name": "PREDICTED NEXT MATHEMATICS  (from semantic context only)",
+      "status": "degraded",
+      "reason": "no predicted symbols at all: the extractor emits only observed ones, so the prediction channel is empty"
+    }
+  ],
+  "ok": 6,
+  "degraded": 1,
+  "failed": 0
+}

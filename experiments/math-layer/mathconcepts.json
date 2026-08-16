@@ -10,12 +10,24 @@
   },
   "confidence_function": {
     "formula": "0.5*evidence + 0.3*symbol + 0.2*anchor",
-    "evidence": {"observed": 1.0, "implied": 0.6, "predicted": 0.2},
-    "symbol": {"at_least_one_observed": 1.0, "none_observed": 0.0},
-    "anchor": {"at_least_one_supported": 1.0, "all_unresolved": 0.0},
+    "evidence": {
+      "observed": 1.0,
+      "implied": 0.6,
+      "predicted": 0.2
+    },
+    "symbol": {
+      "at_least_one_observed": 1.0,
+      "none_observed": 0.0
+    },
+    "anchor": {
+      "supported": 1.0,
+      "unverified": 0.5,
+      "unresolved": 0.0
+    },
     "when_no_anchor_is_expected": "the anchor term is DROPPED and the remaining weights renormalise to 1.0. Absence of a Mathlib name is not a failed lookup, the same way `absorbed` is not `not_integrated` in runlog.py. Scoring it as zero would punish a concept for a fact about Mathlib's design.",
     "what_1_0_means": "every available check passed. NOT that the concept is certainly correct.",
-    "never": "a model's self-reported confidence"
+    "never": "a model's self-reported confidence",
+    "computed_by": "conceptdrill.mathlayer.schema.confidence"
   },
   "corrections_forced_by_step_11": [
     "`Basis` was claimed `exact` and does not exist. The name is `Module.Basis` (Mathlib.LinearAlgebra.Basis.Defs), found via the substring query after the bare name failed.",
@@ -24,114 +36,287 @@
   ],
   "concepts": [
     {
-      "id": "mc_e0a1c4f7d2b8",
+      "id": "mc_a83bdc80f69a",
       "concept": "vector space",
       "spoken": "a vector space over a field",
-      "latex": ["V", "W", "K"],
+      "latex": [
+        "V",
+        "W",
+        "K"
+      ],
       "symbols": [
-        {"latex": "V", "role": "instance", "status": "observed"},
-        {"latex": "W", "role": "instance", "status": "observed"}
+        {
+          "latex": "V",
+          "role": "instance",
+          "status": "observed"
+        },
+        {
+          "latex": "W",
+          "role": "instance",
+          "status": "observed"
+        }
       ],
       "related": [
-        {"relation": "over-field", "target": "field", "status": "observed"},
-        {"relation": "has-dimension", "target": "dimension", "status": "observed"},
-        {"relation": "related-to", "target": "basis", "status": "external"}
+        {
+          "relation": "over-field",
+          "target": "field",
+          "status": "observed"
+        },
+        {
+          "relation": "has-dimension",
+          "target": "dimension",
+          "status": "observed"
+        },
+        {
+          "relation": "related-to",
+          "target": "basis",
+          "status": "external"
+        }
       ],
       "lean": [
-        {"name": "Module", "status": "supported", "hits": 25323},
-        {"name": "Module.Free", "status": "supported", "hits": 689}
+        {
+          "name": "Module",
+          "status": "supported",
+          "hits": 25323
+        },
+        {
+          "name": "Module.Free",
+          "status": "supported",
+          "hits": 689
+        }
       ],
-      "loogle": ["Module", "Module _ _"],
+      "loogle": [
+        "Module",
+        "Module _ _"
+      ],
       "evidence": {
         "doc_id": "fixture:vector-space",
-        "span_ids": ["s1", "s2"],
+        "span_ids": [
+          "s1",
+          "s2"
+        ],
         "ces_row_ids": [],
         "quote": "V is an n-dimensional vector space over K."
       },
       "confidence": 1.0
     },
     {
-      "id": "mc_9b73f10ce4a5",
+      "id": "mc_48eb632fe16a",
       "concept": "dimension",
       "spoken": "dimension V equals n",
-      "latex": ["n", "m", "\\dim V", "\\dim W"],
+      "latex": [
+        "n",
+        "m",
+        "\\dim V",
+        "\\dim W"
+      ],
       "symbols": [
-        {"latex": "n", "role": "value", "status": "observed"},
-        {"latex": "m", "role": "value", "status": "observed"},
-        {"latex": "\\dim V", "role": "derived", "status": "predicted"},
-        {"latex": "\\dim_K V", "role": "derived", "status": "predicted"}
+        {
+          "latex": "n",
+          "role": "value",
+          "status": "observed"
+        },
+        {
+          "latex": "m",
+          "role": "value",
+          "status": "observed"
+        },
+        {
+          "latex": "\\dim V",
+          "role": "derived",
+          "status": "predicted"
+        },
+        {
+          "latex": "\\dim_K V",
+          "role": "derived",
+          "status": "predicted"
+        }
       ],
       "related": [
-        {"relation": "is-a", "target": "cardinal", "status": "external"},
-        {"relation": "related-to", "target": "basis", "status": "external"}
+        {
+          "relation": "related-to",
+          "target": "vector space",
+          "status": "observed"
+        },
+        {
+          "relation": "is-a",
+          "target": "cardinal",
+          "status": "external"
+        },
+        {
+          "relation": "related-to",
+          "target": "basis",
+          "status": "external"
+        }
       ],
       "lean": [
-        {"name": "Module.rank", "status": "supported", "hits": 427},
-        {"name": "Module.finrank", "status": "supported", "hits": 1539},
-        {"name": "FiniteDimensional", "status": "supported", "hits": 2027},
-        {"name": "FiniteDimensional.finrank", "status": "unresolved",
-         "error": "unknown identifier"}
+        {
+          "name": "Module.rank",
+          "status": "supported",
+          "hits": 427
+        },
+        {
+          "name": "Module.finrank",
+          "status": "supported",
+          "hits": 1539
+        },
+        {
+          "name": "FiniteDimensional",
+          "status": "supported",
+          "hits": 2027
+        },
+        {
+          "name": "FiniteDimensional.finrank",
+          "status": "unresolved",
+          "error": "unknown identifier"
+        }
       ],
-      "loogle": ["Module.rank", "\"finrank\""],
+      "loogle": [
+        "Module.rank",
+        "\"finrank\""
+      ],
       "evidence": {
         "doc_id": "fixture:vector-space",
-        "span_ids": ["s1", "s2"],
+        "span_ids": [
+          "s1",
+          "s2"
+        ],
         "ces_row_ids": [],
         "quote": "an n-dimensional vector space"
       },
       "confidence": 1.0
     },
     {
-      "id": "mc_4d2e88af16c0",
+      "id": "mc_90f904b45408",
       "concept": "linear map",
       "spoken": "T colon V right arrow W",
-      "latex": ["T : V \\to W", "T \\colon V \\rightarrow W"],
+      "latex": [
+        "T : V \\to W",
+        "T \\colon V \\rightarrow W"
+      ],
       "symbols": [
-        {"latex": "T", "role": "instance", "status": "observed"},
-        {"latex": "T : V \\to W", "role": "signature", "status": "observed"},
-        {"latex": "\\ker T", "role": "derived", "status": "predicted"},
-        {"latex": "\\operatorname{im} T", "role": "derived", "status": "predicted"}
+        {
+          "latex": "T",
+          "role": "instance",
+          "status": "observed"
+        },
+        {
+          "latex": "T : V \\to W",
+          "role": "signature",
+          "status": "observed"
+        },
+        {
+          "latex": "\\ker T",
+          "role": "derived",
+          "status": "predicted"
+        },
+        {
+          "latex": "\\operatorname{im} T",
+          "role": "derived",
+          "status": "predicted"
+        }
       ],
       "related": [
-        {"relation": "domain", "target": "vector space", "status": "observed"},
-        {"relation": "codomain", "target": "vector space", "status": "observed"},
-        {"relation": "maps-to", "target": "V \\to W", "status": "observed"}
+        {
+          "relation": "domain",
+          "target": "vector space",
+          "status": "observed"
+        },
+        {
+          "relation": "codomain",
+          "target": "vector space",
+          "status": "observed"
+        },
+        {
+          "relation": "maps-to",
+          "target": "V \\to W",
+          "status": "observed"
+        }
       ],
       "lean": [
-        {"name": "LinearMap", "status": "supported", "hits": 11118},
-        {"name": "LinearMap.ker", "status": "supported", "hits": 663},
-        {"name": "LinearMap.range", "status": "supported", "hits": 695}
+        {
+          "name": "LinearMap",
+          "status": "supported",
+          "hits": 11118
+        },
+        {
+          "name": "LinearMap.ker",
+          "status": "supported",
+          "hits": 663
+        },
+        {
+          "name": "LinearMap.range",
+          "status": "supported",
+          "hits": 695
+        }
       ],
-      "loogle": ["LinearMap", "|- _ →ₗ[_] _"],
+      "loogle": [
+        "LinearMap",
+        "|- _ →ₗ[_] _"
+      ],
       "evidence": {
         "doc_id": "fixture:vector-space",
-        "span_ids": ["s3"],
+        "span_ids": [
+          "s3"
+        ],
         "ces_row_ids": [],
         "quote": "Let T : V \\to W be linear."
       },
       "confidence": 1.0
     },
     {
-      "id": "mc_1f6b0d3a9e77",
+      "id": "mc_c0d2856b74d0",
       "concept": "field",
       "spoken": "a field",
-      "latex": ["K"],
+      "latex": [
+        "K"
+      ],
       "symbols": [
-        {"latex": "K", "role": "instance", "status": "observed"},
-        {"latex": "\\mathbb{K}", "role": "instance", "status": "predicted"},
-        {"latex": "\\mathbb{F}", "role": "instance", "status": "predicted"}
+        {
+          "latex": "K",
+          "role": "instance",
+          "status": "observed"
+        },
+        {
+          "latex": "\\mathbb{K}",
+          "role": "instance",
+          "status": "predicted"
+        },
+        {
+          "latex": "\\mathbb{F}",
+          "role": "instance",
+          "status": "predicted"
+        }
       ],
       "related": [
-        {"relation": "related-to", "target": "vector space", "status": "observed"}
+        {
+          "relation": "related-to",
+          "target": "vector space",
+          "status": "implied"
+        }
       ],
       "lean": [
-        {"name": "Field", "status": "supported", "hits": 9093},
-        {"name": "DivisionRing", "status": "supported", "hits": 1348}
+        {
+          "name": "Field",
+          "status": "supported",
+          "hits": 9093
+        },
+        {
+          "name": "DivisionRing",
+          "status": "supported",
+          "hits": 1348
+        }
       ],
-      "loogle": ["Field", "Field _"],
+      "loogle": [
+        "Field",
+        "Field _"
+      ],
       "evidence": {
         "doc_id": "fixture:vector-space",
-        "span_ids": ["s1", "s2"],
+        "span_ids": [
+          "s1",
+          "s2"
+        ],
         "ces_row_ids": [],
         "quote": "vector space over K",
         "note": "The word `field` never occurs. It is implied by the phrase `vector space over K`. DivisionRing is kept because nothing in the text says K is commutative."
@@ -139,22 +324,35 @@
       "confidence": 0.8
     },
     {
-      "id": "mc_5c908e2b7f14",
+      "id": "mc_f2ff83860a4d",
       "concept": "domain",
       "spoken": "the domain of T",
-      "latex": ["V"],
+      "latex": [
+        "V"
+      ],
       "symbols": [
-        {"latex": "V", "role": "instance", "status": "observed"}
+        {
+          "latex": "V",
+          "role": "instance",
+          "status": "observed"
+        }
       ],
       "related": [
-        {"relation": "domain", "target": "linear map", "status": "implied"}
+        {
+          "relation": "domain",
+          "target": "linear map",
+          "status": "implied"
+        }
       ],
       "lean": [],
-      "lean_status": "not_expected",
-      "loogle": ["|- _ →ₗ[_] _"],
+      "loogle": [
+        "|- _ →ₗ[_] _"
+      ],
       "evidence": {
         "doc_id": "fixture:vector-space",
-        "span_ids": ["s3"],
+        "span_ids": [
+          "s3"
+        ],
         "ces_row_ids": [],
         "quote": "T : V \\to W",
         "note": "Read off the notation. The text never says `domain`. In Mathlib this is a type index, not a declaration, so the pattern query is retained and the anchor list is empty by design."
@@ -162,22 +360,35 @@
       "confidence": 0.75
     },
     {
-      "id": "mc_7a45cb01d3e9",
+      "id": "mc_e0c3411ad9d2",
       "concept": "codomain",
       "spoken": "the codomain of T",
-      "latex": ["W"],
+      "latex": [
+        "W"
+      ],
       "symbols": [
-        {"latex": "W", "role": "instance", "status": "observed"}
+        {
+          "latex": "W",
+          "role": "instance",
+          "status": "observed"
+        }
       ],
       "related": [
-        {"relation": "codomain", "target": "linear map", "status": "implied"}
+        {
+          "relation": "codomain",
+          "target": "linear map",
+          "status": "implied"
+        }
       ],
       "lean": [],
-      "lean_status": "not_expected",
-      "loogle": ["|- _ →ₗ[_] _"],
+      "loogle": [
+        "|- _ →ₗ[_] _"
+      ],
       "evidence": {
         "doc_id": "fixture:vector-space",
-        "span_ids": ["s3"],
+        "span_ids": [
+          "s3"
+        ],
         "ces_row_ids": [],
         "quote": "T : V \\to W",
         "note": "same as domain"
@@ -185,24 +396,51 @@
       "confidence": 0.75
     },
     {
-      "id": "mc_c31097e5ba62",
+      "id": "mc_a7a3c8f65476",
       "concept": "basis",
       "spoken": "a basis of V",
       "latex": [],
       "symbols": [
-        {"latex": "\\{v_1, \\dots, v_n\\}", "role": "instance", "status": "predicted"},
-        {"latex": "\\mathcal{B}", "role": "instance", "status": "predicted"}
+        {
+          "latex": "\\{v_1, \\dots, v_n\\}",
+          "role": "instance",
+          "status": "predicted"
+        },
+        {
+          "latex": "\\mathcal{B}",
+          "role": "instance",
+          "status": "predicted"
+        }
       ],
       "related": [
-        {"relation": "related-to", "target": "dimension", "status": "external"}
+        {
+          "relation": "related-to",
+          "target": "dimension",
+          "status": "external"
+        }
       ],
       "lean": [
-        {"name": "Module.Basis", "status": "supported", "hits": 1493,
-         "module": "Mathlib.LinearAlgebra.Basis.Defs"},
-        {"name": "Basis", "status": "unresolved", "error": "unknown identifier"},
-        {"name": "Basis.mk", "status": "unresolved", "error": "unknown identifier"}
+        {
+          "name": "Module.Basis",
+          "status": "supported",
+          "hits": 1493,
+          "module": "Mathlib.LinearAlgebra.Basis.Defs"
+        },
+        {
+          "name": "Basis",
+          "status": "unresolved",
+          "error": "unknown identifier"
+        },
+        {
+          "name": "Basis.mk",
+          "status": "unresolved",
+          "error": "unknown identifier"
+        }
       ],
-      "loogle": ["Module.Basis", "\"Basis\""],
+      "loogle": [
+        "Module.Basis",
+        "\"Basis\""
+      ],
       "evidence": {
         "doc_id": "fixture:vector-space",
         "span_ids": [],
@@ -212,5 +450,12 @@
       },
       "confidence": 0.3
     }
+  ],
+  "corrections_forced_by_step_20": [
+    "Stored confidences were authored by hand and two disagreed with the implemented function. check_record now rejects any record whose stored confidence is not what the function gives, so the two cannot drift again.",
+    "`dimension` scored 1.0 by hand but held only `external` relations: every observed edge touching it was recorded on the other endpoint. Confidence is computed per record, so an edge's direction changes the score of both concepts it connects. Recorded as a limitation, not fixed.",
+    "`field` carried an `observed` relation while its own note said the word never appears. The relation is `implied`.",
+    "Hand-authored `id` values were invented and none was the content address of its concept name. concept_id() now derives them, so an id cannot disagree with the concept it names.",
+    "`lean_status: not_expected` was an invented top-level field. The schema expresses the same thing as an empty anchor list, which drops the anchor term and renormalises instead of scoring a failed lookup."
   ]
 }

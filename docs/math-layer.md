@@ -319,3 +319,81 @@ bottleneck. It is not known to be.
    nowhere, and that gap is precisely what it exists to fill.
 
 The worked example against real text is `tests/fixtures/vector-space.md`.
+
+---
+
+## 8. Review, and the smallest production implementation
+
+Written after steps 9-18 ran. Three findings from the experiment change the
+design above, and they are the reason this section exists rather than a
+straight build of §3.
+
+**Finding 1 — CES contributes nothing to this, measured.** Step 15: one basis
+row is top-1 for four of six mathematical continuations, the whole spread
+across thirteen probes is 0.651-0.762, and *vector space* retrieves the NLP
+sense at 0.717. **The layer therefore must not import the basis, the corpus
+store, or the projection code at all.** §7.3 asked whether CES helps; the
+answer is no, and the consequence is that the production layer is *smaller*
+than designed — it needs span text, spoken math and the docmodel, and nothing
+from `basis.py`, `project.py` or `corpus.py`. `ces_row_ids` survives as an
+opaque provenance string that nothing reads.
+
+**Finding 2 — verification is not optional and is not free.** Two of five
+names claimed `exact` did not exist, both stale in the same direction. The
+`unverified` default earns its place, and `loogle.py` has to be a real module
+rather than a note.
+
+**Finding 3 — the useful ranking signal is discrete.** What separated good
+candidates from bad was `observed | implied | predicted` and whether a Loogle
+query resolved. Neither is a cosine. So `confidence()` is arithmetic over
+declared statuses, deterministic and unit-testable, with no embedding anywhere
+near it.
+
+### Files to add
+
+| file | what it holds | tests |
+|---|---|---|
+| `src/conceptdrill/mathlayer/__init__.py` | the public surface, nothing else | — |
+| `src/conceptdrill/mathlayer/schema.py` | `MATHCONCEPT_FIELDS`, the closed vocabularies, `mathconcept_record()`, `concept_id()`, `confidence()` | `tests/test_mathlayer_schema.py` |
+| `src/conceptdrill/mathlayer/store.py` | atomic read/write of `math-concepts.json` | `tests/test_mathlayer_store.py` |
+| `src/conceptdrill/mathlayer/loogle.py` | explicit verification; offline by default, raises rather than degrading | `tests/test_mathlayer_loogle.py` |
+| `src/conceptdrill/mathlayer/extract.py` | the `Extractor` protocol and its implementations | `tests/test_mathlayer_extract.py` |
+| `tools/mathlayer_show.py` | the CLI of step 21 | — |
+
+`schema.py` follows `runlog.py` exactly: a field tuple that is the contract, a
+record builder that **raises on an unknown key and fills a missing one with
+`None`**, and frozen vocabularies. That module already proved the pattern —
+`bool(strict_mode)` silently turning `None` into `False` is the bug it caught.
+
+`concept_id()` is content-addressed the way `basis.make_row_id` is. A
+positional id transposes the moment a document is re-read.
+
+`extract.py` mirrors `summarize.Summarizer`: a protocol, plus implementations
+carrying `measurement_safe`. `ExtractiveSummarizer` being usable as a stand-in
+voided a 416-document corpus; the same trap is available here and gets the same
+mechanical guard rather than a convention.
+
+### Files to change
+
+**None.**
+
+That is the test of whether this is really a layer. `hierarchy/` keeps every
+signature it has, `basis_version` is untouched, no existing test changes, and
+the pipeline runs identically whether or not `mathlayer/` is installed. If a
+change to an existing file turns out to be needed, the design is wrong and the
+right response is to redesign rather than to make the change.
+
+The one place a change is *tempting* is `Paragraph` (`docmodel_tree.py:265`),
+which carries no flag saying a unit came from mathematics — so the math layer
+must re-read the docmodel to recover which units were formulas. That cost is
+accepted. Adding the field would be a one-line improvement to the pipeline and
+would break the property this section is asserting.
+
+### Deliberately not in the minimal layer
+
+- **Any use of the basis, projections or the corpus store.** Finding 1.
+- **Network access during extraction.** `loogle.py` is invoked explicitly, as a
+  separate verification pass, the way `speech.load_speaker` probes and raises.
+- **The OCR interface of `docs/math-layer-ocr.md`.** It has no consumer yet, and
+  a benchmark that has not run cannot justify an interface.
+- **Writing anywhere near a drill folder or `ces-basis.json`.**

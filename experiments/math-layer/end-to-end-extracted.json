@@ -1,0 +1,110 @@
+[
+  {
+    "id": "mc_a83bdc80f69a",
+    "concept": "vector space",
+    "spoken": "V is an n-dimensional vector space over K. W is an m-dimensional vector space over K.",
+    "latex": [
+      "V",
+      "W"
+    ],
+    "symbols": [
+      {
+        "latex": "V",
+        "role": "instance",
+        "status": "observed"
+      },
+      {
+        "latex": "W",
+        "role": "instance",
+        "status": "observed"
+      }
+    ],
+    "related": [
+      {
+        "relation": "over-field",
+        "target": "field",
+        "status": "implied"
+      }
+    ],
+    "lean": [],
+    "loogle": [],
+    "evidence": {
+      "doc_id": "fixture:vector-space",
+      "span_ids": [
+        "s1"
+      ],
+      "ces_row_ids": [],
+      "quote": "V is an n-dimensional vector space over K. W is an m-dimensional vector space over K. Let T colon V right arrow W be linear.",
+      "note": null
+    },
+    "confidence": 0.75
+  },
+  {
+    "id": "mc_90f904b45408",
+    "concept": "linear map",
+    "spoken": "T colon V right arrow W",
+    "latex": [
+      "T : V \\to W",
+      "T \\colon V \\rightarrow W"
+    ],
+    "symbols": [
+      {
+        "latex": "T",
+        "role": "instance",
+        "status": "observed"
+      }
+    ],
+    "related": [
+      {
+        "relation": "domain",
+        "target": "vector space",
+        "status": "observed"
+      },
+      {
+        "relation": "codomain",
+        "target": "vector space",
+        "status": "observed"
+      }
+    ],
+    "lean": [],
+    "loogle": [],
+    "evidence": {
+      "doc_id": "fixture:vector-space",
+      "span_ids": [
+        "s1"
+      ],
+      "ces_row_ids": [],
+      "quote": "V is an n-dimensional vector space over K. W is an m-dimensional vector space over K. Let T colon V right arrow W be linear.",
+      "note": null
+    },
+    "confidence": 1.0
+  },
+  {
+    "id": "mc_c0d2856b74d0",
+    "concept": "field",
+    "spoken": "over K",
+    "latex": [
+      "K"
+    ],
+    "symbols": [
+      {
+        "latex": "K",
+        "role": "instance",
+        "status": "observed"
+      }
+    ],
+    "related": [],
+    "lean": [],
+    "loogle": [],
+    "evidence": {
+      "doc_id": "fixture:vector-space",
+      "span_ids": [
+        "s1"
+      ],
+      "ces_row_ids": [],
+      "quote": "V is an n-dimensional vector space over K. W is an m-dimensional vector space over K. Let T colon V right arrow W be linear.",
+      "note": null
+    },
+    "confidence": 0.5
+  }
+]
