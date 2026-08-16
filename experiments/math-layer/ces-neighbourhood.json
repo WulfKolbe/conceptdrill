@@ -1,0 +1,640 @@
+{
+  "pool_rows": 5008,
+  "pool_note": "16 independent chunk bases concatenated; not a merge",
+  "embedder": "modernbert",
+  "top_k": 8,
+  "probes": {
+    "concept:vector space": "vector space",
+    "concept:linear map": "linear map",
+    "s1": "V is an n-dimensional vector space over K.",
+    "s3-fixture": "Let T : V right arrow W be linear.",
+    "s3-variant": "Let T : V right arrow W be a linear transformation.",
+    "fixture-whole": "V is an n-dimensional vector space over K. W is an m-dimensional vector space over K. Let T colon V right arrow W be linear.",
+    "variant-whole": "V is an n-dimensional vector space over K. W is an m-dimensional vector space over K. Let T colon V right arrow W be a linear transformation."
+  },
+  "continuations": {
+    "kernel": "the kernel of T is the set of v with T of v equals zero",
+    "rank-nullity": "dimension of the kernel of T plus dimension of the image of T equals n",
+    "basis": "let v sub 1 through v sub n be a basis of V",
+    "matrix": "the matrix of T with respect to the basis is an m by n matrix",
+    "linearity": "T of alpha u plus beta v equals alpha T of u plus beta T of v",
+    "isomorphism": "T is an isomorphism if it is injective and surjective"
+  },
+  "results": {
+    "concept:vector space": {
+      "top1": 0.7171,
+      "hits": [
+        {
+          "similarity": 0.7171,
+          "label": "concept vector constructed from activation deviation over baseline words",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.7025,
+          "label": "free vector space on a set constructed via the free functor from the category of sets to the category of vector spaces",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.702,
+          "label": "definition of workspace-like vector representations by five functional properties including verbal report and selectivity",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6853,
+          "label": "mapping of any vector from the original latent embedding space to a human-understandable conceptual space without assuming dimensions correspond to explicit interpretable concepts",
+          "chunk": "s2-c1"
+        },
+        {
+          "similarity": 0.6771,
+          "label": "three simultaneous semantic layers of conceptual geometry and process semantics whose interplay determines the full meaning of each basis vector in representation",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6726,
+          "label": "decomposition of the geometric product of vectors into inner and outer products through the violation of commutativity producing bivectors from orthogonal vectors",
+          "chunk": "s1-c2"
+        },
+        {
+          "similarity": 0.6689,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6615,
+          "label": "fixed-dimensional real-valued vector representations of words where cosine distance reflects semantic relatedness derived from co-occurrence patterns in large text corpora using distributional semantics",
+          "chunk": "s1-c0"
+        }
+      ]
+    },
+    "concept:linear map": {
+      "top1": 0.6833,
+      "hits": [
+        {
+          "similarity": 0.6833,
+          "label": "tropical linear algebra as a transition between linear and nonlinear algebra",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.682,
+          "label": "linear algebraic generalization of formal concepts using complex-valued matrices and conjugate transpose maps",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6731,
+          "label": "bounded bilinear map from the general linear group to matrix space that vanishes on identity inputs and satisfies a Lipschitz norm bound",
+          "chunk": "s3-c1"
+        },
+        {
+          "similarity": 0.6476,
+          "label": "polygonal link defined as an embedding of disjoint closed broken lines in three-dimensional space, with tame links being those isotopic to such embeddings",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6466,
+          "label": "point-line duality between data domain points and concurrent lines in parallel coordinates",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6458,
+          "label": "Affine variety as the set of all common zeros of an ideal in a polynomial ring in n variables over a field",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6454,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6448,
+          "label": "Similarity fields as algebraic structures that model controlled nonlinear perturbations of classical field structures, with the perturbation magnitude governed by a similarity parameter epsilon",
+          "chunk": "s3-c1"
+        }
+      ]
+    },
+    "s1": {
+      "top1": 0.668,
+      "hits": [
+        {
+          "similarity": 0.668,
+          "label": "smooth projective variety whose points are in bijection with the collection of all linear subspaces of a fixed dimension in a vector space",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6553,
+          "label": "bra-ket notation representing vectors as kets and covectors as bras, establishing a natural isomorphism between a finite-dimensional Hilbert space and its dual via the inner product",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6453,
+          "label": "Affine variety as the set of all common zeros of an ideal in a polynomial ring in n variables over a field",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6419,
+          "label": "three simultaneous semantic layers of conceptual geometry and process semantics whose interplay determines the full meaning of each basis vector in representation",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6338,
+          "label": "free vector space on a set constructed via the free functor from the category of sets to the category of vector spaces",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6313,
+          "label": "rank of Khomology group equals 2 to the power of component count",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6282,
+          "label": "encoder mapping of input elements from r-D space to output elements in r-F space, defined by the cardinality of V times F",
+          "chunk": "s2-c2"
+        },
+        {
+          "similarity": 0.6279,
+          "label": "decomposition of the geometric product of vectors into inner and outer products through the violation of commutativity producing bivectors from orthogonal vectors",
+          "chunk": "s1-c2"
+        }
+      ]
+    },
+    "s3-fixture": {
+      "top1": 0.6833,
+      "hits": [
+        {
+          "similarity": 0.6833,
+          "label": "Reidemeister theorem for smooth link diagrams establishing that two diagrams represent isotopic links precisely when they are related by planar isotopies and the three Reidemeister moves",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6695,
+          "label": "estimation of a linear order on a finite non-empty set, expressed as a binary relation that is reflexive, transitive, antisymmetric, and total",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6617,
+          "label": "knot invariant as an isotopy-invariant function on knot isotopy classes including polynomial invariants derived from skein relations and homological invariants such as Khovanov homology",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.661,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6499,
+          "label": "biquandle generalization of quandles using half-edges at crossings, assigning four elements per crossing and defining colorings of outgoing edges from incoming edges",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6497,
+          "label": "the braid group as an algebraic structure that encodes links through the closure of ascending curves on parallel lines, with equivalence given by Markov relations",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6476,
+          "label": "front projection of a Legendrian curve using slope encoding and cusp singularities for recovering crossing types from relative positions of intersecting branches",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6448,
+          "label": "Partitioning the vertices of a directed graph into positions based on shared patterns of outgoing and incoming connections to the other vertices",
+          "chunk": "s2-c1"
+        }
+      ]
+    },
+    "s3-variant": {
+      "top1": 0.6851,
+      "hits": [
+        {
+          "similarity": 0.6851,
+          "label": "Reidemeister theorem for smooth link diagrams establishing that two diagrams represent isotopic links precisely when they are related by planar isotopies and the three Reidemeister moves",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6738,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6579,
+          "label": "quotient of a coalgebra by a congruence in the category of coalgebras",
+          "chunk": "s2-c1"
+        },
+        {
+          "similarity": 0.6576,
+          "label": "knot invariant as an isotopy-invariant function on knot isotopy classes including polynomial invariants derived from skein relations and homological invariants such as Khovanov homology",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6541,
+          "label": "invariance of W_b under changes of base points on link components and under all three Reidemeister moves establishing a well-defined link invariant",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6539,
+          "label": "front projection of a Legendrian curve using slope encoding and cusp singularities for recovering crossing types from relative positions of intersecting branches",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6488,
+          "label": "tropical linear algebra as a transition between linear and nonlinear algebra",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6478,
+          "label": "three simultaneous semantic layers of conceptual geometry and process semantics whose interplay determines the full meaning of each basis vector in representation",
+          "chunk": "s3-c0"
+        }
+      ]
+    },
+    "fixture-whole": {
+      "top1": 0.6744,
+      "hits": [
+        {
+          "similarity": 0.6744,
+          "label": "estimation of a linear order on a finite non-empty set, expressed as a binary relation that is reflexive, transitive, antisymmetric, and total",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6729,
+          "label": "Reidemeister theorem for smooth link diagrams establishing that two diagrams represent isotopic links precisely when they are related by planar isotopies and the three Reidemeister moves",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6718,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6671,
+          "label": "knot invariant as an isotopy-invariant function on knot isotopy classes including polynomial invariants derived from skein relations and homological invariants such as Khovanov homology",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6652,
+          "label": "three simultaneous semantic layers of conceptual geometry and process semantics whose interplay determines the full meaning of each basis vector in representation",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6632,
+          "label": "decomposition of the geometric product of vectors into inner and outer products through the violation of commutativity producing bivectors from orthogonal vectors",
+          "chunk": "s1-c2"
+        },
+        {
+          "similarity": 0.6549,
+          "label": "point-line duality between data domain points and concurrent lines in parallel coordinates",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6539,
+          "label": "the braid group as an algebraic structure that encodes links through the closure of ascending curves on parallel lines, with equivalence given by Markov relations",
+          "chunk": "s2-c0"
+        }
+      ]
+    },
+    "variant-whole": {
+      "top1": 0.6903,
+      "hits": [
+        {
+          "similarity": 0.6903,
+          "label": "Reidemeister theorem for smooth link diagrams establishing that two diagrams represent isotopic links precisely when they are related by planar isotopies and the three Reidemeister moves",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6894,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6798,
+          "label": "three simultaneous semantic layers of conceptual geometry and process semantics whose interplay determines the full meaning of each basis vector in representation",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6719,
+          "label": "knot invariant as an isotopy-invariant function on knot isotopy classes including polynomial invariants derived from skein relations and homological invariants such as Khovanov homology",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6686,
+          "label": "decomposition of the geometric product of vectors into inner and outer products through the violation of commutativity producing bivectors from orthogonal vectors",
+          "chunk": "s1-c2"
+        },
+        {
+          "similarity": 0.6636,
+          "label": "quotient of a coalgebra by a congruence in the category of coalgebras",
+          "chunk": "s2-c1"
+        },
+        {
+          "similarity": 0.6612,
+          "label": "the braid group as an algebraic structure that encodes links through the closure of ascending curves on parallel lines, with equivalence given by Markov relations",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6576,
+          "label": "bra-ket notation representing vectors as kets and covectors as bras, establishing a natural isomorphism between a finite-dimensional Hilbert space and its dual via the inner product",
+          "chunk": "s1-c0"
+        }
+      ]
+    },
+    "next:kernel": {
+      "top1": 0.6911,
+      "hits": [
+        {
+          "similarity": 0.6911,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6895,
+          "label": "Affine variety as the set of all common zeros of an ideal in a polynomial ring in n variables over a field",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6874,
+          "label": "triviality of the kernel via preservation of puncture-connecting lines and the action of the half-turn Dehn twist",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6694,
+          "label": "combinatorial description of a toric variety derived from the correspondence between its monomials and binomials and the vertices of a lattice polytope",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6686,
+          "label": "Frobenius norm and non-zero entry count as measures of tensor magnitude and sparsity, equaling the square root of sparsity for binary tensors",
+          "chunk": "s1-c3"
+        },
+        {
+          "similarity": 0.6612,
+          "label": "recursive spanning tree construction for Khovanov homology by splitting bifurcation cubes of link diagrams and decomposing each complex into homological and acyclic summands",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6606,
+          "label": "knot invariant as an isotopy-invariant function on knot isotopy classes including polynomial invariants derived from skein relations and homological invariants such as Khovanov homology",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6563,
+          "label": "finite generating set whose leading monomials generate the initial ideal of an ideal in a polynomial ring",
+          "chunk": "s1-c0"
+        }
+      ]
+    },
+    "next:rank-nullity": {
+      "top1": 0.7617,
+      "hits": [
+        {
+          "similarity": 0.7617,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.7129,
+          "label": "dimension vector defined as total function from enumerable index type to numeric ring via typedef",
+          "chunk": "s1-c2"
+        },
+        {
+          "similarity": 0.7071,
+          "label": "rank of Khomology group equals 2 to the power of component count",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.7067,
+          "label": "Frobenius norm and non-zero entry count as measures of tensor magnitude and sparsity, equaling the square root of sparsity for binary tensors",
+          "chunk": "s1-c3"
+        },
+        {
+          "similarity": 0.7002,
+          "label": "knot invariant as an isotopy-invariant function on knot isotopy classes including polynomial invariants derived from skein relations and homological invariants such as Khovanov homology",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6955,
+          "label": "the finite-dimensional character of the vector space of modular forms at each weight and level, the property that enables further theoretical development",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6935,
+          "label": "extension of knot theory through additional crossing types that generalizes standard invariants to broader settings and produces new tools for reliable unknot detection",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6925,
+          "label": "Affine variety as the set of all common zeros of an ideal in a polynomial ring in n variables over a field",
+          "chunk": "s1-c0"
+        }
+      ]
+    },
+    "next:basis": {
+      "top1": 0.6512,
+      "hits": [
+        {
+          "similarity": 0.6512,
+          "label": "proof by contradiction that assumes the negation of the desired conclusion and derives an impossibility from the resulting logical premises and axioms",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6455,
+          "label": "representations of braid groups as homomorphisms to linear operators",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6454,
+          "label": "the braid group as an algebraic structure that encodes links through the closure of ascending curves on parallel lines, with equivalence given by Markov relations",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6391,
+          "label": "Reidemeister theorem for smooth link diagrams establishing that two diagrams represent isotopic links precisely when they are related by planar isotopies and the three Reidemeister moves",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6356,
+          "label": "finite generating set whose leading monomials generate the initial ideal of an ideal in a polynomial ring",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6352,
+          "label": "mathematical language models derived from transformer architectures through pretraining on mathematical corpora augmented with specialized mathematical tokens for improved domain-specific notation capture",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6303,
+          "label": "three simultaneous semantic layers of conceptual geometry and process semantics whose interplay determines the full meaning of each basis vector in representation",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6274,
+          "label": "Dimension universe construction conveying semantic information about underlying physical dimensions through quantity types for formal reasoning and verified type checking in specifications",
+          "chunk": "s1-c2"
+        }
+      ]
+    },
+    "next:matrix": {
+      "top1": 0.7614,
+      "hits": [
+        {
+          "similarity": 0.7614,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.7116,
+          "label": "Frobenius norm and non-zero entry count as measures of tensor magnitude and sparsity, equaling the square root of sparsity for binary tensors",
+          "chunk": "s1-c3"
+        },
+        {
+          "similarity": 0.7085,
+          "label": "rank of Khomology group equals 2 to the power of component count",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.7038,
+          "label": "data matrix formed by transposing each data point and placing the transposes as rows, yielding a matrix with n rows and d columns",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.7026,
+          "label": "lower bound of the ponderable partial spectrum of complex Hermetry c and d condensation forms derived from the minimal metronic condensation threshold",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.7018,
+          "label": "data matrix whose columns represent N observations in M-dimensional Euclidean space, with each column as one data point and each row as one feature",
+          "chunk": "s2-c2"
+        },
+        {
+          "similarity": 0.7002,
+          "label": "generalization of matrix attributes including eigenvectors and rank to tensors, yielding structures with significantly richer and more complex behavior than matrix counterparts",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6975,
+          "label": "Vertices of the matroid polytope and the lattice points corresponding exactly to basis indicator vectors of the matroid over the ground set",
+          "chunk": "s1-c0"
+        }
+      ]
+    },
+    "next:linearity": {
+      "top1": 0.7006,
+      "hits": [
+        {
+          "similarity": 0.7006,
+          "label": "eigenvectors of a tensor as fixed and base points of its gradient map",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6977,
+          "label": "similarity field script parameterized by a non-negative perturbation parameter epsilon with deformed addition and multiplication operations defined over the set of real numbers",
+          "chunk": "s3-c1"
+        },
+        {
+          "similarity": 0.6942,
+          "label": "the finite-dimensional character of the vector space of modular forms at each weight and level, the property that enables further theoretical development",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6907,
+          "label": "Vector subtraction defined as the addition of a vector and the negation of another vector having equal length but opposite directional orientation",
+          "chunk": "s1-c2"
+        },
+        {
+          "similarity": 0.6804,
+          "label": "unified description of all fundamental forces and elementary particles",
+          "chunk": "s3-c0"
+        },
+        {
+          "similarity": 0.6784,
+          "label": "Summit form, summit set, and summit power defined by iterative alpha-transformations of a word",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6718,
+          "label": "inductive proof of coproduct equality using STU relation decomposition",
+          "chunk": "s2-c0"
+        },
+        {
+          "similarity": 0.6707,
+          "label": "inner product of two vectors defined as half the sum of their ordered geometric products equaling magnitude times cosine of the angle between them",
+          "chunk": "s1-c2"
+        }
+      ]
+    },
+    "next:isomorphism": {
+      "top1": 0.7118,
+      "hits": [
+        {
+          "similarity": 0.7118,
+          "label": "the equivalence of injective and surjective properties for functions mapping a finite set to itself, thereby rendering the two properties fully interchangeable",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6643,
+          "label": "bijection between multisets and diagrams via well-defined injective surjective mapping",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6419,
+          "label": "quotient of a coalgebra by a congruence in the category of coalgebras",
+          "chunk": "s2-c1"
+        },
+        {
+          "similarity": 0.6274,
+          "label": "finite generating set whose leading monomials generate the initial ideal of an ideal in a polynomial ring",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6145,
+          "label": "subgraph isomorphism solved by spectral matching of graph eigenvalue signatures",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6135,
+          "label": "proof by contradiction that assumes the negation of the desired conclusion and derives an impossibility from the resulting logical premises and axioms",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6133,
+          "label": "Affine variety as the set of all common zeros of an ideal in a polynomial ring in n variables over a field",
+          "chunk": "s1-c0"
+        },
+        {
+          "similarity": 0.6112,
+          "label": "Summit form, summit set, and summit power defined by iterative alpha-transformations of a word",
+          "chunk": "s2-c0"
+        }
+      ]
+    },
+    "delta:s3-fixture->s3-variant": {
+      "shared_of_top_k": 4,
+      "top_k": 8,
+      "added": [
+        "invariance of W_b under changes of base points on link components and under all three Reidemeister moves establishing a well-defined link invariant",
+        "quotient of a coalgebra by a congruence in the category of coalgebras",
+        "three simultaneous semantic layers of conceptual geometry and process semantics whose interplay determines the full meaning of each basis vector in representation",
+        "tropical linear algebra as a transition between linear and nonlinear algebra"
+      ],
+      "removed": [
+        "Partitioning the vertices of a directed graph into positions based on shared patterns of outgoing and incoming connections to the other vertices",
+        "biquandle generalization of quandles using half-edges at crossings, assigning four elements per crossing and defining colorings of outgoing edges from incoming edges",
+        "estimation of a linear order on a finite non-empty set, expressed as a binary relation that is reflexive, transitive, antisymmetric, and total",
+        "the braid group as an algebraic structure that encodes links through the closure of ascending curves on parallel lines, with equivalence given by Markov relations"
+      ],
+      "top1_change": 0.0018
+    },
+    "delta:fixture-whole->variant-whole": {
+      "shared_of_top_k": 6,
+      "top_k": 8,
+      "added": [
+        "bra-ket notation representing vectors as kets and covectors as bras, establishing a natural isomorphism between a finite-dimensional Hilbert space and its dual via the inner product",
+        "quotient of a coalgebra by a congruence in the category of coalgebras"
+      ],
+      "removed": [
+        "estimation of a linear order on a finite non-empty set, expressed as a binary relation that is reflexive, transitive, antisymmetric, and total",
+        "point-line duality between data domain points and concurrent lines in parallel coordinates"
+      ],
+      "top1_change": 0.0159
+    }
+  }
+}

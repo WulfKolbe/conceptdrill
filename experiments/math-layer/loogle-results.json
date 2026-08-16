@@ -1,0 +1,1119 @@
+{
+  "step": 11,
+  "endpoint": "https://loogle.lean-lang.org/json",
+  "existing_mechanism": "none: no lean/lake/elan/loogle binary, no Lean code in conceptdrill, and PDFDRILL's lean_export generates Lean rather than searching it",
+  "queries": 31,
+  "resolved": 26,
+  "records": [
+    {
+      "concept": "vector space",
+      "kind": "lean_name",
+      "query": "Module",
+      "claimed_certainty": "exact",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 25323 declarations mentioning Module.\nOf these, only the first 200 are shown.\n",
+        "count": 25323,
+        "hits": [
+          {
+            "name": "Module",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] : Type (max u v)"
+          },
+          {
+            "name": "Semiring.toModule",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u_1} [Semiring R] : Module R R"
+          },
+          {
+            "name": "Module.toDistribMulAction",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u} {M : Type v} {inst✝ : Semiring R} {inst✝¹ : AddCommMonoid M} [self : Module R M] : DistribMulAction R M"
+          },
+          {
+            "name": "Module.toMulActionWithZero",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u_5} {M : Type u_6} {x✝ : Semiring R} {x✝¹ : AddCommMonoid M} [Module R M] : MulActionWithZero R M"
+          },
+          {
+            "name": "Module.eq_zero_of_zero_eq_one",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u_1} {M : Type u_3} [Semiring R] [AddCommMonoid M] [Module R M] (x : M) (zero_eq_one : 0 = 1) : x = 0"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "vector space",
+      "kind": "lean_name",
+      "query": "Module.Free",
+      "claimed_certainty": "uncertain",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 689 declarations mentioning Module.Free.\nOf these, only the first 200 are shown.\n",
+        "count": 689,
+        "hits": [
+          {
+            "name": "Module.Free",
+            "module": "Mathlib.LinearAlgebra.FreeModule.Basic",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M] : Prop"
+          },
+          {
+            "name": "Module.Free.self",
+            "module": "Mathlib.LinearAlgebra.FreeModule.Basic",
+            "type": " (R : Type u) [Semiring R] : Module.Free R R"
+          },
+          {
+            "name": "Module.Free.ChooseBasisIndex",
+            "module": "Mathlib.LinearAlgebra.FreeModule.Basic",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M] [Module.Free R M] : Type v"
+          },
+          {
+            "name": "Module.Free.of_subsingleton",
+            "module": "Mathlib.LinearAlgebra.FreeModule.Basic",
+            "type": " (R : Type u) (N : Type z) [Semiring R] [AddCommMonoid N] [Module R N] [Subsingleton N] : Module.Free R N"
+          },
+          {
+            "name": "Module.Free.of_subsingleton'",
+            "module": "Mathlib.LinearAlgebra.FreeModule.Basic",
+            "type": " (R : Type u) (N : Type z) [Semiring R] [AddCommMonoid N] [Module R N] [Subsingleton R] : Module.Free R N"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "vector space",
+      "kind": "loogle_pattern",
+      "query": "Module",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 25323 declarations mentioning Module.\nOf these, only the first 200 are shown.\n",
+        "count": 25323,
+        "hits": [
+          {
+            "name": "Module",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] : Type (max u v)"
+          },
+          {
+            "name": "Semiring.toModule",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u_1} [Semiring R] : Module R R"
+          },
+          {
+            "name": "Module.toDistribMulAction",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u} {M : Type v} {inst✝ : Semiring R} {inst✝¹ : AddCommMonoid M} [self : Module R M] : DistribMulAction R M"
+          },
+          {
+            "name": "Module.toMulActionWithZero",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u_5} {M : Type u_6} {x✝ : Semiring R} {x✝¹ : AddCommMonoid M} [Module R M] : MulActionWithZero R M"
+          },
+          {
+            "name": "Module.eq_zero_of_zero_eq_one",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u_1} {M : Type u_3} [Semiring R] [AddCommMonoid M] [Module R M] (x : M) (zero_eq_one : 0 = 1) : x = 0"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "vector space",
+      "kind": "loogle_pattern",
+      "query": "Module _ _",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 25323 declarations mentioning Module.\nOf these, 25322 match your pattern(s).\nOf these, only the first 200 are shown.\n",
+        "count": 25322,
+        "hits": [
+          {
+            "name": "Semiring.toModule",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u_1} [Semiring R] : Module R R"
+          },
+          {
+            "name": "Module.toDistribMulAction",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u} {M : Type v} {inst✝ : Semiring R} {inst✝¹ : AddCommMonoid M} [self : Module R M] : DistribMulAction R M"
+          },
+          {
+            "name": "Module.toMulActionWithZero",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u_5} {M : Type u_6} {x✝ : Semiring R} {x✝¹ : AddCommMonoid M} [Module R M] : MulActionWithZero R M"
+          },
+          {
+            "name": "Module.eq_zero_of_zero_eq_one",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u_1} {M : Type u_3} [Semiring R] [AddCommMonoid M] [Module R M] (x : M) (zero_eq_one : 0 = 1) : x = 0"
+          },
+          {
+            "name": "Module.zero_smul",
+            "module": "Mathlib.Algebra.Module.Defs",
+            "type": " {R : Type u} {M : Type v} {inst✝ : Semiring R} {inst✝¹ : AddCommMonoid M} [self : Module R M] (x : M) : 0 • x = 0"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "vector space",
+      "kind": "loogle_pattern",
+      "query": "\"Module\"",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 10311 declarations whose name contains \"Module\".\nOf these, only the first 200 are shown.\n",
+        "count": 10311,
+        "hits": [
+          {
+            "name": "Lean.MonadQuotation.getMainModule",
+            "module": "Init.Prelude",
+            "type": " {m : Type → Type} [self : Lean.MonadQuotation m] : m Lean.Name"
+          },
+          {
+            "name": "Lean.Module",
+            "module": "Init.MetaTypes",
+            "type": " : Type"
+          },
+          {
+            "name": "Lean.Module.header",
+            "module": "Init.MetaTypes",
+            "type": " (self : Lean.Module) : Lean.Syntax"
+          },
+          {
+            "name": "Lean.Module.commands",
+            "module": "Init.MetaTypes",
+            "type": " (self : Lean.Module) : Array Lean.Syntax"
+          },
+          {
+            "name": "Lean.Module.mk",
+            "module": "Init.MetaTypes",
+            "type": " (header : Lean.Syntax) (commands : Array Lean.Syntax) : Lean.Module"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "field",
+      "kind": "lean_name",
+      "query": "Field",
+      "claimed_certainty": "exact",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 9093 declarations mentioning Field.\nOf these, only the first 200 are shown.\n",
+        "count": 9093,
+        "hits": [
+          {
+            "name": "Field",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " (K : Type u) : Type u"
+          },
+          {
+            "name": "Field.toCommRing",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : CommRing K"
+          },
+          {
+            "name": "Field.toDiv",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : Div K"
+          },
+          {
+            "name": "Field.toDivisionRing",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : DivisionRing K"
+          },
+          {
+            "name": "Field.toInv",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : Inv K"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "field",
+      "kind": "lean_name",
+      "query": "DivisionRing",
+      "claimed_certainty": "exact",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 1348 declarations mentioning DivisionRing.\nOf these, only the first 200 are shown.\n",
+        "count": 1348,
+        "hits": [
+          {
+            "name": "DivisionRing",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " (K : Type u_2) : Type u_2"
+          },
+          {
+            "name": "DivisionRing.toDiv",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u_2} [self : DivisionRing K] : Div K"
+          },
+          {
+            "name": "DivisionRing.toDivInvMonoid",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u_2} [self : DivisionRing K] : DivInvMonoid K"
+          },
+          {
+            "name": "DivisionRing.toDivisionSemiring",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u_1} [DivisionRing K] : DivisionSemiring K"
+          },
+          {
+            "name": "DivisionRing.toInv",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u_2} [self : DivisionRing K] : Inv K"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "field",
+      "kind": "loogle_pattern",
+      "query": "Field",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 9093 declarations mentioning Field.\nOf these, only the first 200 are shown.\n",
+        "count": 9093,
+        "hits": [
+          {
+            "name": "Field",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " (K : Type u) : Type u"
+          },
+          {
+            "name": "Field.toCommRing",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : CommRing K"
+          },
+          {
+            "name": "Field.toDiv",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : Div K"
+          },
+          {
+            "name": "Field.toDivisionRing",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : DivisionRing K"
+          },
+          {
+            "name": "Field.toInv",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : Inv K"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "field",
+      "kind": "loogle_pattern",
+      "query": "Field _",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 9093 declarations mentioning Field.\nOf these, 9092 match your pattern(s).\nOf these, only the first 200 are shown.\n",
+        "count": 9092,
+        "hits": [
+          {
+            "name": "Field.toCommRing",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : CommRing K"
+          },
+          {
+            "name": "Field.toDiv",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : Div K"
+          },
+          {
+            "name": "Field.toDivisionRing",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : DivisionRing K"
+          },
+          {
+            "name": "Field.toInv",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : Inv K"
+          },
+          {
+            "name": "Field.toNNRatCast",
+            "module": "Mathlib.Algebra.Field.Defs",
+            "type": " {K : Type u} [self : Field K] : NNRatCast K"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "field",
+      "kind": "loogle_pattern",
+      "query": "\"Field\"",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 4325 declarations whose name contains \"Field\".\nOf these, only the first 200 are shown.\n",
+        "count": 4325,
+        "hits": [
+          {
+            "name": "Lean.fieldIdxKind",
+            "module": "Init.Prelude",
+            "type": " : Lean.SyntaxNodeKind"
+          },
+          {
+            "name": "Lean.Parser.Category.structInstFieldDecl",
+            "module": "Init.Notation",
+            "type": " : Lean.Parser.Category"
+          },
+          {
+            "name": "Lean.Syntax.isFieldIdx?",
+            "module": "Init.Meta.Defs",
+            "type": " (s : Lean.Syntax) : Option ℕ"
+          },
+          {
+            "name": "Lean.Grind.Field",
+            "module": "Init.Grind.Ring.Field",
+            "type": " (α : Type u) : Type u"
+          },
+          {
+            "name": "Lean.Grind.Field.toCommRing",
+            "module": "Init.Grind.Ring.Field",
+            "type": " {α : Type u} [self : Lean.Grind.Field α] : Lean.Grind.CommRing α"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "dimension",
+      "kind": "lean_name",
+      "query": "Module.rank",
+      "claimed_certainty": "exact",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 427 declarations mentioning Module.rank.\nOf these, only the first 200 are shown.\n",
+        "count": 427,
+        "hits": [
+          {
+            "name": "Module.rank",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u_1) (M : Type u_2) [Semiring R] [AddCommMonoid M] [Module R M] : Cardinal.{u_2}"
+          },
+          {
+            "name": "rank_le_card",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M] : Module.rank R M ≤ Cardinal.mk M"
+          },
+          {
+            "name": "rank_subsingleton",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M] [Subsingleton R] : Module.rank R M = 1"
+          },
+          {
+            "name": "CommSemiring.rank_self",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u_1) [CommSemiring R] : Module.rank R R = 1"
+          },
+          {
+            "name": "LinearIndependent.cardinal_le_rank",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] [Nontrivial R] {ι : Type v} {v : ι → M} (hv : LinearIndependent R v) : Cardinal.mk ι ≤ Module.rank R M"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "dimension",
+      "kind": "lean_name",
+      "query": "Module.finrank",
+      "claimed_certainty": "uncertain",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 1539 declarations mentioning Module.finrank.\nOf these, only the first 200 are shown.\n",
+        "count": 1539,
+        "hits": [
+          {
+            "name": "Module.finrank",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " (R : Type u_1) (M : Type u_2) [Semiring R] [AddCommMonoid M] [Module R M] : ℕ"
+          },
+          {
+            "name": "CommSemiring.finrank_self",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " (R : Type u_1) [CommSemiring R] : Module.finrank R R = 1"
+          },
+          {
+            "name": "Module.finrank_subsingleton",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] [Subsingleton R] : Module.finrank R M = 1"
+          },
+          {
+            "name": "Module.finrank_eq_of_rank_eq",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] {n : ℕ} (h : Module.rank R M = ↑n) : Module.finrank R M = n"
+          },
+          {
+            "name": "Module.finrank_le_of_rank_le",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] {n : ℕ} (h : Module.rank R M ≤ ↑n) : Module.finrank R M ≤ n"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "dimension",
+      "kind": "lean_name",
+      "query": "FiniteDimensional.finrank",
+      "claimed_certainty": "uncertain",
+      "resolved": false,
+      "result": {
+        "transport": "ok",
+        "error": "unknown identifier 'FiniteDimensional.finrank'",
+        "header": null,
+        "count": 0,
+        "hits": []
+      }
+    },
+    {
+      "concept": "dimension",
+      "kind": "lean_name",
+      "query": "FiniteDimensional",
+      "claimed_certainty": "exact",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 2027 declarations mentioning FiniteDimensional.\nOf these, only the first 200 are shown.\n",
+        "count": 2027,
+        "hits": [
+          {
+            "name": "FiniteDimensional",
+            "module": "Mathlib.LinearAlgebra.FiniteDimensional.Defs",
+            "type": " (K : Type u_1) (V : Type u_2) [DivisionRing K] [AddCommGroup V] [Module K V] : Prop"
+          },
+          {
+            "name": "FiniteDimensional.finiteDimensional_self",
+            "module": "Mathlib.LinearAlgebra.FiniteDimensional.Defs",
+            "type": " (K : Type u) [DivisionRing K] : FiniteDimensional K K"
+          },
+          {
+            "name": "FiniteDimensional.instFintypeElemOfVectorSpaceIndex",
+            "module": "Mathlib.LinearAlgebra.FiniteDimensional.Defs",
+            "type": " {K : Type u} {V : Type v} [DivisionRing K] [AddCommGroup V] [Module K V] [FiniteDimensional K V] : Fintype ↑(Module.Basis.ofVectorSpaceIndex K V)"
+          },
+          {
+            "name": "FiniteDimensional.fintypeBasisIndex",
+            "module": "Mathlib.LinearAlgebra.FiniteDimensional.Defs",
+            "type": " {K : Type u} {V : Type v} [DivisionRing K] [AddCommGroup V] [Module K V] {ι : Type u_1} [FiniteDimensional K V] (b : Module.Basis ι K V) : Fintype ι"
+          },
+          {
+            "name": "Module.Basis.finiteDimensional_of_finite",
+            "module": "Mathlib.LinearAlgebra.FiniteDimensional.Defs",
+            "type": " {K : Type u} {V : Type v} [DivisionRing K] [AddCommGroup V] [Module K V] {ι : Type w} [Finite ι] (h : Module.Basis ι K V) : FiniteDimensional K V"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "dimension",
+      "kind": "loogle_pattern",
+      "query": "Module.rank",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 427 declarations mentioning Module.rank.\nOf these, only the first 200 are shown.\n",
+        "count": 427,
+        "hits": [
+          {
+            "name": "Module.rank",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u_1) (M : Type u_2) [Semiring R] [AddCommMonoid M] [Module R M] : Cardinal.{u_2}"
+          },
+          {
+            "name": "rank_le_card",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M] : Module.rank R M ≤ Cardinal.mk M"
+          },
+          {
+            "name": "rank_subsingleton",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M] [Subsingleton R] : Module.rank R M = 1"
+          },
+          {
+            "name": "CommSemiring.rank_self",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u_1) [CommSemiring R] : Module.rank R R = 1"
+          },
+          {
+            "name": "LinearIndependent.cardinal_le_rank",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] [Nontrivial R] {ι : Type v} {v : ι → M} (hv : LinearIndependent R v) : Cardinal.mk ι ≤ Module.rank R M"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "dimension",
+      "kind": "loogle_pattern",
+      "query": "\"finrank\"",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 682 declarations whose name contains \"finrank\".\nOf these, only the first 200 are shown.\n",
+        "count": 682,
+        "hits": [
+          {
+            "name": "Module.finrank",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " (R : Type u_1) (M : Type u_2) [Semiring R] [AddCommMonoid M] [Module R M] : ℕ"
+          },
+          {
+            "name": "CommSemiring.finrank_self",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " (R : Type u_1) [CommSemiring R] : Module.finrank R R = 1"
+          },
+          {
+            "name": "Module.finrank_subsingleton",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] [Subsingleton R] : Module.finrank R M = 1"
+          },
+          {
+            "name": "Module.finrank_eq_of_rank_eq",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] {n : ℕ} (h : Module.rank R M = ↑n) : Module.finrank R M = n"
+          },
+          {
+            "name": "Module.finrank_le_of_rank_le",
+            "module": "Mathlib.LinearAlgebra.Dimension.Finrank",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] {n : ℕ} (h : Module.rank R M ≤ ↑n) : Module.finrank R M ≤ n"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "dimension",
+      "kind": "loogle_pattern",
+      "query": "Module.rank _ _",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 427 declarations mentioning Module.rank.\nOf these, 426 match your pattern(s).\nOf these, only the first 200 are shown.\n",
+        "count": 426,
+        "hits": [
+          {
+            "name": "rank_le_card",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M] : Module.rank R M ≤ Cardinal.mk M"
+          },
+          {
+            "name": "rank_subsingleton",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M] [Subsingleton R] : Module.rank R M = 1"
+          },
+          {
+            "name": "CommSemiring.rank_self",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " (R : Type u_1) [CommSemiring R] : Module.rank R R = 1"
+          },
+          {
+            "name": "LinearIndependent.cardinal_le_rank",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] [Nontrivial R] {ι : Type v} {v : ι → M} (hv : LinearIndependent R v) : Cardinal.mk ι ≤ Module.rank R M"
+          },
+          {
+            "name": "LinearIndependent.aleph0_le_rank",
+            "module": "Mathlib.LinearAlgebra.Dimension.Basic",
+            "type": " {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M] [Nontrivial R] {ι : Type w} [Infinite ι] {v : ι → M} (hv : LinearIndependent R v) : Cardinal.aleph0 ≤ Module.rank R M"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "linear map",
+      "kind": "lean_name",
+      "query": "LinearMap",
+      "claimed_certainty": "exact",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 11118 declarations mentioning LinearMap.\nOf these, only the first 200 are shown.\n",
+        "count": 11118,
+        "hits": [
+          {
+            "name": "LinearMap.id",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] : M →ₗ[R] M"
+          },
+          {
+            "name": "LinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_14} {S : Type u_15} [Semiring R] [Semiring S] (σ : R →+* S) (M : Type u_16) (M₂ : Type u_17) [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module S M₂] : Type (max u_16 u_17)"
+          },
+          {
+            "name": "RingHom.toSemilinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {S : Type u_5} [Semiring R] [Semiring S] (f : R →+* S) : R →ₛₗ[f] S"
+          },
+          {
+            "name": "LinearMap.id'",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] {σ : R →+* R} [RingHomId σ] : M →ₛₗ[σ] M"
+          },
+          {
+            "name": "AddMonoidHom.toNatLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {M : Type u_8} {M₂ : Type u_10} [AddCommMonoid M] [AddCommMonoid M₂] (f : M →+ M₂) : M →ₗ[ℕ] M₂"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "linear map",
+      "kind": "lean_name",
+      "query": "LinearMap.ker",
+      "claimed_certainty": "exact",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 663 declarations mentioning LinearMap.ker.\nOf these, only the first 200 are shown.\n",
+        "count": 663,
+        "hits": [
+          {
+            "name": "LinearMap.ker",
+            "module": "Mathlib.Algebra.Module.Submodule.Ker",
+            "type": " {R : Type u_1} {R₂ : Type u_2} {M : Type u_5} {M₂ : Type u_7} [Semiring R] [Semiring R₂] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R₂ M₂] {τ₁₂ : R →+* R₂} (f : M →ₛₗ[τ₁₂] M₂) : Submod"
+          },
+          {
+            "name": "LinearMap.ker_id",
+            "module": "Mathlib.Algebra.Module.Submodule.Ker",
+            "type": " {R : Type u_1} {M : Type u_5} [Semiring R] [AddCommMonoid M] [Module R M] : LinearMap.id.ker = ⊥"
+          },
+          {
+            "name": "Submodule.comap_bot",
+            "module": "Mathlib.Algebra.Module.Submodule.Ker",
+            "type": " {R : Type u_1} {R₂ : Type u_2} {M : Type u_5} {M₂ : Type u_7} [Semiring R] [Semiring R₂] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R₂ M₂] {τ₁₂ : R →+* R₂} (f : M →ₛₗ[τ₁₂] M₂) : Submod"
+          },
+          {
+            "name": "LinearMap.ker_zero",
+            "module": "Mathlib.Algebra.Module.Submodule.Ker",
+            "type": " {R : Type u_1} {R₂ : Type u_2} {M : Type u_5} {M₂ : Type u_7} [Semiring R] [Semiring R₂] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R₂ M₂] {τ₁₂ : R →+* R₂} : LinearMap.ker 0 = ⊤"
+          },
+          {
+            "name": "LinearMap.ker_le_comap",
+            "module": "Mathlib.Algebra.Module.Submodule.Ker",
+            "type": " {R : Type u_1} {R₂ : Type u_2} {M : Type u_5} {M₂ : Type u_7} [Semiring R] [Semiring R₂] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R₂ M₂] {τ₁₂ : R →+* R₂} {p : Submodule R₂ M₂} (f : M"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "linear map",
+      "kind": "lean_name",
+      "query": "LinearMap.range",
+      "claimed_certainty": "exact",
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 695 declarations mentioning LinearMap.range.\nOf these, only the first 200 are shown.\n",
+        "count": 695,
+        "hits": [
+          {
+            "name": "LinearMap.range",
+            "module": "Mathlib.Algebra.Module.Submodule.Range",
+            "type": " {R : Type u_1} {R₂ : Type u_2} {M : Type u_5} {M₂ : Type u_6} [Semiring R] [Semiring R₂] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R₂ M₂] {τ₁₂ : R →+* R₂} [RingHomSurjective τ₁₂] (f :"
+          },
+          {
+            "name": "LinearMap.range_id",
+            "module": "Mathlib.Algebra.Module.Submodule.Range",
+            "type": " {R : Type u_1} {M : Type u_5} [Semiring R] [AddCommMonoid M] [Module R M] : LinearMap.id.range = ⊤"
+          },
+          {
+            "name": "Submodule.range_subtype",
+            "module": "Mathlib.Algebra.Module.Submodule.Range",
+            "type": " {R : Type u_1} {M : Type u_5} [Semiring R] [AddCommMonoid M] [Module R M] (p : Submodule R M) : p.subtype.range = p"
+          },
+          {
+            "name": "LinearMap.fintypeRange",
+            "module": "Mathlib.Algebra.Module.Submodule.Range",
+            "type": " {R : Type u_1} {R₂ : Type u_2} {M : Type u_5} {M₂ : Type u_6} [Semiring R] [Semiring R₂] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R₂ M₂] {τ₁₂ : R →+* R₂} [Fintype M] [DecidableEq M₂]"
+          },
+          {
+            "name": "LinearMap.range_eq_map",
+            "module": "Mathlib.Algebra.Module.Submodule.Range",
+            "type": " {R : Type u_1} {R₂ : Type u_2} {M : Type u_5} {M₂ : Type u_6} [Semiring R] [Semiring R₂] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R₂ M₂] {τ₁₂ : R →+* R₂} [RingHomSurjective τ₁₂] (f :"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "linear map",
+      "kind": "loogle_pattern",
+      "query": "LinearMap",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 11118 declarations mentioning LinearMap.\nOf these, only the first 200 are shown.\n",
+        "count": 11118,
+        "hits": [
+          {
+            "name": "LinearMap.id",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] : M →ₗ[R] M"
+          },
+          {
+            "name": "LinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_14} {S : Type u_15} [Semiring R] [Semiring S] (σ : R →+* S) (M : Type u_16) (M₂ : Type u_17) [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module S M₂] : Type (max u_16 u_17)"
+          },
+          {
+            "name": "RingHom.toSemilinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {S : Type u_5} [Semiring R] [Semiring S] (f : R →+* S) : R →ₛₗ[f] S"
+          },
+          {
+            "name": "LinearMap.id'",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] {σ : R →+* R} [RingHomId σ] : M →ₛₗ[σ] M"
+          },
+          {
+            "name": "AddMonoidHom.toNatLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {M : Type u_8} {M₂ : Type u_10} [AddCommMonoid M] [AddCommMonoid M₂] (f : M →+ M₂) : M →ₗ[ℕ] M₂"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "linear map",
+      "kind": "loogle_pattern",
+      "query": "|- _ →ₗ[_] _",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 10362 declarations mentioning LinearMap, RingHom.id, and Semiring.toNonAssocSemiring.\nOf these, 753 match your pattern(s).\nOf these, only the first 200 are shown.\n",
+        "count": 753,
+        "hits": [
+          {
+            "name": "LinearMap.id",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] : M →ₗ[R] M"
+          },
+          {
+            "name": "IsLinearMap.mk'",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} {M₂ : Type u_10} [Semiring R] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R M₂] (f : M → M₂) (lin : IsLinearMap R f) : M →ₗ[R] M₂"
+          },
+          {
+            "name": "Module.compHom.toLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_14} {S : Type u_15} [Semiring R] [Semiring S] (g : R →+* S) : R →ₗ[R] S"
+          },
+          {
+            "name": "LinearMapClass.linearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M₁ : Type u_9} {M₂ : Type u_10} {F : Type u_14} [Semiring R] [AddCommMonoid M₁] [AddCommMonoid M₂] [Module R M₁] [Module R M₂] (f : F) [FunLike F M₁ M₂] [LinearMapClass F R M₁ M₂] : M"
+          },
+          {
+            "name": "AddMonoidHom.toIntLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {M : Type u_8} {M₂ : Type u_10} [AddCommGroup M] [AddCommGroup M₂] (f : M →+ M₂) : M →ₗ[ℤ] M₂"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "linear map",
+      "kind": "loogle_pattern",
+      "query": "LinearMap _ _ _",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 11118 declarations mentioning LinearMap.\nOf these, 11112 match your pattern(s).\nOf these, only the first 200 are shown.\n",
+        "count": 11112,
+        "hits": [
+          {
+            "name": "LinearMap.id",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] : M →ₗ[R] M"
+          },
+          {
+            "name": "RingHom.toSemilinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {S : Type u_5} [Semiring R] [Semiring S] (f : R →+* S) : R →ₛₗ[f] S"
+          },
+          {
+            "name": "LinearMap.id'",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] {σ : R →+* R} [RingHomId σ] : M →ₛₗ[σ] M"
+          },
+          {
+            "name": "AddMonoidHom.toNatLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {M : Type u_8} {M₂ : Type u_10} [AddCommMonoid M] [AddCommMonoid M₂] (f : M →+ M₂) : M →ₗ[ℕ] M₂"
+          },
+          {
+            "name": "LinearMap.addCommMonoid",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R₁ : Type u_2} {R₂ : Type u_3} {M : Type u_8} {M₂ : Type u_10} [Semiring R₁] [Semiring R₂] [AddCommMonoid M] [AddCommMonoid M₂] [Module R₁ M] [Module R₂ M₂] {σ₁₂ : R₁ →+* R₂} : AddCommMonoid (M →ₛₗ["
+          }
+        ]
+      }
+    },
+    {
+      "concept": "linear map",
+      "kind": "loogle_pattern",
+      "query": "LinearMap ?R ?M ?M₂",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 11118 declarations mentioning LinearMap.\nOf these, 11112 match your pattern(s).\nOf these, only the first 200 are shown.\n",
+        "count": 11112,
+        "hits": [
+          {
+            "name": "LinearMap.id",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] : M →ₗ[R] M"
+          },
+          {
+            "name": "RingHom.toSemilinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {S : Type u_5} [Semiring R] [Semiring S] (f : R →+* S) : R →ₛₗ[f] S"
+          },
+          {
+            "name": "LinearMap.id'",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] {σ : R →+* R} [RingHomId σ] : M →ₛₗ[σ] M"
+          },
+          {
+            "name": "AddMonoidHom.toNatLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {M : Type u_8} {M₂ : Type u_10} [AddCommMonoid M] [AddCommMonoid M₂] (f : M →+ M₂) : M →ₗ[ℕ] M₂"
+          },
+          {
+            "name": "LinearMap.addCommMonoid",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R₁ : Type u_2} {R₂ : Type u_3} {M : Type u_8} {M₂ : Type u_10} [Semiring R₁] [Semiring R₂] [AddCommMonoid M] [AddCommMonoid M₂] [Module R₁ M] [Module R₂ M₂] {σ₁₂ : R₁ →+* R₂} : AddCommMonoid (M →ₛₗ["
+          }
+        ]
+      }
+    },
+    {
+      "concept": "basis",
+      "kind": "lean_name",
+      "query": "Basis",
+      "claimed_certainty": "exact",
+      "resolved": false,
+      "result": {
+        "transport": "ok",
+        "error": "unknown identifier 'Basis'",
+        "header": null,
+        "count": 0,
+        "hits": []
+      }
+    },
+    {
+      "concept": "basis",
+      "kind": "lean_name",
+      "query": "Basis.mk",
+      "claimed_certainty": "uncertain",
+      "resolved": false,
+      "result": {
+        "transport": "ok",
+        "error": "unknown identifier 'Basis.mk'",
+        "header": null,
+        "count": 0,
+        "hits": []
+      }
+    },
+    {
+      "concept": "basis",
+      "kind": "loogle_pattern",
+      "query": "Basis",
+      "claimed_certainty": null,
+      "resolved": false,
+      "result": {
+        "transport": "ok",
+        "error": "unknown identifier 'Basis'",
+        "header": null,
+        "count": 0,
+        "hits": []
+      }
+    },
+    {
+      "concept": "basis",
+      "kind": "loogle_pattern",
+      "query": "Basis _ _ _",
+      "claimed_certainty": null,
+      "resolved": false,
+      "result": {
+        "transport": "ok",
+        "error": "Unknown identifier `Basis`",
+        "header": null,
+        "count": 0,
+        "hits": []
+      }
+    },
+    {
+      "concept": "basis",
+      "kind": "loogle_pattern",
+      "query": "\"Basis\"",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 3021 declarations whose name contains \"Basis\".\nOf these, only the first 200 are shown.\n",
+        "count": 3021,
+        "hits": [
+          {
+            "name": "Lean.Meta.Grind.Arith.CommRing.CommRing.basis",
+            "module": "Lean.Meta.Tactic.Grind.Arith.CommRing.Types",
+            "type": " (self : Lean.Meta.Grind.Arith.CommRing.CommRing) : List Lean.Meta.Grind.Arith.CommRing.EqCnstr"
+          },
+          {
+            "name": "Lean.Meta.Grind.AC.Struct.basis",
+            "module": "Lean.Meta.Tactic.Grind.AC.Types",
+            "type": " (self : Lean.Meta.Grind.AC.Struct) : List Lean.Meta.Grind.AC.EqCnstr"
+          },
+          {
+            "name": "Module.Basis",
+            "module": "Mathlib.LinearAlgebra.Basis.Defs",
+            "type": " (ι : Type u_1) (R : Type u_3) (M : Type u_6) [Semiring R] [AddCommMonoid M] [Module R M] : Type (max (max u_1 u_3) u_6)"
+          },
+          {
+            "name": "Module.Basis.instFunLike",
+            "module": "Mathlib.LinearAlgebra.Basis.Defs",
+            "type": " {ι : Type u_1} {R : Type u_3} {M : Type u_6} [Semiring R] [AddCommMonoid M] [Module R M] : FunLike (Module.Basis ι R M) ι M"
+          },
+          {
+            "name": "Module.Basis.reindex",
+            "module": "Mathlib.LinearAlgebra.Basis.Defs",
+            "type": " {ι : Type u_1} {ι' : Type u_2} {R : Type u_3} {M : Type u_6} [Semiring R] [AddCommMonoid M] [Module R M] (b : Module.Basis ι R M) (e : ι ≃ ι') : Module.Basis ι' R M"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "domain",
+      "kind": "loogle_pattern",
+      "query": "|- _ →ₗ[_] _",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 10362 declarations mentioning LinearMap, RingHom.id, and Semiring.toNonAssocSemiring.\nOf these, 753 match your pattern(s).\nOf these, only the first 200 are shown.\n",
+        "count": 753,
+        "hits": [
+          {
+            "name": "LinearMap.id",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] : M →ₗ[R] M"
+          },
+          {
+            "name": "IsLinearMap.mk'",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} {M₂ : Type u_10} [Semiring R] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R M₂] (f : M → M₂) (lin : IsLinearMap R f) : M →ₗ[R] M₂"
+          },
+          {
+            "name": "Module.compHom.toLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_14} {S : Type u_15} [Semiring R] [Semiring S] (g : R →+* S) : R →ₗ[R] S"
+          },
+          {
+            "name": "LinearMapClass.linearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M₁ : Type u_9} {M₂ : Type u_10} {F : Type u_14} [Semiring R] [AddCommMonoid M₁] [AddCommMonoid M₂] [Module R M₁] [Module R M₂] (f : F) [FunLike F M₁ M₂] [LinearMapClass F R M₁ M₂] : M"
+          },
+          {
+            "name": "AddMonoidHom.toIntLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {M : Type u_8} {M₂ : Type u_10} [AddCommGroup M] [AddCommGroup M₂] (f : M →+ M₂) : M →ₗ[ℤ] M₂"
+          }
+        ]
+      }
+    },
+    {
+      "concept": "codomain",
+      "kind": "loogle_pattern",
+      "query": "|- _ →ₗ[_] _",
+      "claimed_certainty": null,
+      "resolved": true,
+      "result": {
+        "transport": "ok",
+        "error": null,
+        "header": "Found 10362 declarations mentioning LinearMap, RingHom.id, and Semiring.toNonAssocSemiring.\nOf these, 753 match your pattern(s).\nOf these, only the first 200 are shown.\n",
+        "count": 753,
+        "hits": [
+          {
+            "name": "LinearMap.id",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} [Semiring R] [AddCommMonoid M] [Module R M] : M →ₗ[R] M"
+          },
+          {
+            "name": "IsLinearMap.mk'",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M : Type u_8} {M₂ : Type u_10} [Semiring R] [AddCommMonoid M] [AddCommMonoid M₂] [Module R M] [Module R M₂] (f : M → M₂) (lin : IsLinearMap R f) : M →ₗ[R] M₂"
+          },
+          {
+            "name": "Module.compHom.toLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_14} {S : Type u_15} [Semiring R] [Semiring S] (g : R →+* S) : R →ₗ[R] S"
+          },
+          {
+            "name": "LinearMapClass.linearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {R : Type u_1} {M₁ : Type u_9} {M₂ : Type u_10} {F : Type u_14} [Semiring R] [AddCommMonoid M₁] [AddCommMonoid M₂] [Module R M₁] [Module R M₂] (f : F) [FunLike F M₁ M₂] [LinearMapClass F R M₁ M₂] : M"
+          },
+          {
+            "name": "AddMonoidHom.toIntLinearMap",
+            "module": "Mathlib.Algebra.Module.LinearMap.Defs",
+            "type": " {M : Type u_8} {M₂ : Type u_10} [AddCommGroup M] [AddCommGroup M₂] (f : M →+ M₂) : M →ₗ[ℤ] M₂"
+          }
+        ]
+      }
+    }
+  ]
+}

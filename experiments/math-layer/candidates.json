@@ -1,0 +1,82 @@
+{
+  "step": "9-10",
+  "produced_by": "authored, not measured",
+  "fixture": "tests/fixtures/vector-space.md",
+  "note": "Lean names are PROPOSED. `certainty` is a claim about this author's confidence, NOT about Mathlib. Step 11 replaces it with evidence.",
+  "certainty_vocabulary": {
+    "exact": "believed to be a real Mathlib 4 declaration name, spelled correctly",
+    "uncertain": "plausible but the spelling or namespace is in doubt",
+    "none": "no Mathlib constant is expected to exist for this concept"
+  },
+  "loogle_syntax_note": "Loogle accepts a bare name, a comma-separated list of constants that must all occur, a double-quoted name substring, and a type pattern with `_` holes, optionally anchored to the conclusion with `|-`. Which of these forms actually parse is measured in step 11, not assumed.",
+  "concepts": [
+    {
+      "concept": "vector space",
+      "lean": [
+        {"name": "Module", "certainty": "exact",
+         "why": "Mathlib 4 has no `VectorSpace`; a vector space is `Module K V` with `[Field K]`"},
+        {"name": "Module.Free", "certainty": "uncertain",
+         "why": "free module; every vector space is one, but it is a different statement"}
+      ],
+      "loogle": ["Module", "Module _ _", "\"Module\""]
+    },
+    {
+      "concept": "field",
+      "lean": [
+        {"name": "Field", "certainty": "exact", "why": "the algebraic structure class"},
+        {"name": "DivisionRing", "certainty": "exact",
+         "why": "the non-commutative weakening; relevant because the fixture never says K is commutative"}
+      ],
+      "loogle": ["Field", "Field _", "\"Field\""]
+    },
+    {
+      "concept": "dimension",
+      "lean": [
+        {"name": "Module.rank", "certainty": "exact",
+         "why": "the Cardinal-valued dimension, defined for any module"},
+        {"name": "Module.finrank", "certainty": "uncertain",
+         "why": "the Nat-valued dimension; namespace is the open question -- see below"},
+        {"name": "FiniteDimensional.finrank", "certainty": "uncertain",
+         "why": "the older spelling of the same declaration; one of these two is stale and I do not know which"},
+        {"name": "FiniteDimensional", "certainty": "exact",
+         "why": "the finiteness hypothesis, not the dimension itself"}
+      ],
+      "loogle": ["Module.rank", "\"finrank\"", "Module.rank _ _"],
+      "open_question": "finrank was moved between namespaces at some point. Both spellings are recorded so step 11 can decide by evidence instead of memory."
+    },
+    {
+      "concept": "linear map",
+      "lean": [
+        {"name": "LinearMap", "certainty": "exact",
+         "why": "notation `M →ₗ[R] M₂`"},
+        {"name": "LinearMap.ker", "certainty": "exact", "why": "derived, not the concept"},
+        {"name": "LinearMap.range", "certainty": "exact", "why": "derived, not the concept"}
+      ],
+      "loogle": ["LinearMap", "|- _ →ₗ[_] _", "LinearMap _ _ _", "LinearMap ?R ?M ?M₂"]
+    },
+    {
+      "concept": "basis",
+      "lean": [
+        {"name": "Basis", "certainty": "exact", "why": "`Basis ι R M`"},
+        {"name": "Basis.mk", "certainty": "uncertain", "why": "constructor; spelling unverified"}
+      ],
+      "loogle": ["Basis", "Basis _ _ _", "\"Basis\""]
+    },
+    {
+      "concept": "domain",
+      "lean": [],
+      "certainty": "none",
+      "why": "In Mathlib the domain of a linear map is a type index, not a declaration. There is nothing to anchor to.",
+      "loogle": ["|- _ →ₗ[_] _"],
+      "loogle_kept_because": "a query with no matching constant is still a finding: it shows the concept lives in the type, not in a name"
+    },
+    {
+      "concept": "codomain",
+      "lean": [],
+      "certainty": "none",
+      "why": "same as domain",
+      "loogle": ["|- _ →ₗ[_] _"],
+      "loogle_kept_because": "same as domain"
+    }
+  ]
+}
