@@ -232,16 +232,24 @@ reference paper's 74 — so their owning section is inferred from `flow_index`.
 
 ### Summaries
 
-Each section yields three tiers (`prompts/section-concept.md`). Measured at
-1.604 BERT tokens/word on real prose:
+Each section yields three tiers (`prompts/section-concept.md`). Their word
+bands are **derived, not written down**: `summarize.bands_for(ceiling)` turns
+a token ceiling into bands at the measured **1.441** tokens/word (median,
+n=786; an earlier 1.604 was an estimate and 11% high). At the default
+ceiling of 50 tokens:
 
-| tier | words | tokens | role |
-|---|---|---|---|
-| `summary` | 80-150 | 128-241 | document-faithful |
-| `abstraction` | ~70 | 96-128 | document-independent |
-| **`label`** | **30-42** | **48-67** | **the basis tier** |
+| tier | words | role |
+|---|---|---|
+| `summary` | 28-34 | document-faithful |
+| `abstraction` | 24-30 | document-independent |
+| **`label`** | **22-28** | **the basis tier** |
 
-Only `label` fits a 50-70 token window. Two summarisers: `ExtractiveSummarizer`
+`--token-ceiling` on `tools/hierarchy_run.py` moves all three (35 gives a
+15-19 word label, 70 gives 31-39). The prompt is rendered from the band, and
+every check reads the same band through `labelcheck.effective_label_band`, so
+what is asked for and what is measured cannot drift apart. The tiers now
+differ in role and form rather than length; only `label` becomes a basis
+vector. Two summarisers: `ExtractiveSummarizer`
 (deterministic, offline, a genuine floor — it cannot abstract) and
 `NovitaSummarizer` (`hierarchy/novita.py`, an OpenAI-compatible chat model;
 the network call is injected, so it tests offline). All LLM output is passed
@@ -268,7 +276,15 @@ becomes a new row. Row order is `(level, -support, label)`; `row_id` is
 content-addressed so identity survives reordering, and `basis_version` hashes
 the ordered ids so a stored CES vector detects that positions moved.
 
-**`TAU` defaults to 0.65, measured rather than guessed.** The design spec
+**`TAU` defaults to 0.75, calibrated for the default `modernbert` encoder.**
+Re-integrating 474 real concepts across thresholds (`tools/rebuild_basis.py`),
+cross-document sharing peaks at 0.75 (137 rows, 29 shared), and
+`basis.calibrate()` independently suggests 0.746. Sharing is not monotone in
+TAU: at 0.65 ModernBERT collapsed 482 concepts into 16-25 rows. **TAU does not
+travel between encoders.**
+
+The history is worth keeping. Under all-MiniLM-L6-v2 the default was 0.65,
+also measured rather than guessed. The design spec
 proposed 0.85; across three topically related papers that produced *zero*
 merges, because the highest cross-document similarity observed was **0.647** —
 and that pair was genuinely related. 0.85 is a near-paraphrase threshold and
@@ -631,7 +647,7 @@ request_verification(sidecar)
 python -m pytest
 ```
 
-634 tests, offline, ~9s. The suite pins the `hash` embedder and the `regex` NLP
+About 1300 tests, offline, ~25s. The suite pins the `hash` embedder and the `regex` NLP
 tier so results do not depend on which optional models happen to be installed.
 Tests touching `~/pdfdrill-library` skip when it is absent.
 

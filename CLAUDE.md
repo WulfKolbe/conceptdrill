@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-python -m pytest                          # full suite, offline, ~10s
+python -m pytest                          # full suite, offline, ~25s
 python -m pytest tests/test_scoring.py     # one file
 python -m pytest -k coverage_curve         # one test
 pip install -e '.[models,nlp,dev]'         # everything
@@ -82,8 +82,14 @@ into the drill folder. Things not obvious from any single file:
   level-2 section from its own paragraphs while ignoring its subsections
   describes almost nothing (1350 vs 11141 characters for one real section).
 
-- **Only the `label` tier fits the BERT window.** Measured 1.604 tokens/word:
-  `label` 30-42 words lands at 48-67 tokens; the other two overshoot.
+- **Word bands are derived, never written down.** `summarize.bands_for(ceiling)`
+  turns a token ceiling into per-tier word bands at the measured 1.441
+  tokens/word (`TOKENS_PER_WORD`; the older 1.604 was an estimate, 11% high).
+  The default ceiling is `EMBEDDING_TOKEN_WINDOW[1]` = 50, giving `label`
+  22-28 words. The prompt is rendered from the band and every check reads the
+  same band via `labelcheck.effective_label_band(ceiling)` — a hard-coded
+  30-42 once made Gate 5 measure the gap between two constants.
+  `test_hierarchy_label_band.py` enforces this.
 
 - **All LLM output goes through `sanitize.py`.** Models emit invisible and
   lookalike characters that change tokenisation. It preserves Greek, accents
@@ -111,10 +117,14 @@ into the drill folder. Things not obvious from any single file:
 
 - **`basis.py` is float64 throughout.** A merge decision is one comparison
   against TAU; a wrong cosine adds a row that should have merged. `DEFAULT_TAU`
-  is 0.65, measured — 0.85 produced zero merges across three related papers.
+  is 0.75, calibrated for the default `modernbert` encoder: cross-document
+  sharing peaks there, and `calibrate()` independently suggests 0.746. TAU
+  does not travel between encoders — the earlier 0.65 was measured on
+  all-MiniLM-L6-v2 and under ModernBERT merged 482 concepts into 25 rows.
 
 - **The basis grows linearly with the corpus — measured, not assumed.**
-  `tools/basis_scaling.py` over all 416 library docmodels (278 usable): 8694
+  `tools/basis_scaling.py` over all 416 library docmodels (278 usable,
+  all-MiniLM-L6-v2 at the then-default TAU 0.65): 8694
   candidates to 5923 rows, `rows/doc` rising not falling, 4861 singletons, and
   only 275 rows spanning more than one document. Most merging is within one
   document. CES therefore *expands* 384 dims to 5923 — it buys interpretable
