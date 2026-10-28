@@ -24,6 +24,8 @@ from __future__ import annotations
 import re
 from typing import Optional
 
+from .summarize import EMBEDDING_TOKEN_WINDOW, bands_for
+
 #: Constructions that describe the document rather than its content. Enumerated
 #: rather than described, because a rule the checker cannot apply is a rule the
 #: model can be judged against only by opinion.
@@ -80,8 +82,37 @@ FLOAT_REFERENCE = re.compile(
 #: caught by the same list because a noun phrase should not contain one either.
 COPULA = re.compile(r"\b(?:is|are|was|were|be|been|being)\b", re.IGNORECASE)
 
-#: Label word budget, from the prompt.
-LABEL_WORDS = (30, 42)
+#: The label word band at the DEFAULT ceiling, derived from the prompt's own
+#: budget rather than copied from it. A convenience alias, not a second source.
+#:
+#: It read (30, 42) while bands_for(50)["label"] was (22, 28): the prompt asked
+#: for one band and every check measured another, so a 26-word label satisfied
+#: the instruction that produced it and failed the gate measuring it. Gate 5's
+#: pass rate was reporting the gap between two constants. A copy cannot drift
+#: if there is no copy.
+LABEL_WORDS = bands_for(EMBEDDING_TOKEN_WINDOW[1])["label"]
+
+
+def effective_label_band(ceiling: Optional[int] = None) -> tuple[int, int]:
+    """The band a label generated at `ceiling` tokens must be checked against.
+
+    THE CONTRACT, and the whole reason this function exists rather than a
+    constant: the band a label is CHECKED against equals the band the prompt
+    ASKED for, at every ceiling.
+
+        effective_label_band(c) == bands_for(c)["label"]
+
+    `bands_for` is the single source; this is the accessor call sites use so
+    that none of them needs a literal. `None` means the package default,
+    `EMBEDDING_TOKEN_WINDOW[1]`.
+
+    A constant cannot be correct here: `--token-ceiling` is a real flag on
+    `tools/hierarchy_run.py` and `tools/bullshit_basis.py`, and the band moves
+    with it -- 50 tokens asks for 22-28 words, 70 asks for 31-39.
+    """
+    if ceiling is None:
+        ceiling = EMBEDDING_TOKEN_WINDOW[1]
+    return bands_for(ceiling)["label"]
 
 
 def banned_constructions(text: str) -> list[str]:
@@ -173,10 +204,18 @@ def bare_acronyms(text: str) -> list[str]:
 
 
 def check_tiers(label: Optional[str], abstraction: Optional[str],
-                summary: Optional[str]) -> dict[str, list[str]]:
-    """All three tiers at once. Absent tiers are not checked, only reported."""
+                summary: Optional[str], *,
+                ceiling: Optional[int] = None) -> dict[str, list[str]]:
+    """All three tiers at once. Absent tiers are not checked, only reported.
+
+    `ceiling` is the token ceiling the tiers were generated at, and the label
+    is checked against `effective_label_band(ceiling)`. Calling `check_label`
+    with its default here would make this correct only at the default ceiling
+    -- the drift `effective_label_band` exists to prevent.
+    """
     out: dict[str, list[str]] = {}
-    out["label"] = check_label(label) if label else ["label is absent"]
+    out["label"] = (check_label(label, words=effective_label_band(ceiling))
+                    if label else ["label is absent"])
     out["abstraction"] = (check_abstraction(abstraction) if abstraction
                           else ["abstraction is absent"])
     out["summary"] = check_summary(summary) if summary else ["summary is absent"]

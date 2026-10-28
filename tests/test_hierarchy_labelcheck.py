@@ -11,17 +11,19 @@ from conceptdrill.hierarchy.labelcheck import (BANNED_CONSTRUCTIONS,
                                                bare_acronyms,
                                                banned_constructions,
                                                check_abstraction, check_label,
-                                               check_summary, check_tiers,
-                                               word_count)
+                                               LABEL_WORDS, check_summary,
+                                               check_tiers, word_count)
 
+#: A label that satisfies every clause. 25 words, inside the band the prompt
+#: asks for at the default ceiling, and short enough that the two words
+#: appended in `test_bare_acronyms_are_reported_not_gated` still fit.
 GOOD = ("supervised classification of short keyword search requests by their "
         "orientation in time, distinguishing past, recency, future and "
-        "atemporal intent using surface wording, lexical cues, corpus "
-        "timestamps and temporal expression resolution over document text")
+        "atemporal intent from surface wording and document text")
 
 
 def test_the_reference_good_label_passes_every_clause():
-    assert 30 <= word_count(GOOD) <= 42
+    assert LABEL_WORDS[0] <= word_count(GOOD) <= LABEL_WORDS[1]
     assert check_label(GOOD) == []
 
 
@@ -56,7 +58,7 @@ def test_ordinary_prose_trips_nothing():
 
 
 def test_a_banned_word_inside_a_longer_word_is_not_a_match():
-    """`presents` is banned; `representsational` must not trip it."""
+    """`presents` is banned; `represents` must not trip it."""
     assert "presents" not in banned_constructions("the model represents intent")
 
 
@@ -66,12 +68,12 @@ def test_a_banned_word_inside_a_longer_word_is_not_a_match():
 
 def test_a_short_label_fails_with_its_count():
     problems = check_label("far too short a label")
-    assert any("below 30" in p for p in problems)
+    assert any(f"below {LABEL_WORDS[0]}" in p for p in problems)
 
 
 def test_a_long_label_fails_with_its_count():
-    problems = check_label(" ".join(["word"] * 50))
-    assert any("above 42" in p for p in problems)
+    problems = check_label(" ".join(["word"] * (LABEL_WORDS[1] + 20)))
+    assert any(f"above {LABEL_WORDS[1]}" in p for p in problems)
 
 
 def test_an_empty_label_fails():

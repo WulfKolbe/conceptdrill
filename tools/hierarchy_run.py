@@ -154,7 +154,8 @@ def main() -> int:
     is_ablation = bool(getattr(summarizer, "is_ablation", False))
     cache = SummaryCache(args.summary_cache) if args.summary_cache else None
     basis = ConceptBasis() if args.tau is None else ConceptBasis(tau=args.tau)
-    from conceptdrill.hierarchy.summarize import bands_for, render_prompt
+    from conceptdrill.hierarchy.summarize import (EMBEDDING_TOKEN_WINDOW,
+                                                  bands_for, render_prompt)
     prompt_text = render_prompt(args.token_ceiling)
     if args.token_ceiling and summarizer is not None:
         # The summariser carries its own prompt for the cache signature and
@@ -391,7 +392,8 @@ def main() -> int:
                "temperature": args.temperature,
                "token_ceiling": args.token_ceiling,
                "tier_bands": {k: list(v) for k, v in
-                              bands_for(args.token_ceiling or 50).items()},
+                              bands_for(args.token_ceiling
+                                        or EMBEDDING_TOKEN_WINDOW[1]).items()},
                "summary_cache": args.summary_cache or None,
                "basis_version": basis.basis_version(),
                "basis_stats": basis.stats()})

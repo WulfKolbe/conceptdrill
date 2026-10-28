@@ -7,7 +7,8 @@ Summarises the frozen 20-span fixture and checks the result mechanically.
 Four clauses, all hard:
 
     parse failures                     0
-    labels inside 30-42 words          100%
+    labels inside the band the         100%
+      prompt asked for
     labels/abstractions free of the    100%
       banned constructions
     labels with a parenthesised        0
@@ -39,9 +40,11 @@ blasfix.apply_env_mitigations()
 from conceptdrill.hierarchy.docmodel_tree import load_tree        # noqa: E402
 from conceptdrill.hierarchy.labelcheck import (bare_acronyms,     # noqa: E402
                                                check_abstraction, check_label,
-                                               check_summary, word_count)
-from conceptdrill.hierarchy.summarize import (SummaryCache,       # noqa: E402
-                                              load_prompt, summary_key)
+                                               check_summary,
+                                               effective_label_band, word_count)
+from conceptdrill.hierarchy.summarize import (EMBEDDING_TOKEN_WINDOW,  # noqa: E402
+                                              SummaryCache, render_prompt,
+                                              summary_key)
 
 FIXTURE = (Path(__file__).resolve().parents[1] / "docs" / "measurements"
            / "gate5-fixture-20.json")
@@ -63,7 +66,11 @@ def main() -> int:
     load_dotenv()
     model = args.llm_model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
     summarizer = NovitaSummarizer(make_openai_chat(model=model), model=model)
-    prompt = load_prompt()
+    # ONE ceiling: the prompt is rendered from it and the band is derived from
+    # it, so the gate cannot measure a band the prompt never asked for.
+    ceiling = EMBEDDING_TOKEN_WINDOW[1]
+    prompt = render_prompt(ceiling)
+    label_band = effective_label_band(ceiling)
     cache = SummaryCache(args.summary_cache) if args.summary_cache else None
 
     fixture = json.loads(Path(args.fixture).read_text(encoding="utf-8"))
@@ -93,7 +100,9 @@ def main() -> int:
             if cache is not None and summary.is_usable:
                 cache.put(key, summary)
 
-        label_problems = check_label(summary.label)
+        # The band is passed, not defaulted: this gate knows its
+        # ceiling, and a default is only right at the default one.
+        label_problems = check_label(summary.label, words=label_band)
         abstraction_problems = check_abstraction(summary.abstraction)
         summary_problems = check_summary(summary.summary)
 
@@ -125,7 +134,9 @@ def main() -> int:
 
     n = len(results)
     parse_failures = [r for r in results if r["parse_failed"]]
-    out_of_band = [r for r in results if not 30 <= r["label_words"] <= 42]
+    band_lo, band_hi = label_band
+    out_of_band = [r for r in results
+                   if not band_lo <= r["label_words"] <= band_hi]
     banned = [r for r in results
               if any("banned construction" in p
                      for p in r["label_problems"] + r["abstraction_problems"])]
@@ -134,7 +145,7 @@ def main() -> int:
 
     clauses = {
         "parse_failures": (len(parse_failures), 0),
-        "labels_outside_30_42_words": (len(out_of_band), 0),
+        "labels_outside_the_label_band": (len(out_of_band), 0),
         "banned_constructions_in_label_or_abstraction": (len(banned), 0),
         "labels_with_a_parenthesised_acronym": (len(acronyms), 0),
     }
@@ -147,6 +158,11 @@ def main() -> int:
             prompt.encode()).hexdigest()[:16],
         "clauses": {k: {"observed": got, "threshold": want}
                     for k, (got, want) in clauses.items()},
+        # The band the clause was measured against, recorded because the
+        # clause name no longer carries it: a report read at another ceiling
+        # would otherwise claim a threshold it never used.
+        "token_ceiling": ceiling,
+        "label_band": list(label_band),
         "label_words": {
             "min": min((r["label_words"] for r in results), default=0),
             "max": max((r["label_words"] for r in results), default=0),
