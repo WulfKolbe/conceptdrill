@@ -14,15 +14,27 @@ The machine-readable parts are JSON Schemas shipped with the package:
 
 ## 1. Words used here
 
-- **document** — one input from the library, named by its folder name (`doc`).
+- **document** — one input from the library. Its `folder` is the library
+  folder name as it is (any characters); its `doc` is a slug derived from it
+  (section 1a) and is what every path and id in the knowledge base uses.
 - **section** — one section of a document's `glyphs.md` split, id
-  `<doc>#<order>`, `order` counting from 0.
+  `<doc>#<order>`, `order` counting from 0. Its **text** is its glyphs.md lines
+  `line_start`..`line_end`, verbatim.
 - **payload item** — a verbatim piece of a document: a display equation, a code
   listing, or a detected pseudocode block. Id `<doc>#<first object id>`.
 - **leaf** — one skill card: how to apply one concept or a small group of
   concepts, with its sources and payload.
 - **topic** — a group of leaves.
 - **slug** — `[a-z0-9]+(-[a-z0-9]+)*`, at most 60 characters.
+
+## 1a. Document slugs
+
+`doc` = the folder name, NFKD-normalised, accents dropped, lower-cased, every
+run of characters outside `[a-z0-9]` replaced by one `-`, leading and trailing
+`-` removed, cut to 56 characters at a `-` boundary where possible (else hard).
+An empty result becomes `doc`. Documents are slugged in order of their folder
+names (code-point order); a slug already taken gets `-2`, `-3`, … appended.
+`kb.json` keeps both, so the folder can always be found again.
 
 ## 2. The tree
 
@@ -46,15 +58,22 @@ Exactly these entries, nothing else:
 ├── payload/
 │   └── <doc>/                        one folder per document that has payload
 │       └── <file>                    <slug-of-id>.tex | <slug-of-id>.txt
+├── text/
+│   └── <doc>/                        one folder per input document
+│       └── <order>.txt               one per section: its text, verbatim
 └── sources/
     └── <doc>.md                      one per input document
 ```
 
 - No hidden entry (a name starting with `.`) anywhere.
 - No empty folder. A `payload/<doc>/` exists only if it holds a file.
+- `text/<doc>/<order>.txt` holds no frontmatter and no added line: its bytes
+  are the section's glyphs.md lines joined by `\n`, with a final `\n`. It is
+  the full-text level, opened only when a summary is not enough; it has no
+  size budget, and its word count is stated wherever it is linked.
 - A letter file holds the entries whose first letter (case-folded, after
   stripping non-letters) is its letter; everything else goes to `other.md`.
-- Every name is lower case.
+- Every name is lower case, except `README.md`, `INDEX.md` and `GLOSSARY.md`.
 
 ## 3. Frontmatter
 
@@ -115,10 +134,10 @@ These sections hold only lines of the given form (plus blank lines), or `None.`:
 | topic README · Related topics | `- [<topic title>](../NN-<s>/README.md)` |
 | leaf · Key concepts | `- <concept>` (each also in the index, pointing at this leaf) |
 | leaf · Payload | `- \`<payload id>\` <kind> · <label>[, <label>] · from \`<section id>\` → [file](../../payload/<doc>/<file>)` |
-| leaf · Sources | `- \`<section id>\` <section title> → [<doc>](../../sources/<doc>.md)` |
+| leaf · Sources | `- \`<section id>\` <section title> → [text, <n> words](../../text/<doc>/<order>.txt) · [<doc>](../../sources/<doc>.md)` |
 | leaf · See also | `- [<leaf title>](<relative path to the leaf>)` |
-| sources · Sections | `- \`<section id>\` p.<page> l.<start>–<end> <title> → <leaf links, comma separated>` |
-| sources · Unused sections | `- \`<section id>\` p.<page> l.<start>–<end> <title> — <reason>` |
+| sources · Sections | `- \`<section id>\` p.<page> l.<start>–<end> <title> → [text, <n> words](../text/<doc>/<order>.txt) · <leaf links, comma separated>` |
+| sources · Unused sections | `- \`<section id>\` p.<page> l.<start>–<end> <title> → [text, <n> words](../text/<doc>/<order>.txt) — <reason>` |
 
 `<kind>` is `equation`, `code` or `pseudocode`. `<label>` is one of
 `verified`, `unverified`, `line numbers not separated`, `detected pseudocode`.
@@ -132,6 +151,8 @@ exact content, when the file is at most 40 lines.
 - Every leaf is linked from its topic README and from at least one index entry.
 - Every payload file is linked from at least one leaf.
 - Every topic README is linked from the root README.
+- Every `text/` file is linked from its `sources/<doc>.md`; a cited section's
+  text is also linked from every leaf citing it.
 
 ## 7. Accounting, budgets, provenance
 
@@ -151,6 +172,35 @@ exact content, when the file is at most 40 lines.
   every input path with its sha256, the LLM model and token usage (or that a
   stub stood in for it), and `written_at`.
 
+## 7a. Rules beyond the schemas
+
+The schemas fix shapes; `kb check` also enforces, each a violation when broken:
+
+1. `status: cited` ⇒ `cited_by` non-empty and `reason` null; `status: unused`
+   ⇒ `cited_by` empty and `reason` a non-empty string.
+2. Each leaf in `cited_by` lists that section in its `sources`, and each
+   section a leaf lists in `sources` names that leaf in `cited_by`.
+3. `status: placed` ⇒ `file`, `sha256`, `section` and `placed_by` set;
+   `status: unplaced` ⇒ all four null and `reason` a non-empty string.
+4. Payload files, text files and leaf slugs are collision-free: no two items
+   share a path.
+5. Every id referenced anywhere (frontmatter, `kb.json` cross-references, line
+   forms) exists in `kb.json`.
+6. Every frontmatter equals `kb.json`: a leaf's `title`, `topic`, `concepts`,
+   `sources`, `payload`, `related`; a topic's `title`, `leaves`, `concepts`
+   (the union of its leaves'), `related`; the README's `documents` and
+   `topics`; a source file's `title` and `sections` (its section count).
+7. Each document's sections have orders 0..n-1 without a gap, and every
+   section has its text file, whose sha256 and word count `kb.json` records.
+8. Document slugs follow section 1a and are unique; `folder` is non-empty.
+9. Letter-file entry counts equal their `INDEX.md`/`GLOSSARY.md` lines and
+   frontmatter.
+
+When an input (`glyphs`, `docmodel`) still exists with its recorded sha256,
+`kb check` also re-derives from it: the section split (ids and text bytes) and
+every payload file's bytes. When it is gone or changed, that is reported as a
+note, not a violation: the knowledge base stays valid as built.
+
 ## 8. The reading protocol (fixed text)
 
 The root README's `## How to read this knowledge base` is exactly:
@@ -161,5 +211,6 @@ The root README's `## How to read this knowledge base` is exactly:
 3. Open that topic's README.md, then at most two of its leaves.
 4. Open a payload file only when the exact equation, code or pseudocode is needed.
 5. Follow See also or Related topics only if the answer is still missing.
-6. Open sources/<doc>.md only to cite or check where a statement comes from.
+6. Open a section's text (text/<doc>/<order>.txt) only when the summary is not enough.
+7. Open sources/<doc>.md only to cite or check where a statement comes from.
 ```
