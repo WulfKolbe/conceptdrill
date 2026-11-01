@@ -702,11 +702,13 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
 
 def build_kb(folders: Sequence[str], *, name: str, library: Path, out_root: Path,
              writer, embedder: str, command: str, commit: Optional[str],
-             replace: bool = False, verified: Optional[set[str]] = None) -> dict:
+             replace: bool = False, verified: Optional[set[str]] = None,
+             dry: bool = False) -> dict:
+    """Build the knowledge base. `dry` runs every stage and writes nothing."""
     if not C.SLUG_RE.match(name):
         raise BuildError(f"--name {name!r} is not a slug")
     target = out_root / "kb" / name
-    if target.exists():
+    if target.exists() and not dry:
         if not replace:
             raise BuildError(f"{target} exists; pass --replace to rebuild it")
         if not (target / "kb.json").is_file():
@@ -727,6 +729,12 @@ def build_kb(folders: Sequence[str], *, name: str, library: Path, out_root: Path
     topics = structure([s for d in docs for s in d.sections], payload, embedder, embedding)
     kb_prose = write_prose(topics, writer)
     files = render(docs, topics, payload, kb_prose, name)
+    counts = {"path": target, "documents": len(docs), "skipped": skipped,
+              "sections": sum(len(d.sections) for d in docs),
+              "leaves": sum(len(t.leaves) for t in topics), "topics": len(topics),
+              "payload": len(payload), "files": len(files) + 1}
+    if dry:
+        return counts
     inputs = []
     for d in docs:
         inputs.append({"path": str(d.glyphs), "sha256": d.glyphs_sha})
@@ -745,7 +753,4 @@ def build_kb(folders: Sequence[str], *, name: str, library: Path, out_root: Path
         path = target / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
-    return {"path": target, "documents": len(docs), "skipped": skipped,
-            "sections": sum(len(d.sections) for d in docs),
-            "leaves": sum(len(t.leaves) for t in topics), "topics": len(topics),
-            "payload": len(payload), "files": len(files)}
+    return counts

@@ -185,6 +185,11 @@ def build_parser() -> argparse.ArgumentParser:
                             help="embedding model for the clustering (default: modernbert)")
     p_kb_build.add_argument("--replace", action="store_true",
                             help="rebuild an existing knowledge base of that name")
+    p_kb_build.add_argument("--model", help="the writer's model (default: "
+                            "$NOVITA_MODEL or the package default)")
+    p_kb_build.add_argument("--estimate", action="store_true",
+                            help="run every stage, call no model, write nothing; "
+                                 "print the writer's calls, tokens and cost")
     p_kb_check = kb_sub.add_parser(
         "check", help="does a folder conform to kb/1? exit 0 yes, 1 no")
     p_kb_check.add_argument("kb_dir")
@@ -502,6 +507,23 @@ def cmd_kb(args: argparse.Namespace) -> int:
     return 1
 
 
+def make_kb_writer(args: argparse.Namespace):
+    """The real writer for `kb build --llm novita`. A seam the tests replace."""
+    from .hierarchy.novita import DEFAULT_MODEL, load_dotenv, make_openai_chat
+    from .kb.writer import LLMWriter
+    from .output import cache_dir
+    load_dotenv(str(REPO_ROOT / ".env"))
+    model = args.model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
+    return LLMWriter(make_openai_chat(model=model), model=model,
+                     cache_path=cache_dir() / "kb-writer.json")
+
+
+def _writer_model(args: argparse.Namespace) -> str:
+    from .hierarchy.novita import DEFAULT_MODEL, load_dotenv
+    load_dotenv(str(REPO_ROOT / ".env"))
+    return args.model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
+
+
 def _kb_build(args: argparse.Namespace) -> int:
     from .kb.build import BuildError, StubWriter, build_kb
     from .kb.check import check
@@ -513,12 +535,30 @@ def _kb_build(args: argparse.Namespace) -> int:
         print("conceptdrill: kb build needs at least one DOC or --docs-file",
               file=sys.stderr)
         return 1
-    if args.llm == "stub":
-        writer = StubWriter()
-    else:
-        print("conceptdrill: --llm novita is not built yet (T-0119 step C); "
-              "use --llm stub", file=sys.stderr)
-        return 1
+    if args.estimate:
+        from .kb.writer import CountingWriter, PRICES, estimate_cost
+        counter = CountingWriter()
+        try:
+            result = build_kb(docs, name=args.name, library=Path(args.library).expanduser(),
+                              out_root=output_root(args.output_root), writer=counter,
+                              embedder=args.embedder, command="", commit=None, dry=True)
+        except BuildError as exc:
+            print(f"conceptdrill: {exc}", file=sys.stderr)
+            return 1
+        print(f"kb {args.name}: {result['documents']} documents, {result['sections']} "
+              f"sections, {result['leaves']} leaves in {result['topics']} topics "
+              f"(nothing written)")
+        for model in dict.fromkeys([_writer_model(args), *PRICES]):
+            e = estimate_cost(model, calls=counter.calls,
+                              prompt_tokens=counter.prompt_tokens)
+            usd = "unknown price" if e["usd"] is None else f"~{e['usd']:.3f} USD"
+            print(f"estimate: {model}: {e['calls']} calls, {e['prompt_tokens']} prompt "
+                  f"tokens, ~{e['completion_tokens']} completion tokens "
+                  f"(assumed {e['completion_per_call']}/call), {usd}")
+        print("estimate: replies already in the writer cache cost nothing; "
+              "the estimate assumes none are")
+        return 0
+    writer = StubWriter() if args.llm == "stub" else make_kb_writer(args)
     try:
         result = build_kb(docs, name=args.name, library=Path(args.library).expanduser(),
                           out_root=output_root(args.output_root), writer=writer,

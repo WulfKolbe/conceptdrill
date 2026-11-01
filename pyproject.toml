@@ -62,7 +62,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 # The kb/1 contract's machine-readable part (docs/kb-format/kb-1.md).
-conceptdrill = ["kb/schemas/*.json"]
+conceptdrill = ["kb/schemas/*.json", "kb/prompts/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
