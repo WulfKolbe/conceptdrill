@@ -166,3 +166,35 @@ def test_corrupt_cache_shard_does_not_break_a_run(tmp_path):
 
     vecs = cached.encode(["still works"])
     assert vecs.shape[0] == 1
+
+
+class _LateRevision:
+    """An embedder that learns its revision only when its model loads, as
+    TransformerEmbedder does ("unresolved" until then)."""
+    name, dim = "late", 4
+
+    def __init__(self):
+        self.revision, self.calls = "unresolved", 0
+
+    def resolve(self):
+        self.revision = "r1"
+        return self.revision
+
+    def encode(self, texts):
+        self.resolve()
+        self.calls += 1
+        return np.ones((len(texts), 4)) / 2.0
+
+
+def test_the_disk_cache_survives_a_late_resolved_revision(tmp_path):
+    """The shard path and the keys used the revision as it was BEFORE the
+    model loaded ("unresolved"), and the flush used it AFTER -- so every
+    process wrote a shard no later process read (found in T-0119)."""
+    first = _LateRevision()
+    c1 = CachedEmbedder(first, cache_dir=tmp_path)
+    c1.encode(["alpha", "beta"])
+    c1.flush()
+    second = _LateRevision()
+    c2 = CachedEmbedder(second, cache_dir=tmp_path)
+    c2.encode(["alpha", "beta"])
+    assert second.calls == 0
