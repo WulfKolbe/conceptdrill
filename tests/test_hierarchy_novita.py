@@ -324,3 +324,45 @@ def test_reasoning_effort_is_sent_and_in_the_cache_key(monkeypatch):
     off("sys", "usr")
     assert "reasoning_effort" not in seen, "None must omit the parameter entirely"
     assert off.params["reasoning_effort"] is None
+
+
+def test_the_chat_counts_its_token_usage(monkeypatch):
+    """A run reports what it spent (T-0117): every call's usage is summed on
+    the chat, and NovitaSummarizer exposes it."""
+    from conceptdrill.hierarchy import novita as nv
+
+    class _Usage:
+        prompt_tokens, completion_tokens = 100, 40
+
+    class _Msg:
+        content = '{"summary": "s", "abstraction": "a", "label": "l"}'
+
+    class _Choice:
+        finish_reason = "stop"
+        message = _Msg()
+
+    class _Reply:
+        choices = [_Choice()]
+        usage = _Usage()
+
+    class _Completions:
+        def create(self, **kw):
+            return _Reply()
+
+    class _Chat:
+        completions = _Completions()
+
+    class _Client:
+        chat = _Chat()
+
+        def __init__(self, **kw):
+            pass
+
+    import openai
+    monkeypatch.setattr(openai, "OpenAI", _Client)
+    monkeypatch.setenv("NOVITA_API_KEY", "k")
+    chat = nv.make_openai_chat(max_tokens=256)
+    chat("sys", "usr")
+    chat("sys", "usr")
+    assert chat.usage == {"calls": 2, "prompt_tokens": 200, "completion_tokens": 80}
+    assert nv.NovitaSummarizer(chat, prompt="p").usage == chat.usage

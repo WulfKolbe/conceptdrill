@@ -81,7 +81,13 @@ def test_a_markdown_heading_outranks_a_plain_line_with_its_number():
 class FakeSummarizer:
     model = "fake-model"
 
+    def __init__(self):
+        self.usage = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
+
     def summarize(self, span_id, title, body):
+        self.usage = {"calls": self.usage["calls"] + 1,
+                      "prompt_tokens": self.usage["prompt_tokens"] + 10,
+                      "completion_tokens": self.usage["completion_tokens"] + 5}
         return SpanSummary(span_id=span_id, title=title, summary=f"S {title}",
                            abstraction=f"A {title}", label=f"L {title}",
                            model=self.model)
@@ -102,9 +108,16 @@ def test_the_sections_command_writes_the_run_and_the_library_copy(
     run = out / "r1"
     record = json.loads((run / "paperA.json").read_text())
     assert record["sections"][0]["abstraction"] == "A Abstract"
+    # The stable key a reading folder links to (T-0105): id, order, title.
+    assert [(s["id"], s["order"]) for s in record["sections"]] == \
+        [(f"paperA#{i}", i) for i in range(len(record["sections"]))]
     assert "**Abstract.** A Abstract" in (run / "paperA.md").read_text()
     manifest = json.loads((run / "manifest.json").read_text())
     assert manifest["run_id"] == "r1" and manifest["produced_by"] == "conceptdrill"
+    calls = sum(1 for s in record["sections"] if s.get("summary"))
+    assert manifest["usage"]["total"] == {"calls": calls, "prompt_tokens": 10 * calls,
+                                          "completion_tokens": 5 * calls}
+    assert manifest["usage"]["per_document"]["paperA"] == manifest["usage"]["total"]
     assert manifest["skipped"] == [{"doc": "missing",
                                     "reason": "no glyphs.md in the library"}]
     dest = library / "paperA" / "conceptdrill" / "r1"

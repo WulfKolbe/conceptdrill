@@ -26,8 +26,11 @@ def test_the_cache_provider_is_switched_off_by_config():
 
 def test_a_test_run_creates_no_hidden_folder():
     before = _dot_folders()
+    # test_core_and_cli builds with the embedding cache on: it is the file
+    # that used to leave `.conceptdrill_cache/` behind.
     run = subprocess.run([sys.executable, "-m", "pytest",
-                          "tests/test_output_location.py"],
+                          "tests/test_output_location.py",
+                          "tests/test_core_and_cli.py"],
                          cwd=REPO_ROOT, capture_output=True, text=True)
     assert run.returncode == 0, run.stdout + run.stderr
     appeared = _dot_folders() - before
