@@ -9,6 +9,7 @@ Subcommands::
     conceptdrill routing
     conceptdrill sections DOC... [--run ID] [--library DIR] [--output-root DIR]
     conceptdrill library-copy RUN_DIR [--library DIR]
+    conceptdrill kb check KB_DIR
 
 The flat form from the spec is also accepted and dispatches to `explain`::
 
@@ -162,6 +163,13 @@ def build_parser() -> argparse.ArgumentParser:
                              "<library>/<doc>/conceptdrill/<run>/")
     p_copy.add_argument("run_dir")
     p_copy.add_argument("--library", default=str(DEFAULT_LIBRARY))
+
+    # -- kb (T-0119) -----------------------------------------------------
+    p_kb = sub.add_parser("kb", help="knowledge bases in the kb/1 format")
+    kb_sub = p_kb.add_subparsers(dest="kb_command", required=True)
+    p_kb_check = kb_sub.add_parser(
+        "check", help="does a folder conform to kb/1? exit 0 yes, 1 no")
+    p_kb_check.add_argument("kb_dir")
 
     return parser
 
@@ -460,6 +468,20 @@ def cmd_library_copy(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_kb(args: argparse.Namespace) -> int:
+    from .kb.check import check
+    report = check(Path(args.kb_dir).expanduser())
+    for v in report.violations:
+        print(v)
+    for n in report.notes:
+        print(f"note: {n}")
+    if report.ok:
+        print(f"kb/1: conforms ({report.files} files)")
+        return 0
+    print(f"kb/1: {len(report.violations)} violations")
+    return 1
+
+
 COMMANDS = {
     "project": cmd_project,
     "concepts": cmd_concepts,
@@ -468,6 +490,7 @@ COMMANDS = {
     "routing": cmd_routing,
     "sections": cmd_sections,
     "library-copy": cmd_library_copy,
+    "kb": cmd_kb,
 }
 
 

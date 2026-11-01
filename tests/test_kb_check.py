@@ -230,7 +230,7 @@ def test_the_cli_exits_1_and_lists_every_violation(tmp_path, capsys):
     assert cli.main(["kb", "check", str(tmp_path)]) == 1
     out = capsys.readouterr().out
     assert "notes: not in the kb/1 tree" in out
-    assert re.search(r"\d+ violations", out)
+    assert re.search(r"kb/1: \d+ violations", out)
 
 
 # --------------------------------------------------------------------------

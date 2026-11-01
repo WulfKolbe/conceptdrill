@@ -100,8 +100,8 @@ absent.
 ## 4. Headings
 
 After the frontmatter: one `# <title>` line, equal to the frontmatter
-`title` (or, for letter files, `# Index: <L>` / `# Glossary: <L>`, with
-`other` written `Other`), then exactly these `##` headings, in this order, each
+`title` (`INDEX.md`: `# Index`; `GLOSSARY.md`: `# Glossary`; letter files:
+`# Index: <L>` / `# Glossary: <L>`, with `other` written `Other`), then exactly these `##` headings, in this order, each
 present once. A heading with nothing to say holds the single line `None.`
 No other `#` or `##` heading appears; `###` and below are free inside a section.
 
