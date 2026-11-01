@@ -111,6 +111,14 @@ class CachedEmbedder:
         if not texts:
             return self.inner.encode(texts)
 
+        # The revision names the shard and is part of every key, so it must be
+        # the one the vectors come from. A transformer learns it only when its
+        # model loads; settle it first, or every process writes a shard (named
+        # after the resolved revision) that no later process reads (looked up
+        # under "unresolved").
+        resolve = getattr(self.inner, "resolve", None)
+        if callable(resolve):
+            resolve()
         self._load_shard()
         keys = [cache_key(t, self.inner.name, self.inner.revision) for t in texts]
 

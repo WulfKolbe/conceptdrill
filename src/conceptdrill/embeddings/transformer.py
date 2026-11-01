@@ -175,6 +175,18 @@ class TransformerEmbedder(BaseEmbedder):
         self.dim = int(getattr(model.config, "hidden_size", 0))
         self.revision = self._resolve_revision()
 
+    def resolve(self) -> str:
+        """Load the model if needed and return the revision it is.
+
+        CachedEmbedder calls this before it reads its shard or builds keys:
+        without it, both used "unresolved" while the shard was written under
+        the real revision, and no later process found its vectors.
+        """
+        if self.spec.revision:
+            return self.spec.revision
+        self._ensure_loaded()
+        return self.revision
+
     def _resolve_revision(self) -> str:
         """Record the commit actually loaded, so a projection made against
         `main` still says which `main`."""
