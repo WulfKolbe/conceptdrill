@@ -20,8 +20,9 @@ The machine-readable parts are JSON Schemas shipped with the package:
 - **section** — one section of a document's `glyphs.md` split, id
   `<doc>#<order>`, `order` counting from 0. Its **text** is its glyphs.md lines
   `line_start`..`line_end`, verbatim.
-- **payload item** — a verbatim piece of a document: a display equation, a code
-  listing, or a detected pseudocode block. Id `<doc>#<first object id>`.
+- **payload item** — a verbatim piece of a document: the display equations of
+  one section (in flow order), one code listing (consecutive listing objects
+  joined), or one detected pseudocode block. Id `<doc>#<first object id>`.
 - **leaf** — one skill card: how to apply one concept or a small group of
   concepts, with its sources and payload.
 - **topic** — a group of leaves.
@@ -169,8 +170,9 @@ exact content, when the file is at most 40 lines.
   ≤ 4000, `INDEX.md`/`GLOSSARY.md` ≤ 500, `sources/<doc>.md` ≤ 4000. A build
   over budget fails; it never changes the tree.
 - **Provenance.** `manifest.json` names the command, the conceptdrill commit,
-  every input path with its sha256, the LLM model and token usage (or that a
-  stub stood in for it), and `written_at`.
+  every input path with its sha256, every requested document it skipped with
+  the reason, the LLM model and token usage (or that a stub stood in for it),
+  and `written_at`.
 
 ## 7a. Rules beyond the schemas
 

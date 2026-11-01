@@ -1,0 +1,75 @@
+{
+ "meta": {},
+ "streams": {},
+ "objects": [
+  {
+   "id": "obj_doc",
+   "type": "Document",
+   "props": {}
+  },
+  {
+   "id": "obj_eq1",
+   "type": "Equation",
+   "props": {
+    "latex": "q = z^{2} + 1",
+    "page": 1,
+    "flow_index": 10
+   }
+  },
+  {
+   "id": "obj_li1",
+   "type": "ListItem",
+   "props": {
+    "content": "1: for each florp q do",
+    "page": 1,
+    "flow_index": 11
+   }
+  },
+  {
+   "id": "obj_li2",
+   "type": "ListItem",
+   "props": {
+    "content": "2: if q is marl then",
+    "page": 1,
+    "flow_index": 12
+   }
+  },
+  {
+   "id": "obj_li3",
+   "type": "ListItem",
+   "props": {
+    "content": "3: return zent",
+    "page": 1,
+    "flow_index": 13
+   }
+  },
+  {
+   "id": "obj_cl1",
+   "type": "CodeListing",
+   "props": {
+    "code": "int florp(int q) { 1",
+    "page": 2,
+    "language": ""
+   }
+  },
+  {
+   "id": "obj_cl2",
+   "type": "CodeListing",
+   "props": {
+    "code": "return q * 2; 2",
+    "page": 2,
+    "language": ""
+   }
+  },
+  {
+   "id": "obj_eq9",
+   "type": "Equation",
+   "props": {
+    "latex": "<!-- DEFERRED x -->",
+    "page": 2,
+    "flow_index": 30
+   }
+  }
+ ],
+ "alignments": []
+}

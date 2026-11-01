@@ -4,37 +4,121 @@
   "title": "kb/1 manifest.json: what made this knowledge base",
   "type": "object",
   "additionalProperties": false,
-  "required": ["format", "kb", "command", "conceptdrill_commit", "inputs", "llm", "written_at"],
+  "required": [
+    "format",
+    "kb",
+    "command",
+    "conceptdrill_commit",
+    "inputs",
+    "skipped",
+    "llm",
+    "written_at"
+  ],
   "properties": {
-    "format": {"const": "kb/1"},
-    "kb": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
-    "command": {"type": "string", "minLength": 1},
-    "conceptdrill_commit": {"type": ["string", "null"]},
-    "inputs": {
-      "type": "array", "minItems": 1,
-      "items": {
-        "type": "object", "additionalProperties": false,
-        "required": ["path", "sha256"],
-        "properties": {"path": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
-      }
+    "format": {
+      "const": "kb/1"
     },
-    "llm": {
-      "type": "object", "additionalProperties": false,
-      "required": ["stub", "model", "usage"],
-      "properties": {
-        "stub": {"type": "boolean"},
-        "model": {"type": ["string", "null"]},
-        "usage": {
-          "type": "object", "additionalProperties": false,
-          "required": ["calls", "prompt_tokens", "completion_tokens"],
-          "properties": {
-            "calls": {"type": "integer", "minimum": 0},
-            "prompt_tokens": {"type": "integer", "minimum": 0},
-            "completion_tokens": {"type": "integer", "minimum": 0}
+    "kb": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "command": {
+      "type": "string",
+      "minLength": 1
+    },
+    "conceptdrill_commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
           }
         }
       }
     },
-    "written_at": {"type": "string", "format": "date-time"}
+    "llm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stub",
+        "model",
+        "usage"
+      ],
+      "properties": {
+        "stub": {
+          "type": "boolean"
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "usage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "calls",
+            "prompt_tokens",
+            "completion_tokens"
+          ],
+          "properties": {
+            "calls": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "prompt_tokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "completion_tokens": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "written_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "skipped": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "folder",
+          "reason"
+        ],
+        "properties": {
+          "folder": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
   }
 }
