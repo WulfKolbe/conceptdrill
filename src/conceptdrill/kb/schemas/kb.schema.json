@@ -120,7 +120,8 @@
           "reason",
           "text_file",
           "text_sha256",
-          "words"
+          "words",
+          "nul"
         ],
         "properties": {
           "id": {
@@ -180,6 +181,10 @@
             "$ref": "#/$defs/sha256"
           },
           "words": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nul": {
             "type": "integer",
             "minimum": 0
           }

@@ -11,6 +11,7 @@
     "conceptdrill_commit",
     "inputs",
     "skipped",
+    "embedding",
     "llm",
     "written_at"
   ],
@@ -117,6 +118,29 @@
             "type": "string",
             "minLength": 1
           }
+        }
+      }
+    },
+    "embedding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "sha256",
+        "vectors"
+      ],
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "vectors": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     }

@@ -425,6 +425,9 @@ def check_kb_json(root: Path, kb: dict, problems: list[str], notes: list[str]) -
             problems.append(f"{s['text_file']}: sha256 differs from kb.json")
         if len(data.decode("utf-8", "replace").split()) != s["words"]:
             problems.append(f"{s['text_file']}: word count differs from kb.json")
+        if data.count(b"\x00") != s["nul"]:
+            problems.append(f"{s['text_file']}: {data.count(b'\x00')} NUL bytes, "
+                            f"kb.json says {s['nul']}")
     for item in kb["payload"]:
         if item["file"] is None:
             continue

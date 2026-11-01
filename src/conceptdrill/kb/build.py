@@ -424,11 +424,17 @@ def _sort_key(section: Section) -> tuple:
 
 
 def structure(sections: list[Section], payload: list[Payload],
-              embedder_name: str) -> list[Topic]:
+              embedder_name: str, embedding: Optional[dict] = None) -> list[Topic]:
     usable = [s for s in sections if s.status == "cited"]
     if not usable:
         raise BuildError("no section has enough text or payload to cite")
     vectors = _embed([s.embed_text for s in usable], embedder_name)
+    if embedding is not None:
+        # What the structure was clustered from: on a host with faulty float32
+        # BLAS, uncached embeddings can differ between runs, so "the same
+        # tree" is checked by this hash, not assumed.
+        embedding.update(model=embedder_name, vectors=int(len(vectors)),
+                         sha256=_sha(np.ascontiguousarray(vectors, dtype="<f8").tobytes()))
     groups = _agglomerate(vectors, [1] * len(usable), max_size=MAX_SECTIONS_PER_LEAF,
                           tau=LEAF_TAU)
     by_section: dict[str, list[Payload]] = {}
@@ -670,7 +676,8 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
                       "number": s.number, "page": s.page, "line_start": s.line_start,
                       "line_end": s.line_end, "status": s.status, "cited_by": s.cited_by,
                       "reason": s.reason, "text_file": s.text_file,
-                      "text_sha256": _sha(s.text.encode("utf-8")), "words": s.words}
+                      "text_sha256": _sha(s.text.encode("utf-8")), "words": s.words,
+                      "nul": s.text.count("\x00")}
                      for s in sections],
         "payload": [{"id": p.id, "doc": p.doc, "kind": p.kind, "members": p.members,
                      "field": p.field, "section": p.section, "placed_by": p.placed_by,
@@ -716,7 +723,8 @@ def build_kb(folders: Sequence[str], *, name: str, library: Path, out_root: Path
             s.status = "cited"
         else:
             s.reason = f"only {s.words} words of text and no payload"
-    topics = structure([s for d in docs for s in d.sections], payload, embedder)
+    embedding: dict = {}
+    topics = structure([s for d in docs for s in d.sections], payload, embedder, embedding)
     kb_prose = write_prose(topics, writer)
     files = render(docs, topics, payload, kb_prose, name)
     inputs = []
@@ -727,6 +735,7 @@ def build_kb(folders: Sequence[str], *, name: str, library: Path, out_root: Path
     files["manifest.json"] = json.dumps({
         "format": C.FORMAT, "kb": name, "command": command,
         "conceptdrill_commit": commit, "inputs": inputs, "skipped": skipped,
+        "embedding": embedding,
         "llm": {"stub": bool(writer.stub), "model": writer.model, "usage": writer.usage},
         "written_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }, indent=2, ensure_ascii=False) + "\n"

@@ -71,7 +71,9 @@ Exactly these entries, nothing else:
 - `text/<doc>/<order>.txt` holds no frontmatter and no added line: its bytes
   are the section's glyphs.md lines joined by `\n`, with a final `\n`. It is
   the full-text level, opened only when a summary is not enough; it has no
-  size budget, and its word count is stated wherever it is linked.
+  size budget, and its word count is stated wherever it is linked. NUL bytes
+  in the input stay verbatim; `kb.json` counts them per section (`nul`) so a
+  reader is told.
 - A letter file holds the entries whose first letter (case-folded, after
   stripping non-letters) is its letter; everything else goes to `other.md`.
 - Every name is lower case, except `README.md`, `INDEX.md` and `GLOSSARY.md`.
@@ -171,8 +173,10 @@ exact content, when the file is at most 40 lines.
   over budget fails; it never changes the tree.
 - **Provenance.** `manifest.json` names the command, the conceptdrill commit,
   every input path with its sha256, every requested document it skipped with
-  the reason, the LLM model and token usage (or that a stub stood in for it),
-  and `written_at`.
+  the reason, the embeddings the structure was clustered from (`embedding`:
+  model, sha256 of the float64 vectors, their count), the LLM model and token
+  usage (or that a stub stood in for it), and `written_at`. Two builds with
+  equal input and embedding hashes have the same structure.
 
 ## 7a. Rules beyond the schemas
 
@@ -193,7 +197,8 @@ The schemas fix shapes; `kb check` also enforces, each a violation when broken:
    (the union of its leaves'), `related`; the README's `documents` and
    `topics`; a source file's `title` and `sections` (its section count).
 7. Each document's sections have orders 0..n-1 without a gap, and every
-   section has its text file, whose sha256 and word count `kb.json` records.
+   section has its text file, whose sha256, word count and NUL count `kb.json`
+   records.
 8. Document slugs follow section 1a and are unique; `folder` is non-empty.
 9. Letter-file entry counts equal their `INDEX.md`/`GLOSSARY.md` lines and
    frontmatter.
