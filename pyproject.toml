@@ -62,4 +62,5 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+# No .pytest_cache: house rule, no hidden folders (owner, 2026-11-01).
+addopts = "-q -p no:cacheprovider"
