@@ -123,3 +123,18 @@ def test_the_sections_command_writes_the_run_and_the_library_copy(
     dest = library / "paperA" / "conceptdrill" / "r1"
     assert (dest / "paperA.json").read_bytes() == (run / "paperA.json").read_bytes()
     assert not (library / "missing").exists()
+
+
+def test_every_section_records_its_page_and_line_range():
+    """For a later mapping to pdfdrill's Section ids by page + title (T-0105,
+    via T-0077): pages are the `---` breaks of glyphs.md, lines are 1-based
+    and inclusive, from the heading line to the section's last line."""
+    text = ("---\n\n# Title\n\nAbstract\n\nAn abstract.\n\n---\n\n"
+            "1 Introduction\n\nFirst page text.\n\n---\n\n2 Method\n\nMore.\n\n"
+            "References\n\n[1] A. Author. 1999.\n")
+    lines = text.splitlines()
+    got = [(s["title"], s["page"], s["line_start"], s["line_end"])
+           for s in split_glyphs(text)]
+    assert got == [("Abstract", 1, 5, 7), ("1. Introduction", 2, 11, 13),
+                   ("2. Method", 3, 17, 19)]
+    assert lines[11 - 1] == "1 Introduction" and lines[19 - 1] == "More."

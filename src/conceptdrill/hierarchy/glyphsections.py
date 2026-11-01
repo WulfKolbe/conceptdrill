@@ -74,8 +74,13 @@ def follows(prev: Optional[tuple], cur: tuple, jump: int = 3) -> bool:
 def split_glyphs(text: str) -> list[dict]:
     """The sections of one glyphs markdown, in document order.
 
-    Each is `{"title", "number", "text", "own_words", "text_words"}`. A parent's
-    `text` includes its subsections, as `summarize_tree` feeds `subtree_text`.
+    Each is `{"title", "number", "page", "line_start", "line_end", "text",
+    "own_words", "text_words"}`. A parent's `text` includes its subsections, as
+    `summarize_tree` feeds `subtree_text`. `page` counts the `---` page breaks
+    of glyphs.md; lines are 1-based and inclusive, heading to last line. They
+    are kept so a section can later be mapped to pdfdrill's Section ids by page
+    and title (drillgroup T-0105 via T-0077) -- conceptdrill invents no
+    pdfdrill ids.
     """
     raw = text.splitlines()
     marked = [l.lstrip().startswith("#") for l in raw]
@@ -89,9 +94,12 @@ def split_glyphs(text: str) -> list[dict]:
                   for m in [NUMBERED.match(l)] if m}
     numbered_doc = len(md_numbers) >= 2 or arabic + roman >= 3
     sections: list[dict] = []
-    cur, prev, top = None, None, None
-    for line, mk in zip(lines, marked):
-        if not line or line == "---":
+    cur, prev, top, page = None, None, None, 0
+    for lineno, (line, mk) in enumerate(zip(lines, marked), 1):
+        if line == "---":
+            page += 1
+            continue
+        if not line:
             continue
         bare = re.sub(r"^(?:[IVX]+|\d+)\.?\s+", "", re.sub(r"\s+\d+$", "", line))
         if STOP.match(bare) and sections:
@@ -124,10 +132,12 @@ def split_glyphs(text: str) -> list[dict]:
                         head = (f"{m.group('num')}. {title}", tup, "")
         if head:
             cur = {"title": head[0], "number": list(head[1]),
+                   "page": max(page, 1), "line_start": lineno, "line_end": lineno,
                    "lines": [head[2]] if head[2] else []}
             sections.append(cur)
         elif cur is not None:
             cur["lines"].append(line)
+            cur["line_end"] = lineno
     for i, s in enumerate(sections):
         own = "\n".join(s["lines"])
         n = tuple(s["number"])
