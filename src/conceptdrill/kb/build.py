@@ -353,8 +353,9 @@ def _embed(texts: list[str], embedder_name: str) -> np.ndarray:
     from ..embeddings import get_embedder
     if not texts:
         return np.zeros((0, 1))
-    vectors = np.asarray(get_embedder(embedder_name, cache=True).encode(texts),
-                         dtype=np.float64)
+    embedder = get_embedder(embedder_name, cache=True)
+    vectors = np.asarray(embedder.encode(texts), dtype=np.float64)
+    embedder.flush()          # persist: the next build must not pay this pass again
     norms = np.linalg.norm(vectors, axis=1, keepdims=True)
     norms[norms == 0] = 1.0
     return vectors / norms
