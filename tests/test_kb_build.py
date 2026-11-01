@@ -153,3 +153,11 @@ def test_nul_bytes_are_kept_and_counted(tmp_path):
 def test_the_manifest_records_the_embeddings_used(built):
     emb = json.loads((built / "manifest.json").read_text())["embedding"]
     assert emb["model"] == "hash" and len(emb["sha256"]) == 64 and emb["vectors"] == 8
+
+
+def test_the_embeddings_are_cached_on_disk(tmp_path, monkeypatch):
+    """A 16-minute modernbert pass must not be repeated on the next build."""
+    monkeypatch.setenv("CONCEPTDRILL_CACHE_DIR", str(tmp_path / "cache"))
+    code, _ = build(tmp_path, ZIB)
+    assert code == 0
+    assert list((tmp_path / "cache").glob("emb-hash-*.npz"))
