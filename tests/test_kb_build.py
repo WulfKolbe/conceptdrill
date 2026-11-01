@@ -131,3 +131,25 @@ def test_unrelated_sets_give_the_same_form(tmp_path):
     _, b = build(tmp_path, ZIB, name="b")
     assert check(a).violations == [] and check(b).violations == []
     assert form_of(a) == form_of(b)
+
+
+def test_nul_bytes_are_kept_and_counted(tmp_path):
+    """pdfdrill leaves NUL bytes in some glyphs.md (a pdfdrill defect). They
+    stay verbatim in the text file, and kb.json tells the reader how many."""
+    import shutil
+    lib = tmp_path / "lib"
+    shutil.copytree(LIB / ZIB, lib / ZIB)
+    g = lib / ZIB / f"{ZIB}.glyphs.md"
+    g.write_text(g.read_text().replace("1 Zib Basics\n\n", "1 Zib Basics\n\n\x00\x00 "))
+    code = cli.main(["kb", "build", ZIB, "--name", "nul", "--library", str(lib),
+                     "--output-root", str(tmp_path), "--llm", "stub", "--embedder", "hash"])
+    assert code == 0
+    kb = tmp_path / "kb" / "nul"
+    s = next(s for s in kbjson(kb)["sections"] if s["id"] == "zib-zab#1")
+    assert s["nul"] == 2 and (kb / s["text_file"]).read_text().count("\x00") == 2
+    assert all(x["nul"] == 0 for x in kbjson(kb)["sections"] if x["id"] != "zib-zab#1")
+
+
+def test_the_manifest_records_the_embeddings_used(built):
+    emb = json.loads((built / "manifest.json").read_text())["embedding"]
+    assert emb["model"] == "hash" and len(emb["sha256"]) == 64 and emb["vectors"] == 8

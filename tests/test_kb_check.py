@@ -188,7 +188,8 @@ def _section(order, status="cited", cited_by=("zorp/blix",), reason=None):
     return {"id": f"d1#{order}", "doc": "d1", "order": order, "title": f"S{order}",
             "number": [], "page": 1, "line_start": 1, "line_end": 2,
             "status": status, "cited_by": list(cited_by), "reason": reason,
-            "text_file": f"text/d1/{order}.txt", "text_sha256": "0" * 64, "words": 2}
+            "text_file": f"text/d1/{order}.txt", "text_sha256": "0" * 64, "words": 2,
+            "nul": 0}
 
 
 def test_a_section_left_out_is_named(tmp_path):
@@ -340,3 +341,10 @@ def test_long_folder_names_are_cut_at_a_dash_and_collisions_numbered():
     assert len(got[long]) <= 56 and not got[long].endswith("-")
     assert got[long] == "001-handbook-of-categorical-algebra-volume-1-basic"
     assert [got["A B"], got["a b"], got["a-b"]] == ["a-b", "a-b-2", "a-b-3"]
+
+
+def test_rule7_the_nul_count_must_match_the_text_file(tmp_path):
+    sec = dict(_section(0), nul=3)
+    kb = _kb_json([sec])
+    write(tmp_path / "text" / "d1" / "0.txt", "a b\n")
+    assert any_match(_write_kb(tmp_path, kb), r"text/d1/0\.txt: 0 NUL bytes, kb\.json says 3")
