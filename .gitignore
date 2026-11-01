@@ -29,3 +29,8 @@ report_*.json
 .env
 .env.*
 !.env.example
+
+# Project-local working space (house rules, 2026-10-30): run output, scratch
+# files and worktrees live here, visible and never committed.
+work/
+worktrees/
