@@ -9,6 +9,7 @@ Subcommands::
     conceptdrill routing
     conceptdrill sections DOC... [--run ID] [--library DIR] [--output-root DIR]
     conceptdrill library-copy RUN_DIR [--library DIR]
+    conceptdrill kb build DOC... --name NAME [--llm stub|novita] [--embedder E]
     conceptdrill kb check KB_DIR
 
 The flat form from the spec is also accepted and dispatches to `explain`::
@@ -167,6 +168,23 @@ def build_parser() -> argparse.ArgumentParser:
     # -- kb (T-0119) -----------------------------------------------------
     p_kb = sub.add_parser("kb", help="knowledge bases in the kb/1 format")
     kb_sub = p_kb.add_subparsers(dest="kb_command", required=True)
+    p_kb_build = kb_sub.add_parser(
+        "build", help="drilled library documents -> a kb/1 knowledge base under "
+                      "<output-root>/kb/<name>/")
+    p_kb_build.add_argument("docs", nargs="*", metavar="DOC",
+                            help="document folder names in the library")
+    p_kb_build.add_argument("--docs-file", help="a file with one folder name per line")
+    p_kb_build.add_argument("--name", required=True, help="the knowledge base's slug")
+    p_kb_build.add_argument("--library", default=str(DEFAULT_LIBRARY))
+    p_kb_build.add_argument("--output-root", help="default: $CONCEPTDRILL_OUTPUT_ROOT "
+                            f"or {DEFAULT_OUTPUT_ROOT}")
+    p_kb_build.add_argument("--llm", choices=["novita", "stub"], default="novita",
+                            help="who names and writes prose: the model (spends "
+                                 "NOVITA_API_KEY) or a stub with fixed strings")
+    p_kb_build.add_argument("--embedder", default="modernbert",
+                            help="embedding model for the clustering (default: modernbert)")
+    p_kb_build.add_argument("--replace", action="store_true",
+                            help="rebuild an existing knowledge base of that name")
     p_kb_check = kb_sub.add_parser(
         "check", help="does a folder conform to kb/1? exit 0 yes, 1 no")
     p_kb_check.add_argument("kb_dir")
@@ -470,6 +488,8 @@ def cmd_library_copy(args: argparse.Namespace) -> int:
 
 def cmd_kb(args: argparse.Namespace) -> int:
     from .kb.check import check
+    if args.kb_command == "build":
+        return _kb_build(args)
     report = check(Path(args.kb_dir).expanduser())
     for v in report.violations:
         print(v)
@@ -480,6 +500,49 @@ def cmd_kb(args: argparse.Namespace) -> int:
         return 0
     print(f"kb/1: {len(report.violations)} violations")
     return 1
+
+
+def _kb_build(args: argparse.Namespace) -> int:
+    from .kb.build import BuildError, StubWriter, build_kb
+    from .kb.check import check
+    docs = list(args.docs)
+    if args.docs_file:
+        docs += [l.strip() for l in Path(args.docs_file).read_text().splitlines()
+                 if l.strip()]
+    if not docs:
+        print("conceptdrill: kb build needs at least one DOC or --docs-file",
+              file=sys.stderr)
+        return 1
+    if args.llm == "stub":
+        writer = StubWriter()
+    else:
+        print("conceptdrill: --llm novita is not built yet (T-0119 step C); "
+              "use --llm stub", file=sys.stderr)
+        return 1
+    try:
+        result = build_kb(docs, name=args.name, library=Path(args.library).expanduser(),
+                          out_root=output_root(args.output_root), writer=writer,
+                          embedder=args.embedder,
+                          command=shlex.join(["conceptdrill", *args.argv]),
+                          commit=_commit(), replace=args.replace)
+    except BuildError as exc:
+        print(f"conceptdrill: {exc}", file=sys.stderr)
+        return 1
+    print(f"kb {args.name}: {result['documents']} documents, {result['sections']} "
+          f"sections, {result['leaves']} leaves in {result['topics']} topics, "
+          f"{result['payload']} payload items, {result['files']} files -> {result['path']}")
+    for s in result["skipped"]:
+        print(f"  skipped {s['folder']}: {s['reason']}")
+    report = check(result["path"])
+    for v in report.violations:
+        print(v)
+    for n in report.notes:
+        print(f"note: {n}")
+    if not report.ok:
+        print(f"kb/1: {len(report.violations)} violations")
+        return 1
+    print(f"kb/1: conforms ({report.files} files)")
+    return 0
 
 
 COMMANDS = {

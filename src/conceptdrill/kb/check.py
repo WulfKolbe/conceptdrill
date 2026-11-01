@@ -589,3 +589,28 @@ def check(root: Path) -> Report:
         check_kb_json(root, kb, problems, report.notes)
         check_against_kb(kb, mds, graph, problems)
     return report
+
+
+def form_of(root: Path) -> dict:
+    """A knowledge base's form, without its names or content.
+
+    Two trees built from unrelated documents must have equal forms: the same
+    root entries, and for every file kind the same headings and frontmatter
+    keys. Which optional folders exist (payload/) depends on the content.
+    """
+    root = Path(root)
+    kinds: dict[str, set] = {}
+    for path in sorted(root.rglob("*.md")):
+        rel = path.relative_to(root).as_posix()
+        kind = kind_of(rel)
+        if kind is None:
+            continue
+        md = parse_md(rel, path.read_text(encoding="utf-8"), [])
+        kinds.setdefault(kind, set()).add(
+            (tuple(h for h, _ in md.sections), tuple(md.front or ())))
+    present = sorted(p.name for p in root.iterdir()
+                     if p.name in C.ROOT_FILES + C.REQUIRED_DIRS + ["text"])
+    letters = {folder: sorted(p.stem for p in (root / folder).glob("*.md"))
+               for folder in ("index", "glossary")}
+    return {"root": present, "letters": letters,
+            "kinds": {k: sorted(v) for k, v in sorted(kinds.items())}}
