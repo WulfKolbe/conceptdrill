@@ -34,6 +34,39 @@ labeling (CCL) papers already in the library. A CLI given only the knowledge
 base must be able to find the method, its exact definition, and the verbatim
 algorithm/formula/code material it needs, in a few small reads.
 
+## 1a. Three things, kept apart (coordinator, 2026-11-01, on the owner's request)
+
+The owner: "implement an abstract generator, not another example". So:
+
+1. **The format** — `kb/1`, a written contract (`docs/kb-format/kb-1.md`) plus
+   JSON Schemas (`src/conceptdrill/kb/schemas/`) and the machine check
+   `kb check`. It names no topic, no paper, no field. The owner's example is
+   kept verbatim as reading material in
+   `docs/inputs/2026-11-01-owner-example-kb-structure.md`; it is not a template
+   and not a fixture. Where this design and kb/1 differ, kb/1 wins.
+2. **The generator** — `conceptdrill kb build DOC... --name N`: deterministic
+   stages (sections, payload, concepts, topics by clustering) and two narrow
+   LLM stages (naming, leaf prose), each reading only its inputs and writing
+   into the build directory. Any document set in, a kb/1 tree out.
+3. **The test inputs** — the 21 CCL papers; a second, unrelated set of about 5
+   library documents from another field; and a synthetic mini set (two tiny
+   glyphs.md files with nonsense topics) for the unit tests.
+
+No knowledge-base content is written by hand. A test greps `src/` and the
+prompts for field- or paper-specific terms and fails on any.
+
+Build order, each step red first and its own commit:
+- **A.** `kb check` and the schemas, tested on broken trees (a missing heading,
+  an extra folder, a dead link, an over-budget leaf, an unaccounted section)
+  and on one valid tiny tree generated from the synthetic set by B's stubs.
+- **B.** The deterministic stages with the LLM replaced by a stub returning
+  fixed strings; `kb build` on the synthetic set passes `kb check`; on the CCL
+  set, still stubbed: the skeleton, payload byte-equal to the docmodel, every
+  section accounted for. No key is spent in A or B.
+- **C.** The real LLM stages behind `SummaryCache`, the model an option; the
+  cost is named and asked before the first paid run.
+- **D.** Acceptance (section 9).
+
 ## 2. Goals
 
 1. **One command** builds a knowledge base from a list of library documents:
@@ -238,22 +271,20 @@ Fails (exit 1, every violation listed) unless:
 - Deterministic ordering everywhere; given the same cached LLM results, a
   rebuild is byte-identical except `written_at`.
 
-## 9. Acceptance
+## 9. Acceptance (step D)
 
-On the 21 CCL papers (labeling-21 set), through the installed command:
-1. `conceptdrill sections <21 docs> --run ccl-21` (fresh, hashed), then
-   `conceptdrill kb build <21 docs> --name ccl-21 --from-run ccl-21` writes
-   `work/output/kb/ccl-21/`; `kb check` passes; manifests record usage.
-2. The owner's test case, walked by hand and recorded: from README/INDEX to a
-   block-based labeling leaf in ≤ 3 reads; that leaf lists the decision-tree /
-   block-scan payload of the BBDT, Spaghetti and DRAG papers, and the payload
-   files equal the docmodel's content.
-3. A second, unrelated document set builds a KB with the identical skeleton
-   (`kb check` passes; the two trees differ only in topic/leaf names and
-   content).
-4. Comparison with the owner's chat that read 20 drilled CCL documents by hand:
-   the method's needed facts (to be listed from that chat) are reachable in
-   the KB.
+Through the installed command:
+1. The CCL set and the second, unrelated set each build a knowledge base that
+   passes `kb check`, with identical skeletons: the two trees differ only in
+   topic and leaf names and content.
+2. The owner's test case, walked and recorded: "generate a block-based
+   labeling implementation in C++ from the papers" — README → topic README →
+   leaf in at most 3 reads, and the payload the papers carry for it (code and
+   pseudocode of the decision-tree/block-scan methods, their equations)
+   present and byte-equal to the docmodel.
+3. Each build's manifest records its inputs' sha256, commit and token usage.
+4. When the owner gives the comparison chat's output (Q1): the facts it used
+   are reachable in the CCL knowledge base.
 
 ## 10. Calls made by the designer (for the owner to check)
 

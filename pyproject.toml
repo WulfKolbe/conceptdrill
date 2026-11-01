@@ -60,6 +60,10 @@ conceptdrill = "conceptdrill.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+# The kb/1 contract's machine-readable part (docs/kb-format/kb-1.md).
+conceptdrill = ["kb/schemas/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # No .pytest_cache: house rule, no hidden folders (owner, 2026-11-01).
