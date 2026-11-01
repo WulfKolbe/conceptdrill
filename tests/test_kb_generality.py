@@ -16,6 +16,10 @@ CORPUS_TERMS = [
     r"label(l)?ing", r"connected.component", r"\bccl\b", r"\bbbdt\b", r"spaghetti",
     r"yacclab", r"union.find", r"\bdrag\b", r"grana", r"bolelli", r"mirflickr",
     r"\boasis\b", r"2016icpr", r"2019tip", r"sensors-15",
+    # the second, unrelated test set: five physics/photonics papers
+    r"bose", r"einstein", r"condensat", r"phonon", r"molecular spin",
+    r"photovoltaic", r"solar", r"\blaser\b", r"van der waals", r"s41586", r"s41467",
+    r"s42005", r"s41598", r"aax7163",
 ]
 
 

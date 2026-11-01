@@ -138,6 +138,8 @@ def split_glyphs(text: str) -> list[dict]:
         elif cur is not None:
             cur["lines"].append(line)
             cur["line_end"] = lineno
+    if not sections:
+        sections = _markdown_split(lines, marked) or _page_split(lines)
     for i, s in enumerate(sections):
         own = "\n".join(s["lines"])
         n = tuple(s["number"])
@@ -153,6 +155,79 @@ def split_glyphs(text: str) -> list[dict]:
         s["own_words"] = len(own.split())
         s["text_words"] = len(s["text"].split())
         del s["lines"]
+    return sections
+
+
+#: A markdown heading that reads as words: letters, digits, spaces and plain
+#: punctuation, at least one word of four letters, at most eight words.
+_WORDY = re.compile(r"^[\w ,:;'’()&/.-]+$")
+
+
+def _clean_heading(text: str) -> bool:
+    words = text.split()
+    return (1 <= len(words) <= 8 and bool(_WORDY.match(text))
+            and any(sum(c.isalpha() for c in w) >= 4 for w in words))
+
+
+def _markdown_split(lines: list[str], marked: list[bool]) -> list[dict]:
+    """For documents that number nothing: their clean markdown headings.
+
+    The first level-1 heading is the document title, not a section; a heading
+    text that repeats is a running page header; math fragments, figure labels
+    and author lines do not read as words. Fewer than two headings left is no
+    structure at all, and the page split takes over -- as it does when the
+    headings cover less than half of the document's non-blank lines.
+    """
+    heads = [(i, l) for i, (l, mk) in enumerate(zip(lines, marked)) if mk and l]
+    counts: dict[str, int] = {}
+    for _, l in heads:
+        counts[l.casefold()] = counts.get(l.casefold(), 0) + 1
+    title = next((l for i, l in heads), None)
+    sections, cur, page = [], None, 0
+    keep = {i for i, l in heads if l != title and counts[l.casefold()] == 1
+            and _clean_heading(l)}
+    if len([i for i in keep if not STOP.match(lines[i])]) < 2:
+        return []
+    for lineno, line in enumerate(lines, 1):
+        if line == "---":
+            page += 1
+            continue
+        if not line:
+            continue
+        i = lineno - 1
+        if i in keep and STOP.match(line):
+            cur = None
+            continue
+        if i in keep:
+            cur = {"title": line, "number": [], "page": max(page, 1),
+                   "line_start": lineno, "line_end": lineno, "lines": []}
+            sections.append(cur)
+        elif cur is not None:
+            cur["lines"].append(line)
+            cur["line_end"] = lineno
+    covered = sum(len(c["lines"]) + 1 for c in sections)
+    if covered * 2 < sum(1 for l in lines if l and l != "---"):
+        return []
+    return sections
+
+
+def _page_split(lines: list[str]) -> list[dict]:
+    """The last resort: one section per page of glyphs.md, titled by number."""
+    sections, cur, page = [], None, 0
+    for lineno, line in enumerate(lines, 1):
+        if line == "---":
+            page += 1
+            cur = None
+            continue
+        if not line:
+            continue
+        if cur is None:
+            cur = {"title": f"Page {max(page, 1)}", "number": [], "page": max(page, 1),
+                   "line_start": lineno, "line_end": lineno, "lines": [line]}
+            sections.append(cur)
+        else:
+            cur["lines"].append(line)
+            cur["line_end"] = lineno
     return sections
 
 

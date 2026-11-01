@@ -138,3 +138,43 @@ def test_every_section_records_its_page_and_line_range():
     assert got == [("Abstract", 1, 5, 7), ("1. Introduction", 2, 11, 13),
                    ("2. Method", 3, 17, 19)]
     assert lines[11 - 1] == "1 Introduction" and lines[19 - 1] == "More."
+
+
+# --------------------------------------------------------------------------
+# Documents with no numbered heading and no "Abstract" line (T-0119)
+# --------------------------------------------------------------------------
+
+def test_without_numbering_clean_markdown_headings_become_sections():
+    """Many journals number nothing. Their markdown headings are used when
+    they read as words; math fragments, figure labels and running page
+    headers are text."""
+    text = ("---\n\n# Quorp Flux in Dense Marls\n\n### Ada Lovelace ${}^{1}$\n\n"
+            "Opening text about quorps.\n\n### Measuring the flux\n\nWe measured.\n\n"
+            "## H<sup>^</sup> ${}^{s}$ ¼ ∑\n\nMore measurement text.\n\n"
+            "---\n\n# Article\n\n### a b\n\nPanel labels.\n\n### Discussion\n\n"
+            "It went well.\n\n# Article\n\n### References\n\n[1] Nobody.\n")
+    titles = [s["title"] for s in split_glyphs(text)]
+    assert titles == ["Measuring the flux", "Discussion"]
+    measuring = split_glyphs(text)[0]
+    assert "More measurement text." in measuring["text"]
+
+
+def test_without_any_usable_heading_each_page_is_a_section():
+    text = ("---\n\n# Some Title\n\n## ∂H ${}^{s}$ ¼ ∑\n\nfirst page words\n\n"
+            "---\n\nsecond page words\n\n---\n\nthird page words\n")
+    got = [(s["title"], s["page"]) for s in split_glyphs(text)]
+    assert got == [("Page 1", 1), ("Page 2", 2), ("Page 3", 3)]
+    assert "first page words" in split_glyphs(text)[0]["text"]
+
+
+def test_a_numbered_document_keeps_its_split():
+    """The fallbacks never touch a document the numbered split can read."""
+    assert [s["title"] for s in split_glyphs(IEEE)][:2] == ["Abstract", "I. INTRODUCTION"]
+
+
+def test_markdown_headings_that_cover_little_of_the_text_give_way_to_pages():
+    """Two clean headings at the very end would leave the body in no section."""
+    body = "\n\n".join(f"body line {i} of the quorp text" for i in range(30))
+    text = (f"---\n\n# Some Title\n\n{body}\n\n---\n\n### View the thing online\n\n"
+            "a link\n\n### Permissions\n\nsome rights\n")
+    assert [s["title"] for s in split_glyphs(text)] == ["Page 1", "Page 2"]
