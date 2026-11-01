@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import blasfix                                                    # noqa: E402
 
 blasfix.apply_env_mitigations()
-from conceptdrill.output import output_root                  # noqa: E402
+from conceptdrill.output import cache_dir, output_root       # noqa: E402
 
 import numpy as np                                                # noqa: E402
 
@@ -69,7 +69,7 @@ def main() -> int:
     ap.add_argument("--token-ceiling", type=int, default=50)
     ap.add_argument("--compare", default="",
                     help="a run directory whose concepts stand for real text")
-    ap.add_argument("--summary-cache", default=".conceptdrill_cache/bullshit.json")
+    ap.add_argument("--summary-cache", default=str(cache_dir() / "bullshit.json"))
     ap.add_argument("--out", default=str(output_root() / "bullshit"))
     args = ap.parse_args()
 

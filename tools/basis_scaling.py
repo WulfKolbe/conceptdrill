@@ -53,6 +53,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import blasfix                                                    # noqa: E402
 
 blasfix.apply_env_mitigations()
+from conceptdrill.output import cache_dir                    # noqa: E402
 os.environ.setdefault("CONCEPTDRILL_NLP_BACKEND", "regex")
 
 import numpy as np                                                # noqa: E402
@@ -119,7 +120,7 @@ def _void_main() -> int:
     ap.add_argument("--llm-model", default="",
                     help="chat model id; defaults to NOVITA_MODEL or the "
                          "package default")
-    ap.add_argument("--summary-cache", default=".conceptdrill_cache/summaries.json",
+    ap.add_argument("--summary-cache", default=str(cache_dir() / "summaries.json"),
                     help="content-addressed summary cache; '' disables it")
     ap.add_argument("--out", default="", help="write the report as JSON")
     ap.add_argument("--store", default="",

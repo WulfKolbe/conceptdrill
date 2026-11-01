@@ -25,6 +25,17 @@ REAL_DOCMODEL = Path(
 needs_real = pytest.mark.skipif(
     not REAL_DOCMODEL.exists(), reason="drilled library not present")
 
+#: These tests describe the docmodel 2209.00445 had when they were written: 24
+#: sections at levels 2-4. pdfdrill re-drilled it on 2026-08-22, and every copy
+#: left (model.docmodel.json, its .gz, the 2209.00445v3 folder) now gives 6
+#: level-1 sections. The old file exists nowhere, so it cannot be pinned in the
+#: repo. Strict: if the library gets the nested docmodel back, these XPASS and
+#: fail, and the mark comes off.
+redrilled = pytest.mark.xfail(
+    strict=True,
+    reason="2209.00445 re-drilled 2026-08-22: 6 level-1 sections, not the "
+           "24 at levels 2-4 these tests were written against; old docmodel lost")
+
 
 def span(oid: str, caption: str, level: int, flow: int, **props) -> dict:
     """A minimal DocModel Section object, shaped like the real thing."""
@@ -348,6 +359,7 @@ def test_no_paragraph_is_ever_dropped():
 # --------------------------------------------------------------------------
 
 @needs_real
+@redrilled
 def test_real_document_yields_the_expected_sections():
     objs = json.loads(REAL_DOCMODEL.read_text())["objects"]
     secs = read_markers(objs)
@@ -357,6 +369,7 @@ def test_real_document_yields_the_expected_sections():
 
 
 @needs_real
+@redrilled
 def test_real_document_levels_and_appendix_counts():
     objs = json.loads(REAL_DOCMODEL.read_text())["objects"]
     secs = read_markers(objs)
@@ -378,6 +391,7 @@ def test_no_real_title_retains_latex_markup():
 
 
 @needs_real
+@redrilled
 def test_exactly_one_real_title_is_degraded():
     """Only \\ALG\\ Application loses meaning; if this count moves, the
     cleaner's behaviour changed."""
@@ -497,6 +511,7 @@ def test_cyclic_parents_do_not_hang_depth():
 # --------------------------------------------------------------------------
 
 @needs_real
+@redrilled
 def test_real_tree_matches_the_printed_outline():
     tree = load_tree(REAL_DOCMODEL)
     stats = tree.stats()
@@ -507,6 +522,7 @@ def test_real_tree_matches_the_printed_outline():
 
 
 @needs_real
+@redrilled
 def test_real_tree_nests_the_known_subsections():
     tree = load_tree(REAL_DOCMODEL)
     by_title = {n.title: n for n in tree.nodes.values()}
@@ -517,6 +533,7 @@ def test_real_tree_nests_the_known_subsections():
 
 
 @needs_real
+@redrilled
 def test_real_tree_accounts_for_every_paragraph():
     """84 of 85 paragraphs carry parent_section; the 85th is front matter."""
     tree = load_tree(REAL_DOCMODEL)
@@ -539,6 +556,7 @@ def test_real_tree_accounts_for_every_paragraph():
 
 
 @needs_real
+@redrilled
 def test_real_math_reaches_the_sections_that_contain_it():
     """74 math objects used to be excluded from every summary. Formula objects
     carry no parent_section, so this only works via flow-index assignment."""
@@ -550,6 +568,7 @@ def test_real_math_reaches_the_sections_that_contain_it():
 
 
 @needs_real
+@redrilled
 def test_real_math_enlarges_the_body_it_belongs_to():
     import json as _json
     from conceptdrill.hierarchy.docmodel_tree import build_tree as _bt
@@ -564,6 +583,7 @@ def test_real_math_enlarges_the_body_it_belongs_to():
 
 
 @needs_real
+@redrilled
 def test_real_subtree_text_is_larger_than_body_text():
     tree = load_tree(REAL_DOCMODEL)
     by_title = {n.title: n for n in tree.nodes.values()}
@@ -572,6 +592,7 @@ def test_real_subtree_text_is_larger_than_body_text():
 
 
 @needs_real
+@redrilled
 def test_real_tree_reports_one_degraded_title():
     assert load_tree(REAL_DOCMODEL).stats()["degraded_titles"] == 1
 

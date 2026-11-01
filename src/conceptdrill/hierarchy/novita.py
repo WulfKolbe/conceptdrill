@@ -166,6 +166,10 @@ def make_openai_chat(*, api_key: Optional[str] = None,
                     or DEFAULT_BASE_URL,
                     max_retries=max_retries)
 
+    # What this chat has spent, summed over its calls, so a run can report
+    # its cost instead of leaving it to the provider's billing page (T-0117).
+    usage = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
+
     def chat(system: str, user: str) -> str:
         extra = {"reasoning_effort": reasoning_effort} if reasoning_effort else {}
         reply = client.chat.completions.create(
@@ -173,6 +177,10 @@ def make_openai_chat(*, api_key: Optional[str] = None,
             messages=[{"role": "system", "content": system},
                       {"role": "user", "content": user}],
             **extra)
+        spent = getattr(reply, "usage", None)
+        usage["calls"] += 1
+        usage["prompt_tokens"] += getattr(spent, "prompt_tokens", 0) or 0
+        usage["completion_tokens"] += getattr(spent, "completion_tokens", 0) or 0
         choice = reply.choices[0]
         if choice.finish_reason == "length":
             # A truncated reply is a budget failure, not a malformed one.
@@ -193,6 +201,7 @@ def make_openai_chat(*, api_key: Optional[str] = None,
     # reasoning_effort belongs here for the same reason max_tokens does: it
     # changes the generation, so a cache built at one setting must not serve a
     # run made at another.
+    chat.usage = usage
     chat.params = {"model": model, "temperature": temperature,
                    "max_tokens": max_tokens,
                    "reasoning_effort": reasoning_effort}
@@ -250,6 +259,11 @@ class NovitaSummarizer:
         self.prompt = prompt if prompt is not None else load_prompt()
         self.max_body = max_body
         self.throttle = throttle if throttle is not None else Throttle()
+
+    @property
+    def usage(self) -> Optional[dict]:
+        """Tokens spent through this summariser's chat, when the chat counts."""
+        return getattr(self._chat, "usage", None)
 
     @property
     def cache_signature(self) -> str:

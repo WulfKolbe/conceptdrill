@@ -17,9 +17,10 @@ from typing import Optional, Sequence
 
 import numpy as np
 
+from ..output import DEFAULT_CACHE_DIR, cache_dir as _cache_dir
 from .base import Embedder, l2_normalise
 
-DEFAULT_CACHE_DIR = ".conceptdrill_cache"
+__all__ = ["DEFAULT_CACHE_DIR", "CachedEmbedder", "cache_key"]
 
 
 def cache_key(text: str, model: str, revision: str) -> str:
@@ -40,7 +41,7 @@ class CachedEmbedder:
         self._mem: dict[str, np.ndarray] = {}
         self._lock = threading.Lock()
         self._dirty = False
-        self.cache_dir = Path(cache_dir) if cache_dir else Path(DEFAULT_CACHE_DIR)
+        self.cache_dir = _cache_dir(cache_dir)
         self.persist = persist
         self._loaded = False
 

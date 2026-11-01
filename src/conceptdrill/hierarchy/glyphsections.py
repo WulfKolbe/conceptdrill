@@ -153,19 +153,28 @@ def summarise_sections(doc: str, sections: list[dict], summarizer, *,
 
     Short sections are kept and marked `skipped`, never dropped: the record
     accounts for every section the split found.
+
+    Every section gets `id` (`<doc>#<order>`, the span id the summariser sees)
+    and `order`: the stable key a reading folder links to (T-0105). With the
+    split unchanged, the same glyphs.md gives the same ids.
     """
     for i, s in enumerate(sections):
+        s["id"], s["order"] = f"{doc}#{i}", i
         if s["text_words"] < min_words:
             s["skipped"] = f"only {s['text_words']} words of text"
             continue
-        r = summarizer.summarize(f"{doc}#{i}", s["title"], s["text"])
+        r = summarizer.summarize(s["id"], s["title"], s["text"])
         s.update(abstraction=r.abstraction, summary=r.summary, label=r.label,
                  model=r.model, error=r.error or None,
                  more_concepts=[{"label": c.label, "abstraction": c.abstraction,
                                  "summary": c.summary} for c in r.siblings])
         log(f"{doc:20s} {i + 1:2d}/{len(sections)} {s['title'][:40]:40s} "
             f"{'ERROR ' + r.error if r.error else 'ok'}")
-    return {"doc": doc, "sections": sections}
+    record = {"doc": doc, "sections": sections}
+    usage = getattr(summarizer, "usage", None)
+    if usage is not None:
+        record["usage"] = dict(usage)
+    return record
 
 
 def render_markdown(record: dict) -> str:

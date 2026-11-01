@@ -43,7 +43,8 @@ def write_manifest(run_dir: Path, *, run_id: str, command: str,
                    documents: Mapping[str, Iterable[Path]],
                    produced_by: str = "conceptdrill",
                    producer: Optional[dict] = None,
-                   skipped: Iterable[dict] = ()) -> Path:
+                   skipped: Iterable[dict] = (),
+                   usage: Optional[dict] = None) -> Path:
     """Record what made this run, with each document's inputs and their sha256.
 
     Inputs are hashed now, while they are the files the run read. An input
@@ -61,6 +62,7 @@ def write_manifest(run_dir: Path, *, run_id: str, command: str,
                             for p in inputs]
                       for doc, inputs in documents.items()},
         "skipped": list(skipped),
+        "usage": usage,
         "written_at": _now(),
     }
     path = Path(run_dir) / MANIFEST

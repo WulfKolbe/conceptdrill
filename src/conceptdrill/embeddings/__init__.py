@@ -69,7 +69,7 @@ def get_embedder(name: str = "sentencebert", *, cache: bool = True,
 
     if not cache:
         return inner
-    return CachedEmbedder(inner, cache_dir=cache_dir or DEFAULT_CACHE_DIR)
+    return CachedEmbedder(inner, cache_dir=cache_dir)
 
 
 __all__ = [

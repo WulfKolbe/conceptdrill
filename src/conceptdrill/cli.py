@@ -80,7 +80,8 @@ def _add_build_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--no-cache", action="store_true",
                    help="do not read or write the embedding cache")
     p.add_argument("--cache-dir", metavar="DIR",
-                   help="embedding cache location (default: .conceptdrill_cache)")
+                   help="embedding cache location (default: $CONCEPTDRILL_CACHE_DIR or "
+                        "work/conceptdrill-cache)")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -432,15 +433,21 @@ def cmd_sections(args: argparse.Namespace) -> int:
             failed.append({"doc": doc, "reason": f"{type(exc).__name__}: {exc}"})
             print(f"  FAILED {doc}: {type(exc).__name__}: {exc}")
     secs = [s for r in records.values() for s in r["sections"]]
+    per_doc = {d: r["usage"] for d, r in records.items() if r.get("usage")}
+    total = {k: sum(u[k] for u in per_doc.values())
+             for k in ("calls", "prompt_tokens", "completion_tokens")}
     print(f"sections: {len(secs)} found, "
           f"{sum(1 for s in secs if s.get('summary'))} summarised, "
           f"{sum(1 for s in secs if s.get('skipped'))} too short, "
           f"{sum(1 for s in secs if s.get('error'))} errors")
+    print(f"tokens: {total['calls']} calls, {total['prompt_tokens']} prompt, "
+          f"{total['completion_tokens']} completion")
     write_manifest(run_dir, run_id=run_id,
                    command=shlex.join(["conceptdrill", *args.argv]),
                    commit=_commit(),
                    documents={d: [found[d]] for d in records},
-                   skipped=skipped + failed)
+                   skipped=skipped + failed,
+                   usage={"total": total, "per_document": per_doc})
     if not args.no_library_copy:
         _print_copy(copy_to_library(run_dir, library))
     return 1 if failed else 0

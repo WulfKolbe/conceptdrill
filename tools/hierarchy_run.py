@@ -30,7 +30,7 @@ import blasfix                                                    # noqa: E402
 import numpy as np                                                # noqa: E402
 
 blasfix.apply_env_mitigations()
-from conceptdrill.output import output_root                  # noqa: E402
+from conceptdrill.output import cache_dir, output_root       # noqa: E402
 
 from conceptdrill.embeddings import get_embedder                  # noqa: E402
 from conceptdrill.hierarchy.basis import (STRUCTURAL_ROW_ID,      # noqa: E402
@@ -118,7 +118,7 @@ def main() -> int:
                     help="decoding temperature. Part of the cache signature, "
                          "so changing it is a cache miss by construction.")
     ap.add_argument("--tau", type=float, default=None)
-    ap.add_argument("--summary-cache", default=".conceptdrill_cache/summaries.json")
+    ap.add_argument("--summary-cache", default=str(cache_dir() / "summaries.json"))
     ap.add_argument("--speech", default="",
                     help="path to the la2speech project; renders maths through "
                          "SRE instead of the coarse fallback. Loaded by path, "

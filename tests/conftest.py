@@ -24,6 +24,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 # Must be set before conceptdrill.nlp resolves and caches the backend.
 os.environ.setdefault("CONCEPTDRILL_NLP_BACKEND", "regex")
 
+# The suite's caches go to their own folder under work/: not the hidden
+# `.conceptdrill_cache/` it used to leave in the checkout, and not the real
+# cache, which holds paid LLM summaries a test must not write hash vectors into.
+os.environ["CONCEPTDRILL_CACHE_DIR"] = str(
+    Path(__file__).resolve().parents[1] / "work" / "test-cache")
+
 # Numerics, before numpy is imported. This host computes float32 GEMM wrongly in
 # roughly one process in three, which reaches even the `hash` backend because
 # projection is a numpy matmul. Without this the determinism tests flake.
