@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import blasfix                                                    # noqa: E402
 
 blasfix.apply_env_mitigations()
+from conceptdrill.output import output_root                  # noqa: E402
 
 from conceptdrill.hierarchy.docmodel_tree import load_tree        # noqa: E402
 from conceptdrill.hierarchy.labelcheck import (bare_acronyms,     # noqa: E402
@@ -54,8 +55,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--library", default=str(Path.home() / "pdfdrill-library"))
     ap.add_argument("--fixture", default=str(FIXTURE))
-    ap.add_argument("--out", default=str(Path.home() / "conceptdrill-corpus-llm"
-                                         / "gate5"))
+    ap.add_argument("--out", default=str(output_root() / "gate5"))
     ap.add_argument("--llm-model", default="")
     ap.add_argument("--summary-cache",
                     default=".conceptdrill_cache/summaries.json")

@@ -7,6 +7,8 @@ Subcommands::
     conceptdrill explain  INPUT --text "..." [--top N]
     conceptdrill verify   SIDECAR
     conceptdrill routing
+    conceptdrill sections DOC... [--run ID] [--library DIR] [--output-root DIR]
+    conceptdrill library-copy RUN_DIR [--library DIR]
 
 The flat form from the spec is also accepted and dispatches to `explain`::
 
@@ -19,7 +21,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shlex
+import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Sequence
@@ -27,9 +33,17 @@ from typing import Optional, Sequence
 from . import __version__
 from .candidates import DEFAULT_SOURCES, GENERATORS
 from .embeddings import KNOWN_MODELS
+from .hierarchy.glyphsections import (render_markdown, split_glyphs,
+                                      summarise_sections)
+from .hierarchy.libcopy import SUBFOLDER, copy_to_library, write_manifest
+from .output import DEFAULT_OUTPUT_ROOT, OUTPUT_ROOT_ENV, REPO_ROOT, output_root
 from .routing import routing_table
 from .scoring.metrics import DEFAULT_WEIGHTS
 from .storage import build_payload, sidecar_path, verify_sidecar, write_sidecar
+
+
+#: pdfdrill's library of drilled documents, one folder per document.
+DEFAULT_LIBRARY = Path.home() / "pdfdrill-library"
 
 
 def _timestamp() -> str:
@@ -125,6 +139,28 @@ def build_parser() -> argparse.ArgumentParser:
     p_verify.add_argument("sidecar")
 
     sub.add_parser("routing", help="print the object-type -> model routing table")
+
+    # -- sections / library-copy (T-0117) --------------------------------
+    p_sections = sub.add_parser(
+        "sections", help="abstract, summary and label per section of library "
+                         "documents' glyphs.md; spends NOVITA_API_KEY")
+    p_sections.add_argument("docs", nargs="+", metavar="DOC",
+                            help="document folder names in the library")
+    p_sections.add_argument("--run", help="run id, the run directory's name "
+                            "(default: sections-<UTC timestamp>)")
+    p_sections.add_argument("--library", default=str(DEFAULT_LIBRARY))
+    p_sections.add_argument("--output-root", help="where run directories go "
+                            f"(default: ${OUTPUT_ROOT_ENV} or {DEFAULT_OUTPUT_ROOT})")
+    p_sections.add_argument("--workers", type=int, default=4,
+                            help="documents summarised at once (default: 4)")
+    p_sections.add_argument("--no-library-copy", action="store_true",
+                            help="write the run only, no copy into the library")
+
+    p_copy = sub.add_parser(
+        "library-copy", help="copy a run's per-document results into "
+                             "<library>/<doc>/conceptdrill/<run>/")
+    p_copy.add_argument("run_dir")
+    p_copy.add_argument("--library", default=str(DEFAULT_LIBRARY))
 
     return parser
 
@@ -329,12 +365,102 @@ def cmd_routing(args: argparse.Namespace) -> int:
     return 0
 
 
+def make_section_summarizer():
+    """The LLM summariser `sections` uses. A seam the tests replace."""
+    from .hierarchy.novita import (DEFAULT_MODEL, NovitaSummarizer,
+                                   load_dotenv, make_openai_chat)
+    load_dotenv(str(REPO_ROOT / ".env"))
+    model = os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
+    return NovitaSummarizer(make_openai_chat(model=model), model=model)
+
+
+def _commit() -> Optional[str]:
+    """The checkout's commit, with `-dirty` when it has uncommitted changes."""
+    def git(*a):
+        return subprocess.run(["git", "-C", str(REPO_ROOT), *a],
+                              capture_output=True, text=True)
+    head = git("rev-parse", "--short", "HEAD")
+    if head.returncode:
+        return None
+    dirty = git("status", "--porcelain", "--untracked-files=no").stdout.strip()
+    return head.stdout.strip() + ("-dirty" if dirty else "")
+
+
+def _print_copy(report: dict) -> None:
+    print(f"library copy: {len(report['copied'])} documents into "
+          f"<library>/<doc>/{SUBFOLDER}/{report['run_id']}/")
+    for s in report["skipped"]:
+        print(f"  skipped {s['doc']}: {s['reason']}")
+
+
+def cmd_sections(args: argparse.Namespace) -> int:
+    run_id = args.run or "sections-" + datetime.now(timezone.utc).strftime(
+        "%Y%m%dT%H%M%SZ")
+    library = Path(args.library).expanduser()
+    run_dir = output_root(args.output_root) / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    found, skipped = {}, []
+    for doc in args.docs:
+        glyphs = library / doc / f"{doc}.glyphs.md"
+        if glyphs.is_file():
+            found[doc] = glyphs
+        else:
+            skipped.append({"doc": doc, "reason": "no glyphs.md in the library"})
+    print(f"run {run_id}: {len(found)} documents -> {run_dir}")
+    for s in skipped:
+        print(f"  skipped {s['doc']}: {s['reason']}")
+
+    def one(doc: str) -> dict:
+        record_path = run_dir / f"{doc}.json"
+        if record_path.is_file():        # an interrupted run resumes
+            return json.loads(record_path.read_text())
+        sections = split_glyphs(found[doc].read_text(encoding="utf-8"))
+        record = summarise_sections(doc, sections, make_section_summarizer(),
+                                    log=lambda line: print(line, flush=True))
+        record_path.write_text(json.dumps(record, indent=2, ensure_ascii=False))
+        (run_dir / f"{doc}.md").write_text(render_markdown(record))
+        return record
+
+    failed = []
+    with ThreadPoolExecutor(max(1, args.workers)) as pool:
+        futures = {doc: pool.submit(one, doc) for doc in found}
+    records = {}
+    for doc, fut in futures.items():
+        try:
+            records[doc] = fut.result()
+        except Exception as exc:     # one document failing must not stop the rest
+            failed.append({"doc": doc, "reason": f"{type(exc).__name__}: {exc}"})
+            print(f"  FAILED {doc}: {type(exc).__name__}: {exc}")
+    secs = [s for r in records.values() for s in r["sections"]]
+    print(f"sections: {len(secs)} found, "
+          f"{sum(1 for s in secs if s.get('summary'))} summarised, "
+          f"{sum(1 for s in secs if s.get('skipped'))} too short, "
+          f"{sum(1 for s in secs if s.get('error'))} errors")
+    write_manifest(run_dir, run_id=run_id,
+                   command=shlex.join(["conceptdrill", *args.argv]),
+                   commit=_commit(),
+                   documents={d: [found[d]] for d in records},
+                   skipped=skipped + failed)
+    if not args.no_library_copy:
+        _print_copy(copy_to_library(run_dir, library))
+    return 1 if failed else 0
+
+
+def cmd_library_copy(args: argparse.Namespace) -> int:
+    report = copy_to_library(Path(args.run_dir).expanduser(),
+                             Path(args.library).expanduser())
+    _print_copy(report)
+    return 0
+
+
 COMMANDS = {
     "project": cmd_project,
     "concepts": cmd_concepts,
     "explain": cmd_explain,
     "verify": cmd_verify,
     "routing": cmd_routing,
+    "sections": cmd_sections,
+    "library-copy": cmd_library_copy,
 }
 
 
@@ -350,6 +476,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     parser = build_parser()
     args = parser.parse_args(argv)
+    args.argv = argv
 
     if not args.command:
         parser.print_help()

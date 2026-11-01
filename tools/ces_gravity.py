@@ -39,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import blasfix                                                    # noqa: E402
 
 blasfix.apply_env_mitigations()
+from conceptdrill.output import output_root                  # noqa: E402
 
 import numpy as np                                                # noqa: E402
 
@@ -51,7 +52,7 @@ from conceptdrill.hierarchy.sentences import sentences_from_tree  # noqa: E402
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_dir", nargs="?",
-                    default=str(Path.home() / "conceptdrill-corpus-llm" / "current"))
+                    default=str(output_root() / "current"))
     ap.add_argument("--model", default="modernbert")
     ap.add_argument("--top", type=int, default=30, help="how many to print")
     ap.add_argument("--out", default="")

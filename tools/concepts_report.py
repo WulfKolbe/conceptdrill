@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The concepts a run produced, laid out for a human to read against the source.
 
-    PYTHONPATH=src python3 tools/concepts_report.py ~/conceptdrill-corpus-llm/current
+    PYTHONPATH=src python3 tools/concepts_report.py work/output/current
 
 Every gate so far answers a mechanical question -- is it truncated, is it in
 budget, do the tiers overlap. None of them answers the only question that
@@ -18,13 +18,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from conceptdrill.output import output_root                  # noqa: E402
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_dir", nargs="?",
-                    default=str(Path.home() / "conceptdrill-corpus-llm" / "current"))
+                    default=str(output_root() / "current"))
     ap.add_argument("--source-chars", type=int, default=0,
                     help="truncate span text to this many characters; 0 shows "
                          "all of it, which is the point of the report")

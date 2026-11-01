@@ -11,7 +11,17 @@ python -m pytest -k coverage_curve         # one test
 pip install -e '.[models,nlp,dev]'         # everything
 
 PYTHONPATH=src python -m conceptdrill.cli …   # run without installing
+scripts/install.sh                         # venv/ + `conceptdrill` linked into ~/.local/bin (guarded)
+
+conceptdrill sections DOC… --run ID        # abstract/summary/label per glyphs.md section; spends NOVITA_API_KEY
+conceptdrill library-copy work/output/ID   # copy a run's per-document results into the library
 ```
+
+**Output goes inside the project.** Every run writes under
+`conceptdrill.output.output_root()`: `work/output/` (visible, git-ignored),
+overridden by `CONCEPTDRILL_OUTPUT_ROOT` or a tool's `--out`/`--output-root`.
+No code names a folder outside the project; `test_output_location.py`
+refuses one. The final location is a change to `DEFAULT_OUTPUT_ROOT` only.
 
 There is no linter or type-checker configured.
 
@@ -145,6 +155,11 @@ rather than inventing parallel ones:
   `capability_valid()` re-hashes inputs — do not reinvent staleness.
 - Sidecar writes are additive; preserve keys you do not understand.
 - The corpus basis is **not** per-document and must not live in a drill folder.
+- **Per-document results are copied, not stored, in the library** (T-0117):
+  `<library>/<doc>/conceptdrill/<run>/` gets `<doc>.json`, `<doc>.md` and a
+  `provenance.json` (command, commit, run id, inputs with sha256). Nothing else
+  in the document folder is written, and a document without a folder is
+  skipped, never created. The run under `work/output/` stays the original.
 
 ## Constraints that must hold
 

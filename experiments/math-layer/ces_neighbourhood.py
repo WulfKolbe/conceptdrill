@@ -51,8 +51,9 @@ blasfix.apply_env_mitigations()
 import numpy as np                                                # noqa: E402
 
 from conceptdrill.embeddings import get_embedder                  # noqa: E402
+from conceptdrill.output import output_root                  # noqa: E402
 
-FULL = Path.home() / "conceptdrill-corpus-llm" / "full"
+FULL = output_root() / "full"
 OUT = Path(__file__).resolve().parent / "ces-neighbourhood.json"
 TOP_K = 8
 

@@ -9,7 +9,7 @@ set -u
 cd /home/wkolbe/conceptdrill
 export CONCEPTDRILL_STRICT=1 CONCEPTDRILL_NLP_BACKEND=regex
 SHARD="$1"; CHUNK="${2:-20}"
-OUT="$HOME/conceptdrill-corpus-llm/full"
+OUT="$(PYTHONPATH=src python3 -c 'from conceptdrill.output import output_root; print(output_root())')/full"
 mkdir -p "$OUT"
 mapfile -t DOCS < <(python3 -c "
 import json,sys

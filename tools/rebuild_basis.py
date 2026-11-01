@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 r"""Rebuild a run's basis at other thresholds, without touching the LLM.
 
-    PYTHONPATH=src python3 tools/rebuild_basis.py ~/conceptdrill-corpus-llm/tc50 \
+    PYTHONPATH=src python3 tools/rebuild_basis.py work/output/tc50 \
         --tau 0.65 0.75 0.80 0.85 0.88 0.90 0.92
 
 The concepts are already written in `spans.jsonl`; only the integration step
@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import blasfix                                                    # noqa: E402
 
 blasfix.apply_env_mitigations()
+from conceptdrill.output import output_root                  # noqa: E402
 
 import numpy as np                                                # noqa: E402
 
@@ -41,7 +42,7 @@ from conceptdrill.hierarchy.basis import ConceptBasis             # noqa: E402
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_dir", nargs="?",
-                    default=str(Path.home() / "conceptdrill-corpus-llm" / "current"))
+                    default=str(output_root() / "current"))
     ap.add_argument("--tau", type=float, nargs="+",
                     default=[0.65, 0.75, 0.80, 0.85, 0.88, 0.90, 0.92, 0.95])
     ap.add_argument("--out", default="")

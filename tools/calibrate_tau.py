@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 r"""What merge threshold does THIS embedder need?
 
-    PYTHONPATH=src python3 tools/calibrate_tau.py ~/conceptdrill-corpus-llm/tc50
+    PYTHONPATH=src python3 tools/calibrate_tau.py work/output/tc50
 
 TAU = 0.65 was measured against all-MiniLM-L6-v2, whose off-diagonal cosines
 had median 0.18. A different encoder has a different similarity scale, and the
@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import blasfix                                                    # noqa: E402
 
 blasfix.apply_env_mitigations()
+from conceptdrill.output import output_root                  # noqa: E402
 
 import numpy as np                                                # noqa: E402
 
@@ -46,7 +47,7 @@ from conceptdrill.hierarchy.basis import calibrate                # noqa: E402
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_dir", nargs="?",
-                    default=str(Path.home() / "conceptdrill-corpus-llm" / "current"))
+                    default=str(output_root() / "current"))
     ap.add_argument("--percentile", type=float, default=99.0,
                     help="percentile of the CROSS-document distribution to "
                          "suggest as tau")

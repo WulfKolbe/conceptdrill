@@ -33,6 +33,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import blasfix                                                    # noqa: E402
 
 blasfix.apply_env_mitigations()
+from conceptdrill.output import output_root                  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 BAR = "=" * 74
@@ -97,7 +98,7 @@ def _ces():
     if not path.exists():
         return "failed", "no ces-neighbourhood.json; run ces_neighbourhood.py", None
 
-    full = Path.home() / "conceptdrill-corpus-llm" / "full"
+    full = output_root() / "full"
     vectors, labels = [], []
     for chunk in sorted(full.iterdir()):
         if not ((chunk / "basis.npz").exists() and (chunk / "basis.json").exists()):

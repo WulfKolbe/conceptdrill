@@ -3,7 +3,7 @@
 
     python3 tools/hierarchy_run.py --limit 3
 
-Runs land in `~/conceptdrill-corpus-llm/current/` by default. Not /tmp: a
+Runs land in `work/output/current/` (`conceptdrill.output.output_root()`) by default. Not /tmp: a
 measurement that a reboot can delete is not a record of anything.
 
 Writes `run-<timestamp>-<git-sha>/` per `hierarchy/runlog.py`. Every span in
@@ -30,6 +30,7 @@ import blasfix                                                    # noqa: E402
 import numpy as np                                                # noqa: E402
 
 blasfix.apply_env_mitigations()
+from conceptdrill.output import output_root                  # noqa: E402
 
 from conceptdrill.embeddings import get_embedder                  # noqa: E402
 from conceptdrill.hierarchy.basis import (STRUCTURAL_ROW_ID,      # noqa: E402
@@ -95,7 +96,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--library", default=str(Path.home() / "pdfdrill-library"))
     ap.add_argument("--out",
-                    default=str(Path.home() / "conceptdrill-corpus-llm"),
+                    default=str(output_root()),
                     help="run directories land here; keep them out of /tmp "
                          "so a measurement survives a reboot and is findable")
     ap.add_argument("--limit", type=int, default=3)

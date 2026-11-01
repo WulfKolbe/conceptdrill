@@ -91,7 +91,9 @@ def test_the_sections_command_writes_the_run_and_the_library_copy(
         tmp_path, monkeypatch):
     library = tmp_path / "library"
     (library / "paperA").mkdir(parents=True)
-    (library / "paperA" / "paperA.glyphs.md").write_text(IEEE * 3)
+    # An abstract above MIN_WORDS, so the first section is summarised.
+    long = IEEE.replace("We study labeling", "We study labeling " + "of binary images " * 15)
+    (library / "paperA" / "paperA.glyphs.md").write_text(long)
     monkeypatch.setattr(cli, "make_section_summarizer", lambda: FakeSummarizer())
     out = tmp_path / "output"
     code = cli.main(["sections", "paperA", "missing", "--run", "r1",

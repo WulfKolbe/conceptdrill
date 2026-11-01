@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run every gate against a run directory and write the verdict beside it.
 
-    python3 tools/gate_report.py ~/conceptdrill-corpus-llm/current
+    python3 tools/gate_report.py work/output/current
 
 Writes `gates.json` into the run directory, so a run and its verdict are one
 artefact rather than a directory plus a number someone remembered. Exits
@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import blasfix                                                    # noqa: E402
 
 blasfix.apply_env_mitigations()
+from conceptdrill.output import output_root                  # noqa: E402
 
 from conceptdrill.hierarchy.gates import (gate1_persistence,      # noqa: E402
                                           gate2_basis_text,
@@ -52,7 +53,7 @@ def labels_for(run: Path) -> Path | None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_dir", nargs="?",
-                    default=str(Path.home() / "conceptdrill-corpus-llm" / "current"))
+                    default=str(output_root() / "current"))
     ap.add_argument("--labels", default="")
     args = ap.parse_args()
 

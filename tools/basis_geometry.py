@@ -1,6 +1,6 @@
 r"""The geometry of the basis: scalar products, difference lengths, parallelism.
 
-    PYTHONPATH=src python3 tools/basis_geometry.py ~/conceptdrill-corpus-llm/current
+    PYTHONPATH=src python3 tools/basis_geometry.py work/output/current
 
 Visualisation and dimensionality-reduction methods start from one of two
 matrices, so both are written rather than derived on demand:
@@ -37,6 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import blasfix                                                    # noqa: E402
 
 blasfix.apply_env_mitigations()
+from conceptdrill.output import output_root                  # noqa: E402
 
 import numpy as np                                                # noqa: E402
 
@@ -46,7 +47,7 @@ from conceptdrill.hierarchy.basis import STRUCTURAL_ROW_ID        # noqa: E402
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_dir", nargs="?",
-                    default=str(Path.home() / "conceptdrill-corpus-llm" / "current"))
+                    default=str(output_root() / "current"))
     ap.add_argument("--parallel-at", type=float, default=0.9,
                     help="cosine above which two rows are called near-parallel")
     ap.add_argument("--top", type=int, default=20)
