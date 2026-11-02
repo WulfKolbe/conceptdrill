@@ -161,3 +161,53 @@ def test_the_embeddings_are_cached_on_disk(tmp_path, monkeypatch):
     code, _ = build(tmp_path, ZIB)
     assert code == 0
     assert list((tmp_path / "cache").glob("emb-hash-*.npz"))
+
+
+# --------------------------------------------------------------------------
+# T-0130 change (1): payload travels with its chapter
+# --------------------------------------------------------------------------
+
+def _sec(order, number):
+    from conceptdrill.kb.build import Section
+    return Section(doc="d", order=order, title=f"S{order}", number=number, page=1,
+                   line_start=1, line_end=1, text="x\n", embed_text="x", status="cited")
+
+
+def _item(section, member):
+    from conceptdrill.kb.build import Payload
+    return Payload("d", "code", [member], "code", "c", 1, "c", [], section, "text")
+
+
+def test_a_leaf_citing_a_chapter_carries_its_subsections_payload():
+    """Same paper, same top-level section: chapter 2's leaf carries the
+    payload of 2.1, even in a different leaf; chapter 3's does not travel."""
+    import numpy as np
+    from conceptdrill.kb.build import Leaf, attach_payload
+    s2, s21, s3 = _sec(2, [2]), _sec(3, [2, 1]), _sec(4, [3])
+    p21, p3 = _item("d#3", "obj_a"), _item("d#4", "obj_b")
+    leaves = [Leaf([s2], [], np.zeros(2)), Leaf([s21], [], np.zeros(2)),
+              Leaf([s3], [], np.zeros(2))]
+    attach_payload(leaves, [p21, p3])
+    assert [p.id for p in leaves[0].payload] == ["d#obj_a"]
+    assert [p.id for p in leaves[1].payload] == ["d#obj_a"]
+    assert [p.id for p in leaves[2].payload] == ["d#obj_b"]
+
+
+def test_unnumbered_sections_keep_only_their_own_payload():
+    import numpy as np
+    from conceptdrill.kb.build import Leaf, attach_payload
+    a, b = _sec(0, []), _sec(1, [])
+    leaves = [Leaf([a], [], np.zeros(2)), Leaf([b], [], np.zeros(2))]
+    attach_payload(leaves, [_item("d#1", "obj_c")])
+    assert [p.id for p in leaves[0].payload] == []
+    assert [p.id for p in leaves[1].payload] == ["d#obj_c"]
+
+
+def test_a_chapter_number_from_another_paper_is_another_chapter():
+    import numpy as np
+    from conceptdrill.kb.build import Leaf, attach_payload
+    mine, other = _sec(2, [2]), _sec(2, [2])
+    other.doc = "e"
+    leaves = [Leaf([mine], [], np.zeros(2)), Leaf([other], [], np.zeros(2))]
+    attach_payload(leaves, [_item("d#2", "obj_d")])
+    assert [p.id for p in leaves[1].payload] == []
