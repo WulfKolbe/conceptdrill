@@ -97,7 +97,7 @@ def test_a_document_without_glyphs_is_listed_and_skipped(tmp_path):
     assert code == 0
     manifest = json.loads((kb / "manifest.json").read_text())
     assert manifest["skipped"] == [{"folder": "nowhere",
-                                    "reason": "no nowhere.glyphs.md in the library"}]
+                                    "reason": "no nowhere.glyphs.md or nowhere.md in the library"}]
     assert check(kb).violations == []
 
 

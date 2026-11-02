@@ -573,7 +573,7 @@ def _kb_build(args: argparse.Namespace) -> int:
     docs = list(args.docs)
     if args.docs_file:
         docs += [l.strip() for l in Path(args.docs_file).read_text().splitlines()
-                 if l.strip()]
+                 if l.strip() and not l.strip().startswith("#")]
     if not docs:
         print("conceptdrill: kb build needs at least one DOC or --docs-file",
               file=sys.stderr)

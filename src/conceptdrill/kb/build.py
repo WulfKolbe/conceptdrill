@@ -141,11 +141,13 @@ class Document:
     folder: str
     doc: str
     title: str
-    glyphs: Path
+    glyphs: Path                  # the Markdown input: glyphs.md, else <doc>.md
     glyphs_sha: str
     docmodel: Optional[Path]
     docmodel_sha: Optional[str]
     sections: list[Section]
+    input: str = "glyphs"         # "glyphs" or "md"
+    split: str = "numbered"       # numbered, markdown or page (see glyphsections)
 
 
 def _sha(data: bytes) -> str:
@@ -165,26 +167,36 @@ def _title_of(text: str, folder: str) -> str:
     return folder
 
 
+def markdown_input(library: Path, folder: str) -> tuple[Optional[Path], str]:
+    """A document's Markdown input: its glyphs.md, else its <doc>.md projection
+    (pdfdrill's `md`, MathPix dialect, the owner's choice for documents with no
+    glyphs.md, 2026-11-02). The same heading split reads both."""
+    for name, kind in ((f"{folder}.glyphs.md", "glyphs"), (f"{folder}.md", "md")):
+        if (library / folder / name).is_file():
+            return library / folder / name, kind
+    return None, ""
+
+
 def load_documents(folders: Sequence[str], library: Path) -> tuple[list[Document], list[dict]]:
     present, skipped = [], []
     for folder in dict.fromkeys(folders):            # keep order, drop repeats
-        glyphs = library / folder / f"{folder}.glyphs.md"
-        if glyphs.is_file():
+        if markdown_input(library, folder)[0] is not None:
             present.append(folder)
         else:
-            skipped.append({"folder": folder,
-                            "reason": f"no {folder}.glyphs.md in the library"})
+            skipped.append({"folder": folder, "reason": f"no {folder}.glyphs.md or "
+                                                        f"{folder}.md in the library"})
     slugs = C.doc_slugs(present)
     docs = []
     for folder in sorted(present, key=lambda f: slugs[f]):
-        glyphs = library / folder / f"{folder}.glyphs.md"
+        glyphs, kind = markdown_input(library, folder)
         raw = glyphs.read_bytes()
         text = raw.decode("utf-8")
         lines = text.splitlines()
         dm = library / folder / "model.docmodel.json"
         doc = slugs[folder]
         sections = []
-        for order, s in enumerate(split_glyphs(text)):
+        split = split_glyphs(text)
+        for order, s in enumerate(split):
             body = "\n".join(lines[s["line_start"] - 1:s["line_end"]]) + "\n"
             sections.append(Section(
                 doc=doc, order=order, title=_one_line(s["title"]), number=s["number"],
@@ -193,7 +205,7 @@ def load_documents(folders: Sequence[str], library: Path) -> tuple[list[Document
         docs.append(Document(folder, doc, _title_of(text, folder), glyphs, _sha(raw),
                              dm if dm.is_file() else None,
                              _sha(dm.read_bytes()) if dm.is_file() else None,
-                             sections))
+                             sections, kind, split[0]["split"] if split else "page"))
     return docs, skipped
 
 
@@ -705,6 +717,7 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
     files["kb.json"] = json.dumps({
         "format": C.FORMAT, "kb": name,
         "documents": [{"doc": d.doc, "folder": d.folder, "title": d.title,
+                       "input": d.input, "split": d.split,
                        "glyphs": {"path": str(d.glyphs), "sha256": d.glyphs_sha},
                        "docmodel": ({"path": str(d.docmodel), "sha256": d.docmodel_sha}
                                     if d.docmodel else None)} for d in docs],

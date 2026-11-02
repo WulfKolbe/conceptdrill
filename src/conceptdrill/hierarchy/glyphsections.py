@@ -138,8 +138,12 @@ def split_glyphs(text: str) -> list[dict]:
         elif cur is not None:
             cur["lines"].append(line)
             cur["line_end"] = lineno
+    split = "numbered"
     if not sections:
-        sections = _markdown_split(lines, marked) or _page_split(lines)
+        sections = _markdown_split(lines, marked)
+        split = "markdown"
+        if not sections:
+            sections, split = _page_split(lines), "page"
     for i, s in enumerate(sections):
         own = "\n".join(s["lines"])
         n = tuple(s["number"])
@@ -154,6 +158,7 @@ def split_glyphs(text: str) -> list[dict]:
         s["text"] = own + ("\n\n" + "\n\n".join(kids) if kids else "")
         s["own_words"] = len(own.split())
         s["text_words"] = len(s["text"].split())
+        s["split"] = split     # which rule made it: numbered, markdown or page
         del s["lines"]
     return sections
 
