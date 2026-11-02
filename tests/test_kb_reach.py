@@ -69,3 +69,37 @@ def test_the_stubbed_synthetic_build_reaches_nothing(tmp_path, capsys):
     assert cli.main(["kb", "reach", str(tmp_path / "kb" / "s")]) == 0
     out = capsys.readouterr().out
     assert "reach: 0 of 3 payload items" in out
+
+
+# --------------------------------------------------------------------------
+# A second, independent query source: the paper's title (coordinator, T-0130)
+# --------------------------------------------------------------------------
+
+def _kb2(concepts, leaf_payload, doc_title="Quorp Flux in Dense Marls"):
+    kb = _kb(concepts, leaf_payload)
+    kb["documents"] = [{"doc": "d", "title": doc_title}]
+    kb["payload"][0]["doc"] = "d"
+    return kb
+
+
+def test_a_paper_is_reached_when_an_entry_naming_its_title_carries_its_payload():
+    from conceptdrill.kb.reach import reach_by_title
+    r = reach_by_title(_kb2(["quorp flux"], ["d#obj_1"]))
+    assert (r["documents"], r["reachable"]) == (1, 1)
+
+
+def test_a_paper_is_not_reached_by_an_entry_that_names_something_else():
+    from conceptdrill.kb.reach import reach_by_title
+    r = reach_by_title(_kb2(["Zent steps"], ["d#obj_1"]))
+    assert r["reachable"] == 0 and r["rows"][0]["reason"] == "no index entry names the paper"
+
+
+def test_both_measures_are_reported(tmp_path, capsys):
+    assert cli.main(["kb", "build", "Florp Dynamics (v2)", "--name", "s", "--library",
+                     str(LIB), "--output-root", str(tmp_path), "--llm", "stub",
+                     "--embedder", "hash"]) == 0
+    capsys.readouterr()
+    cli.main(["kb", "reach", str(tmp_path / "kb" / "s")])
+    out = capsys.readouterr().out
+    assert "reach: 0 of 3 payload items" in out
+    assert "reach by paper title: 0 of 1 papers with payload" in out
