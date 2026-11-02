@@ -103,3 +103,22 @@ def test_both_measures_are_reported(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "reach: 0 of 3 payload items" in out
     assert "reach by paper title: 0 of 1 papers with payload" in out
+
+
+def test_naming_a_paper_takes_two_shared_words_or_all_of_a_short_title():
+    """Coordinator, T-0130: "half the content words" let "Quibbling of Florps
+    — pseudocode" name the paper "Florp Dynamics" by one shared word. A
+    title of two or fewer content words needs all of them; a longer one at
+    least two."""
+    from conceptdrill.kb.reach import names_title
+    assert not names_title("Quibbling of Florps — pseudocode", "Florp Dynamics")
+    assert names_title("florp dynamics of marls", "Florp Dynamics")
+    assert not names_title("quorp flux", "Quorp Flux in Dense Marls")  # 2 of 4
+    assert names_title("dense quorp", "Quorp Flux in Dense Marls")
+    assert not names_title("dense", "Quorp Flux in Dense Marls")
+
+
+def test_the_paper_title_measure_uses_the_stricter_rule():
+    from conceptdrill.kb.reach import reach_by_title
+    r = reach_by_title(_kb2(["quorp"], ["d#obj_1"], doc_title="Quorp Flux in Dense Marls"))
+    assert r["reachable"] == 0
