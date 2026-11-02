@@ -596,19 +596,16 @@
   ],
   "by_title": {
     "documents": 18,
-    "reachable": 10,
-    "share": 0.5555555555555556,
+    "reachable": 3,
+    "share": 0.16666666666666666,
     "rows": [
       {
         "doc": "2009tiplabeling",
         "title": "Optimized Block-based Connected Components Labeling with Decision Trees",
         "items": 4,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Decision tree -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-and-drag-compression",
-          "Optimal Decision Tree (ODTree) -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-for-ccl-decision-tables"
-        ]
+        "reachable": false,
+        "reason": "no index entry names the paper",
+        "via": []
       },
       {
         "doc": "2016acivs",
@@ -622,12 +619,9 @@
         "doc": "2016icpr",
         "title": "YACCLAB - Yet Another Connected Components Labeling Benchmark",
         "items": 3,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Connected Component Labeling (CCL) -> yacclab-ccl-benchmarking-framework/yacclab-benchmarking-framework-for-ccl-algorithms",
-          "Connected Component Labeling (CCL) -> yacclab-ccl-benchmarking-framework/yacclab-ccl-benchmarking-framework"
-        ]
+        "reachable": false,
+        "reason": "no index entry names the paper",
+        "via": []
       },
       {
         "doc": "2018icpr",
@@ -673,48 +667,33 @@
         "doc": "2019tip-fosnncz",
         "title": "Spaghetti Labeling: Directed Acyclic Graphs for Block-Based Connected Components Labeling",
         "items": 3,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Connected Component Labeling -> yacclab-ccl-benchmarking-framework/yacclab-benchmarking-for-connected-component-labeling",
-          "Connected Component Labeling (CCL) -> yacclab-ccl-benchmarking-framework/synthetic-ccl-benchmark-dataset-generation"
-        ]
+        "reachable": false,
+        "reason": "no index entry names the paper",
+        "via": []
       },
       {
         "doc": "2019tpds",
         "title": "Optimized Block-Based Algorithms to Label Connected Components on GPUs",
         "items": 5,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Connected Component Labeling -> yacclab-ccl-benchmarking-framework/yacclab-benchmarking-for-connected-component-labeling",
-          "Connected Component Labeling (CCL) -> gpu-union-find-for-connected-component-labeling/gpu-parallel-union-find-for-connected-component-labeling",
-          "Connected Component Labeling (CCL) -> yacclab-ccl-benchmarking-framework/yacclab-benchmarking-framework-for-ccl-algorithms",
-          "Connected Components Labeling (CCL) -> connected-components-labeling-algorithms-and-benchmarking/gpu-based-connected-components-labeling-algorithms"
-        ]
+        "reachable": false,
+        "reason": "no index entry names the paper",
+        "via": []
       },
       {
         "doc": "2021icpr-labeling",
         "title": "A Heuristic-Based Decision Tree for Connected Components Labeling of 3D Volumes",
         "items": 2,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Decision Tree (DTree) -> connected-components-labeling-algorithms-and-benchmarking/two-scan-connected-components-labeling-with-union-find",
-          "Decision Tree Learning for CCL -> decision-tree-optimization-and-drag-compression-for-binary/3d-block-based-mask-decision-tree-learning-for-ccl",
-          "Optimal Decision Tree (ODTree) -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-for-ccl-decision-tables"
-        ]
+        "reachable": false,
+        "reason": "no index entry names the paper",
+        "via": []
       },
       {
         "doc": "2021ivpr",
         "title": "Fast Run-Based Connected Components Labeling for Bitonal Images",
         "items": 6,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Bitonal Image -> connected-components-labeling-algorithms-and-benchmarking/yacclab-benchmark-for-connected-components-labeling",
-          "Connected Components Labeling (CCL) -> connected-components-labeling-algorithms-and-benchmarking/yacclab-benchmark-for-connected-components-labeling"
-        ]
+        "reachable": false,
+        "reason": "no index entry names the paper",
+        "via": []
       },
       {
         "doc": "2021tpami-copqhjy",
@@ -729,7 +708,7 @@
         "title": "A new Direct Connected Component Labeling and Analysis Algorithms for GPUs",
         "items": 2,
         "reachable": false,
-        "reason": "no entry naming the paper points at a leaf with its payload",
+        "reason": "no index entry names the paper",
         "via": []
       },
       {
@@ -744,13 +723,9 @@
         "doc": "ipta-79",
         "title": "Distanceless Label Propagation: an Efficient Direct Connected Component Labeling Algorithm for GPUs",
         "items": 1,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Connected Components Labeling (CCL) -> connected-components-labeling-algorithms-and-benchmarking/distanceless-label-propagation-dlp-for-gpu-based-connected",
-          "Direct Algorithm -> connected-components-labeling-algorithms-and-benchmarking/distanceless-label-propagation-dlp-for-gpu-based-connected",
-          "DLP (Distanceless Label Propagation) -> connected-components-labeling-algorithms-and-benchmarking/distanceless-label-propagation-dlp-for-gpu-based-connected"
-        ]
+        "reachable": false,
+        "reason": "no index entry names the paper",
+        "via": []
       },
       {
         "doc": "oliveira2010uf",

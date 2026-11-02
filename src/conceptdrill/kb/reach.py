@@ -63,12 +63,12 @@ def names_title(entry: str, title: str) -> bool:
     """Does the index entry name the paper? Stricter than `names`: a paper's
     title is long and shares single words with much of its own field, so one
     shared word proves nothing. All content words of a title of two or fewer;
-    at least two of a longer one (coordinator, T-0130)."""
+    of a longer one, at least half and at least two (coordinator, T-0130)."""
     want = content_words(title)
     if not want:
         return False
     shared = len(want & set(_tokens(entry)))
-    return shared == len(want) if len(want) <= 2 else shared >= 2
+    return shared == len(want) if len(want) <= 2 else shared >= max(2, ceil(len(want) / 2))
 
 
 def reach(kb: dict) -> dict:

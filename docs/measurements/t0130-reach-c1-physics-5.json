@@ -64,50 +64,40 @@
   ],
   "by_title": {
     "documents": 4,
-    "reachable": 4,
-    "share": 1.0,
+    "reachable": 0,
+    "share": 0.0,
     "rows": [
       {
         "doc": "s41467-023-39995-0",
         "title": "Strong bulk photovoltaic effect in engineered edge-embedded van der Waals structures",
         "items": 1,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Bulk photovoltaic effect (BPVE) -> advanced-solar-energy-conversion/edge-embedded-vdw-structures-for-bulk-photovoltaic-effect",
-          "Edge-embedded vdW structures -> advanced-solar-energy-conversion/edge-embedded-vdw-structures-for-bulk-photovoltaic-effect"
-        ]
+        "reachable": false,
+        "reason": "no entry naming the paper points at a leaf with its payload",
+        "via": []
       },
       {
         "doc": "s41586-022-04731-z",
         "title": "Article Continuous Bose–Einstein condensation",
         "items": 2,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Bose-Einstein condensate (BEC) -> continuous-bec-of-strontium-atoms/f-test-for-bec-presence-in-time-of-flight-images"
-        ]
+        "reachable": false,
+        "reason": "no entry naming the paper points at a leaf with its payload",
+        "via": []
       },
       {
         "doc": "s42005-020-0326-2",
         "title": "A fully planar solar pumped laser based on a luminescent solar collector",
         "items": 2,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "Luminescent solar collector (LSC) -> advanced-solar-energy-conversion/planar-solar-pumped-laser-with-luminescent-solar-collector",
-          "Solar-pumped laser (SPL) -> advanced-solar-energy-conversion/planar-solar-pumped-laser-with-luminescent-solar-collector"
-        ]
+        "reachable": false,
+        "reason": "no index entry names the paper",
+        "via": []
       },
       {
         "doc": "sciadv-aax7163",
         "title": "How do phonons relax molecular spins?",
         "items": 1,
-        "reachable": true,
-        "reason": null,
-        "via": [
-          "spin-phonon coupling Hamiltonian -> spin-phonon-relaxation-in-molecular-qubits/nonsecular-redfield-equations-for-spin-phonon-relaxation"
-        ]
+        "reachable": false,
+        "reason": "no index entry names the paper",
+        "via": []
       }
     ]
   }
