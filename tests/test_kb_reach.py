@@ -60,15 +60,19 @@ def test_unreachable_when_no_entry_names_the_method():
     assert r["rows"][0]["reason"] == "no index entry names its method"
 
 
-def test_the_stubbed_synthetic_build_reaches_nothing(tmp_path, capsys):
-    """Stub concept names are CONCEPT-n: they name no method. The measure says so."""
+def test_the_stubbed_synthetic_build_reaches_one_item_by_a_generated_entry(tmp_path, capsys):
+    """Stub concept names are CONCEPT-n and name nothing. The one item reached
+    is the equation of chapter 2, through the entry generated for the
+    pseudocode of 2.1 ("Quibbling of Florps - pseudocode"): it names the
+    equation's own section -- the circular kind of reach that T-0130's second
+    measure exists to expose."""
     assert cli.main(["kb", "build", "Florp Dynamics (v2)", "--name", "s", "--library",
                      str(LIB), "--output-root", str(tmp_path), "--llm", "stub",
                      "--embedder", "hash"]) == 0
     capsys.readouterr()
     assert cli.main(["kb", "reach", str(tmp_path / "kb" / "s")]) == 0
     out = capsys.readouterr().out
-    assert "reach: 0 of 3 payload items" in out
+    assert "reach: 1 of 3 payload items" in out
 
 
 # --------------------------------------------------------------------------
@@ -101,5 +105,5 @@ def test_both_measures_are_reported(tmp_path, capsys):
     capsys.readouterr()
     cli.main(["kb", "reach", str(tmp_path / "kb" / "s")])
     out = capsys.readouterr().out
-    assert "reach: 0 of 3 payload items" in out
+    assert "reach: 1 of 3 payload items" in out
     assert "reach by paper title: 0 of 1 papers with payload" in out
