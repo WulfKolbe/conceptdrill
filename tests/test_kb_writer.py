@@ -200,3 +200,19 @@ def test_the_cache_key_parameters_are_the_chats(monkeypatch):
     from conceptdrill.kb.writer import chat_params
     monkeypatch.setenv("NOVITA_API_KEY", "k")
     assert chat_params("m") == novita.make_openai_chat(model="m").params
+
+
+def test_payload_carried_for_the_chapter_is_not_in_the_writer_prompt(tmp_path, monkeypatch):
+    """T-0130: the writer is asked about the payload of the sections a leaf
+    cites only, so carrying a chapter's payload changes no prompt (and no
+    cache key, and costs nothing)."""
+    import numpy as np
+    from conceptdrill.kb.build import Leaf, Payload, Section, Topic, write_prose
+    sec = lambda o, n: Section("d", o, f"S{o}", n, 1, 1, 1, "x\n", "x", "cited")
+    s2, s21 = sec(2, [2]), sec(3, [2, 1])
+    carried = Payload("d", "code", ["obj_a"], "code", "c", 1, "c", [], "d#3", "text")
+    leaf = Leaf([s2], [carried], np.zeros(2))
+    chat = FakeChat()
+    write_prose([Topic([leaf])], LLMWriter(chat, model="fake", cache_path=tmp_path / "w.json"))
+    leaf_prompt = next(u for sys_, u in chat.calls if "KIND: leaf" in sys_)
+    assert "d#obj_a" not in leaf_prompt

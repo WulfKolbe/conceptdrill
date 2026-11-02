@@ -424,6 +424,40 @@ def _sort_key(section: Section) -> tuple:
     return (section.doc, section.order)
 
 
+def attach_payload(leaves: list["Leaf"], payload: list[Payload]) -> None:
+    """Give each leaf the payload of its chapters (T-0130).
+
+    An item placed in a numbered section is carried by every leaf citing a
+    section of the same document with the same top-level number: a paper's
+    method chapter and its subsections hold the method's payload between them,
+    and clustering by text may split them across leaves. An item in an
+    unnumbered section stays with the leaves citing that section only.
+    """
+    sections = {s.id: s for l in leaves for s in l.sections}
+    def chapter(sid: str):
+        s = sections.get(sid)
+        return (s.doc, s.number[0]) if s is not None and s.number else None
+    by_chapter: dict[tuple, list[Payload]] = {}
+    by_section: dict[str, list[Payload]] = {}
+    for p in payload:
+        if p.section is None:
+            continue
+        by_section.setdefault(p.section, []).append(p)
+        ch = chapter(p.section)
+        if ch is not None:
+            by_chapter.setdefault(ch, []).append(p)
+    order = {s.id: (s.doc, s.order) for s in sections.values()}
+    rank = {"equation": 0, "pseudocode": 1, "code": 2}
+    for leaf in leaves:
+        mine: dict[str, Payload] = {}
+        for s in leaf.sections:
+            ch = (s.doc, s.number[0]) if s.number else None
+            for p in (by_chapter.get(ch, []) if ch else by_section.get(s.id, [])):
+                mine[p.id] = p
+        leaf.payload = sorted(mine.values(), key=lambda p: (
+            order.get(p.section, ("", 10 ** 9)), rank[p.kind], p.members[0]))
+
+
 def structure(sections: list[Section], payload: list[Payload],
               embedder_name: str, embedding: Optional[dict] = None) -> list[Topic]:
     usable = [s for s in sections if s.status == "cited"]
@@ -438,17 +472,13 @@ def structure(sections: list[Section], payload: list[Payload],
                          sha256=_sha(np.ascontiguousarray(vectors, dtype="<f8").tobytes()))
     groups = _agglomerate(vectors, [1] * len(usable), max_size=MAX_SECTIONS_PER_LEAF,
                           tau=LEAF_TAU)
-    by_section: dict[str, list[Payload]] = {}
-    for p in payload:
-        if p.section is not None:
-            by_section.setdefault(p.section, []).append(p)
     leaves = []
     for g in groups:
         secs = sorted((usable[i] for i in g), key=_sort_key)
         centroid = vectors[g].mean(axis=0)
         n = np.linalg.norm(centroid)
-        leaves.append(Leaf(secs, [p for s in secs for p in by_section.get(s.id, [])],
-                           centroid / n if n else centroid))
+        leaves.append(Leaf(secs, [], centroid / n if n else centroid))
+    attach_payload(leaves, payload)
     leaves.sort(key=lambda l: _sort_key(l.sections[0]))
     lv = np.vstack([l.vector for l in leaves])
     want = min(len(leaves), max(MIN_TOPICS, min(MAX_TOPICS, round(len(leaves) ** 0.5)),
@@ -488,9 +518,14 @@ def write_prose(topics: list[Topic], writer) -> dict:
     for t_index, topic in enumerate(topics, 1):
         taken_leaves: set[str] = set()
         for leaf in topic.leaves:
+            # The writer sees the payload of the sections it cites. Payload a
+            # leaf carries for its chapter (attach_payload) is added by code and
+            # left out here, so carrying it changes no prompt and costs nothing.
+            own = {s.id for s in leaf.sections}
             leaf.prose = writer.leaf(
                 [{"id": s.id, "title": s.title, "text": s.text} for s in leaf.sections],
-                [{"id": p.id, "kind": p.kind, "content": p.content} for p in leaf.payload])
+                [{"id": p.id, "kind": p.kind, "content": p.content}
+                 for p in leaf.payload if p.section in own])
             leaf.title = _one_line(leaf.prose["title"]) or "Untitled"
             leaf.slug = _unique(C.slugify(leaf.title), taken_leaves)
         topic.prose = writer.topic([{"title": l.title, "summary": l.prose["summary"]}
