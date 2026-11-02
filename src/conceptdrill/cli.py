@@ -187,6 +187,9 @@ def build_parser() -> argparse.ArgumentParser:
                             help="rebuild an existing knowledge base of that name")
     p_kb_build.add_argument("--model", help="the writer's model (default: "
                             "$NOVITA_MODEL or the package default)")
+    p_kb_build.add_argument("--cache-only", action="store_true",
+                            help="serve every writer reply from the cache; a miss "
+                                 "exits 1, names the entry and spends nothing")
     p_kb_build.add_argument("--estimate", action="store_true",
                             help="run every stage, call no model, write nothing; "
                                  "print the writer's calls, tokens and cost")
@@ -509,19 +512,34 @@ def cmd_kb(args: argparse.Namespace) -> int:
 
 def make_kb_writer(args: argparse.Namespace):
     """The real writer for `kb build --llm novita`. A seam the tests replace."""
-    from .hierarchy.novita import DEFAULT_MODEL, load_dotenv, make_openai_chat
-    from .kb.writer import LLMWriter
+    from .hierarchy import novita
+    from .kb.writer import LLMWriter, chat_params
     from .output import cache_dir
-    load_dotenv(str(REPO_ROOT / ".env"))
-    model = args.model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
-    return LLMWriter(make_openai_chat(model=model), model=model,
+    model = _writer_model(args)
+    def chat():
+        # Only at the first cache miss: a build served from the cache needs
+        # no key, and --cache-only never gets here.
+        novita.load_dotenv(str(REPO_ROOT / ".env"))
+        return novita.make_openai_chat(model=model)
+    return LLMWriter(model=model, params=chat_params(model), chat_factory=chat,
+                     cache_only=args.cache_only,
                      cache_path=cache_dir() / "kb-writer.json")
 
 
 def _writer_model(args: argparse.Namespace) -> str:
-    from .hierarchy.novita import DEFAULT_MODEL, load_dotenv
-    load_dotenv(str(REPO_ROOT / ".env"))
-    return args.model or os.environ.get("NOVITA_MODEL") or DEFAULT_MODEL
+    """--model, else NOVITA_MODEL from the environment or the project's .env
+    (read for the model name only, never for the key), else the default."""
+    from .hierarchy.novita import DEFAULT_MODEL
+    if args.model:
+        return args.model
+    if os.environ.get("NOVITA_MODEL"):
+        return os.environ["NOVITA_MODEL"]
+    env = REPO_ROOT / ".env"
+    if env.is_file():
+        for line in env.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith("NOVITA_MODEL="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return DEFAULT_MODEL
 
 
 def _kb_build(args: argparse.Namespace) -> int:

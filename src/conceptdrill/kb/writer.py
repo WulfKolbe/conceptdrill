@@ -38,6 +38,18 @@ COMPLETION_PER_CALL = 5500
 ChatFn = Callable[[str, str], str]
 
 
+def chat_params(model: str) -> dict:
+    """The parameters `make_openai_chat(model=model)` reports as `.params`.
+
+    The writer's cache key includes them, and it must know them before any
+    chat exists: a replay from the cache needs no key, so no chat is made.
+    A test holds this equal to the chat's own.
+    """
+    from ..hierarchy.novita import DEFAULT_MAX_TOKENS, DEFAULT_REASONING_EFFORT
+    return {"model": model, "temperature": 0.2, "max_tokens": DEFAULT_MAX_TOKENS,
+            "reasoning_effort": DEFAULT_REASONING_EFFORT}
+
+
 def prompt(kind: str) -> str:
     return resources.files("conceptdrill.kb").joinpath(
         "prompts", f"{kind}.md").read_text(encoding="utf-8")
@@ -88,10 +100,20 @@ def _valid(kind: str, reply: Optional[dict]) -> Optional[dict]:
 
 
 class LLMWriter:
+    """`chat` may be given, or made by `chat_factory` at the first cache miss
+    -- so a build served wholly from the cache needs no key. With
+    `cache_only`, a miss is an error naming the entry, and nothing is spent."""
     stub = False
 
-    def __init__(self, chat: ChatFn, *, model: str, cache_path: Path) -> None:
+    def __init__(self, chat: Optional[ChatFn] = None, *, model: str, cache_path: Path,
+                 params: Optional[dict] = None,
+                 chat_factory: Optional[Callable[[], ChatFn]] = None,
+                 cache_only: bool = False) -> None:
         self.chat = chat
+        self.chat_factory = chat_factory
+        self.cache_only = cache_only
+        self.params = params if params is not None else \
+            getattr(chat, "params", {"model": model})
         self.model = model
         self.cache_path = Path(cache_path)
         self._cache: dict = {}
@@ -101,17 +123,35 @@ class LLMWriter:
 
     @property
     def usage(self) -> dict:
+        if self.chat is None:
+            return {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
         spent = getattr(self.chat, "usage", None)
         return dict(spent) if spent is not None else dict(self._calls)
+
+    @staticmethod
+    def _what(data: dict) -> str:
+        items = data.get("sections") or data.get("leaves") or data.get("topics") or []
+        return ", ".join(str(i.get("id", i.get("title", "?"))) for i in items)
 
     def _ask(self, kind: str, data: dict) -> dict:
         system = prompt(kind)
         user = json.dumps(data, ensure_ascii=False, indent=1)
-        params = getattr(self.chat, "params", {"model": self.model})
-        key = hashlib.sha256(json.dumps([self.model, params, system, user],
+        key = hashlib.sha256(json.dumps([self.model, self.params, system, user],
                                         sort_keys=True).encode()).hexdigest()
         if key in self._cache:
             return self._cache[key]
+        if self.cache_only:
+            raise BuildError(f"cache miss for the {kind} of {self._what(data)} "
+                             f"(key {key[:12]}); --cache-only spends nothing")
+        if self.chat is None:
+            if self.chat_factory is None:
+                raise BuildError(f"cache miss for the {kind} of {self._what(data)} "
+                                 f"and no way to make a chat")
+            try:
+                self.chat = self.chat_factory()
+            except RuntimeError as exc:      # no key: fail before any call
+                raise BuildError(f"cache miss for the {kind} of {self._what(data)}: "
+                                 f"{exc}") from exc
         for _ in range(2):
             self._calls["calls"] += 1
             reply = _valid(kind, parse_reply(self.chat(system, user) or ""))
@@ -120,7 +160,7 @@ class LLMWriter:
                 self.flush()
                 return reply
         raise BuildError(f"the writer gave no usable {kind} reply twice for "
-                         f"{', '.join(s.get('id', s.get('title', '?')) for s in data.get('sections', data.get('leaves', data.get('topics', []))))}")
+                         f"{self._what(data)}")
 
     def leaf(self, sections, payload):
         return self._ask("leaf", leaf_input(sections, payload))
