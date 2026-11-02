@@ -214,6 +214,7 @@ class Payload:
     section: Optional[str] = None
     placed_by: Optional[str] = None
     reason: Optional[str] = None
+    caption: Optional[str] = None
 
     @property
     def id(self) -> str:
@@ -255,7 +256,8 @@ def extract_payload(doc: Document, verified: set[str]) -> list[Payload]:
             code = "\n".join(o["props"].get("code", "") for o in run)
             items.append(Payload(doc.doc, "code", [o["id"] for o in run], "code", code,
                                  _page(run[0]["props"]), _probe(code),
-                                 ["line numbers not separated"]))
+                                 ["line numbers not separated"],
+                                 caption=run[0]["props"].get("caption") or None))
             run.clear()
     for o in objects:
         if o.get("type") != "CodeListing":
@@ -300,7 +302,8 @@ def extract_payload(doc: Document, verified: set[str]) -> list[Payload]:
             continue
         items.append(Payload(doc.doc, "equation", [o["id"]], "latex", latex,
                              _page(o["props"]), latex.strip(),
-                             ["verified" if o["id"] in verified else "unverified"]))
+                             ["verified" if o["id"] in verified else "unverified"],
+                             caption=o["props"].get("caption") or None))
     return items
 
 
@@ -422,6 +425,33 @@ class Topic:
 
 def _sort_key(section: Section) -> tuple:
     return (section.doc, section.order)
+
+
+def entry_name(section: Section, doc_sections: list[Section], kind: str, *,
+               caption: Optional[str]) -> Optional[str]:
+    """The index entry for a payload item placed in `section` (T-0130).
+
+    Named from the item's own caption or listing label; else from the nearest
+    preceding numbered subsection of the same chapter; else from the chapter's
+    title. Never from `section`'s own title -- that is what `kb reach` queries
+    with -- and never from the paper's title, its second query. None when no
+    such name exists or it names nothing.
+    """
+    from .reach import content_words, method_name
+    if caption and content_words(caption):
+        return f"{_one_line(caption)} — {kind}"
+    if not section.number:
+        return None
+    chapter = section.number[0]
+    before = [s for s in doc_sections if s.order < section.order and s.number
+              and s.number[0] == chapter]
+    subs = [s for s in before if len(s.number) >= 2]
+    heads = [s for s in before if len(s.number) == 1]
+    source = subs[-1] if subs else (heads[-1] if heads else None)
+    if source is None:
+        return None
+    name = method_name(source.title)
+    return f"{name} — {kind}" if content_words(name) else None
 
 
 def attach_payload(leaves: list["Leaf"], payload: list[Payload]) -> None:
@@ -576,9 +606,18 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
     by_id = {s.id: s for s in sections}
 
     # leaves
+    doc_sections = {d.doc: d.sections for d in docs}
     for leaf in leaves:
         concepts = [_one_line(c["name"]) for c in leaf.prose.get("concepts", [])
                     if _one_line(c["name"])]
+        # One index entry per payload item this leaf's own sections hold.
+        own = {s.id: s for s in leaf.sections}
+        for p in leaf.payload:
+            if p.section in own:
+                entry = entry_name(own[p.section], doc_sections[p.doc], p.kind,
+                                   caption=p.caption)
+                if entry and entry not in concepts:
+                    concepts.append(entry)
         def payload_lines(inline: bool) -> str:
             out = []
             for p in leaf.payload:
