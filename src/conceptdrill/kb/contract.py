@@ -24,7 +24,7 @@ SLUG_RE = re.compile(rf"^{SLUG}$")
 SLUG_MAX = 60
 DOC_SLUG_MAX = 56
 
-#: The files at the root.
+#: The files at the root (kb/1; kb/2 adds SOURCES.md, see Spec.root_files).
 ROOT_FILES = ["README.md", "INDEX.md", "GLOSSARY.md", "kb.json", "manifest.json"]
 
 #: The measured tokens-per-word of the project (summarize.TOKENS_PER_WORD).
@@ -61,6 +61,7 @@ class Spec:
     max_areas: Optional[int] = None
     max_topics_per_area: Optional[int] = None
     max_leaves_per_topic: int = 8
+    root_files: tuple = tuple(ROOT_FILES)
     fences_allowed: frozenset = field(default_factory=lambda: frozenset({("leaf", "Payload")}))
 
 
@@ -146,13 +147,17 @@ KB2 = Spec(
     required_dirs=["index", "glossary", "areas", "sources"],
     headings={"readme": ["Purpose", "Areas", "How to read this knowledge base", "Sources"],
               "area": ["Purpose", "Topics", "How the topics differ", "Related areas"],
+              "sources_list": ["Documents"],
               **_COMMON_HEADINGS},
-    frontmatter={"readme": ["format", "kb", "title", "documents", "areas"],
+    # The document list is SOURCES.md's, not the README's: 87 documents put
+    # the README over its budget (owner's choice, 2026-11-02).
+    frontmatter={"readme": ["format", "kb", "title", "areas"],
+                 "sources_list": ["format", "kb", "documents"],
                  # No `concepts`: an area's union overflowed its budget (one area of 66 leaves: 275
                  # names, 1836 tokens); topics, leaves and the index carry them.
                  "area": ["format", "id", "title", "topics", "related"],
                  **_COMMON_FRONT},
-    budgets={**_COMMON_BUDGETS, "area": 1500},
+    budgets={**_COMMON_BUDGETS, "area": 1500, "sources_list": 4000},
     protocol="""\
 1. Read this file and INDEX.md. Do not open other files yet.
 2. Pick the one area, or the one index entry, that matches the question.
@@ -161,8 +166,10 @@ KB2 = Spec(
 5. Open a payload file only when the exact equation, code or pseudocode is needed.
 6. Follow See also, Related topics or Related areas only if the answer is still missing.
 7. Open a section's text (text/<doc>/<order>.txt) only when the summary is not enough.
-8. Open sources/<doc>.md only to cite or check where a statement comes from.""",
+8. Open SOURCES.md or sources/<doc>.md only to cite or check where a statement comes from.""",
     line_forms=_forms("../../../../", _KB2_LEAF_DIR, {
+        ("readme", "Sources"): r"^- \[Sources\]\(SOURCES\.md\) — [0-9]+ documents?$",
+        ("sources_list", "Documents"): rf"^- \[{SLUG}\]\(sources/{SLUG}\.md\) — .*$",
         ("readme", "Areas"): rf"^- \[.+\]\(areas/{_NN}-{SLUG}/README\.md\) — .+$",
         ("area", "Topics"): rf"^- \[.+\]\(topics/{_NN}-{SLUG}/README\.md\) — .+$",
         ("area", "Related areas"): rf"^- \[.+\]\(\.\./{_NN}-{SLUG}/README\.md\)$",
@@ -173,6 +180,7 @@ KB2 = Spec(
     schema="kb-2.schema.json",
     max_areas=12,
     max_topics_per_area=12,
+    root_files=tuple(ROOT_FILES[:3] + ["SOURCES.md"] + ROOT_FILES[3:]),
 )
 
 SPECS = {"kb/1": KB1, "kb/2": KB2}

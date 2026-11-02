@@ -807,16 +807,20 @@ def render(docs: list[Document], areas: list[Area], payload: list[Payload],
 
     # README
     kb_title = _one_line(kb_prose.get("title", "")) or name
+    files["SOURCES.md"] = _doc_md("sources_list", {
+        "format": S.format, "kb": name, "documents": len(docs)}, "# Sources", [
+        ("Documents", _bullets([f"- [{d.doc}](sources/{d.doc}.md) — {d.title}" for d in docs]))])
     files["README.md"] = _doc_md("readme", {
         "format": S.format, "kb": name, "title": kb_title,
-        "documents": [d.doc for d in docs], "areas": [a.slug for a in areas]},
+        "areas": [a.slug for a in areas]},
         f"# {kb_title}", [
         ("Purpose", _prose(kb_prose.get("purpose", ""))),
         ("Areas", _bullets([f"- [{_one_line(a.prose['title'])}]({a.folder}/README.md) — "
                             f"{_one_line(a.prose.get('purpose', '')) or 'None.'}"
                             for a in areas])),
         ("How to read this knowledge base", S.protocol),
-        ("Sources", _bullets([f"- [{d.doc}](sources/{d.doc}.md) — {d.title}" for d in docs]))])
+        ("Sources", f"- [Sources](SOURCES.md) — {len(docs)} "
+                    f"document{'' if len(docs) == 1 else 's'}")])
 
     # kb.json
     files["kb.json"] = json.dumps({

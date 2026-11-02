@@ -25,6 +25,10 @@ lines. A form that holds only for small sets is not a fixed form. kb/2 adds
 one level, **always present**, so the tree has the same shape for every set:
 a small set gets exactly one area.
 
+The root README lists no documents: `SOURCES.md` does, as `INDEX.md` lists
+the index. The 87-paper set's README was 1,533 tokens over its 1,500 budget
+from its document list alone (owner's choice, 2026-11-02).
+
 ## 1. Words used here
 
 - **document** — one input from the library. Its `folder` is the library
@@ -64,6 +68,7 @@ Exactly these entries, nothing else:
 ├── README.md
 ├── INDEX.md
 ├── GLOSSARY.md
+├── SOURCES.md
 ├── kb.json
 ├── manifest.json
 ├── index/
@@ -109,7 +114,8 @@ absent.
 
 | file | keys |
 |---|---|
-| `README.md` | `format: kb/2`, `kb`, `title`, `documents`, `areas` |
+| `README.md` | `format: kb/2`, `kb`, `title`, `areas` |
+| `SOURCES.md` | `format`, `kb`, `documents` (int) |
 | `INDEX.md` | `format`, `kb`, `letters` |
 | `GLOSSARY.md` | `format`, `kb`, `letters` |
 | `index/<l>.md` | `format`, `kb`, `letter`, `entries` (int) |
@@ -119,7 +125,7 @@ absent.
 | `areas/NN-<a>/topics/NN-<t>/<s>.md` (leaf) | `format`, `id`, `title`, `topic`, `concepts`, `sources`, `payload`, `related` |
 | `sources/<doc>.md` | `format`, `doc`, `title`, `sections` (int) |
 
-- `documents`, `sources`: document names / section ids that exist in `kb.json`.
+- `sources`: section ids that exist in `kb.json`.
 - `areas`, `topics`, `leaves`, `related`, `topic`: area, topic or leaf ids that exist.
 - `payload`: payload ids that exist.
 - An area README names no `concepts`: the union over up to 96 leaves does not
@@ -132,7 +138,7 @@ absent.
 
 After the frontmatter: one `# <title>` line, equal to the frontmatter
 `title` (`INDEX.md`: `# Index`; `GLOSSARY.md`: `# Glossary`; letter files:
-`# Index: <L>` / `# Glossary: <L>`, with `other` written `Other`), then exactly these `##` headings, in this order, each
+`# Index: <L>` / `# Glossary: <L>`, with `other` written `Other`; `SOURCES.md`: `# Sources`), then exactly these `##` headings, in this order, each
 present once. A heading with nothing to say holds the single line `None.`
 No other `#` or `##` heading appears; `###` and below are free inside a section.
 
@@ -141,6 +147,7 @@ No other `#` or `##` heading appears; `###` and below are free inside a section.
 | `README.md` | Purpose · Areas · How to read this knowledge base · Sources |
 | `INDEX.md` | Letters |
 | `GLOSSARY.md` | Letters |
+| `SOURCES.md` | Documents |
 | `index/<l>.md` | Index |
 | `glossary/<l>.md` | Glossary |
 | area `README.md` | Purpose · Topics · How the topics differ · Related areas |
@@ -158,7 +165,8 @@ These sections hold only lines of the given form (plus blank lines), or `None.`:
 | where | line form |
 |---|---|
 | README · Areas | `- [<area title>](areas/NN-<a>/README.md) — <one line>` |
-| README · Sources | `- [<doc>](sources/<doc>.md) — <document title>` |
+| README · Sources | `- [Sources](SOURCES.md) — <n> documents` (the one line) |
+| SOURCES · Documents | `- [<doc>](sources/<doc>.md) — <document title>` |
 | INDEX · Letters, GLOSSARY · Letters | `- [<L>](index/<l>.md) — <n> entries` (glossary: `glossary/<l>.md`, `terms`) |
 | index/`<l>` · Index | `- <concept> → [<leaf title>](../areas/NN-<a>/topics/NN-<t>/<s>.md)` |
 | glossary/`<l>` · Glossary | `- **<term>** — <definition> → [<leaf title>](../areas/NN-<a>/topics/NN-<t>/<s>.md)` |
@@ -183,6 +191,7 @@ exact content, when the file is at most 40 lines.
 - Every link is a relative Markdown link to a file inside the knowledge base,
   and resolves. No absolute paths, no URLs, no links out of the tree.
 - Every area README is linked from the root README.
+- Every `sources/<doc>.md` is linked from `SOURCES.md`.
 - Every topic README is linked from its area README.
 - Every leaf is linked from its topic README and from at least one index entry.
 - Every payload file is linked from at least one leaf.
@@ -202,7 +211,7 @@ exact content, when the file is at most 40 lines.
 - **Budgets**, in tokens counted as words × 1.441: root README ≤ 1500, area
   README ≤ 1500, topic README ≤ 1500, leaf ≤ 2500 (fenced payload blocks
   counted), each letter file ≤ 4000, `INDEX.md`/`GLOSSARY.md` ≤ 500,
-  `sources/<doc>.md` ≤ 4000. A build over budget fails; it never changes the
+  `SOURCES.md` ≤ 4000 (about 200 documents), `sources/<doc>.md` ≤ 4000. A build over budget fails; it never changes the
   tree.
 - **Provenance.** `manifest.json` names the command, the conceptdrill commit,
   every input path with its sha256, every requested document it skipped with
@@ -230,7 +239,7 @@ The schemas fix shapes; `kb check` also enforces, each a violation when broken:
    `sources`, `payload`, `related`; a topic's `title`, `leaves`, `concepts`
    (the union of its leaves'), `related` (the topics of its leaves' related
    leaves, other than itself); an area's `title`, `topics`, `related` (the
-   areas of its leaves' related leaves, other than itself); the README's `documents` and `areas`; a source file's
+   areas of its leaves' related leaves, other than itself); the README's `areas`; `SOURCES.md`'s `documents` (the document count, also its line count); a source file's
    `title` and `sections` (its section count).
 7. Each document's sections have orders 0..n-1 without a gap, and every
    section has its text file, whose sha256, word count and NUL count `kb.json`
@@ -256,7 +265,7 @@ The root README's `## How to read this knowledge base` is exactly:
 5. Open a payload file only when the exact equation, code or pseudocode is needed.
 6. Follow See also, Related topics or Related areas only if the answer is still missing.
 7. Open a section's text (text/<doc>/<order>.txt) only when the summary is not enough.
-8. Open sources/<doc>.md only to cite or check where a statement comes from.
+8. Open SOURCES.md or sources/<doc>.md only to cite or check where a statement comes from.
 ```
 
 An index entry leads straight to a leaf, so INDEX → letter file → leaf →

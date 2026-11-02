@@ -91,6 +91,8 @@ def kind_of(rel: str, spec: C.Spec = C.CURRENT) -> Optional[str]:
         return "index"
     if rel == "GLOSSARY.md":
         return "glossary"
+    if rel == "SOURCES.md" and spec is C.KB2:
+        return "sources_list"
     if len(parts) == 2 and parts[0] == "index":
         return "index_letter"
     if len(parts) == 2 and parts[0] == "glossary":
@@ -175,6 +177,8 @@ def check_md(md: MdFile, problems: list[str], spec: C.Spec = C.CURRENT) -> None:
         expected = C.letter_title(kind, letter)
     elif kind in ("index", "glossary"):
         expected = "# Index" if kind == "index" else "# Glossary"
+    elif kind == "sources_list":
+        expected = "# Sources"
     else:
         expected = f"# {(md.front or {}).get('title', '')}"
     if md.title != expected:
@@ -218,8 +222,9 @@ def check_md(md: MdFile, problems: list[str], spec: C.Spec = C.CURRENT) -> None:
     used = C.tokens(md.text)
     if budget and used > budget:
         problems.append(f"{rel}: {used} tokens, budget {budget}")
-    if kind in ("index_letter", "glossary_letter") and md.front:
-        key = "entries" if kind == "index_letter" else "terms"
+    if kind in ("index_letter", "glossary_letter", "sources_list") and md.front:
+        key = {"index_letter": "entries", "glossary_letter": "terms",
+               "sources_list": "documents"}[kind]
         lines = [l for l in (md.sections[0][1] if md.sections else []) if l.strip()]
         count = 0 if lines == ["None."] else len(lines)
         if md.front.get(key) != count:
@@ -255,7 +260,7 @@ def check_links(root: Path, md: MdFile, problems: list[str],
 def check_tree(root: Path, problems: list[str], spec: C.Spec = C.CURRENT) -> list[str]:
     """Shape of the folder. Returns every file's relative path."""
     files: list[str] = []
-    for name in C.ROOT_FILES:
+    for name in spec.root_files:
         if not (root / name).is_file():
             problems.append(f"{name}: missing")
     for name in spec.required_dirs:
@@ -280,7 +285,7 @@ def check_tree(root: Path, problems: list[str], spec: C.Spec = C.CURRENT) -> lis
         files.append(rel)
         if not _file_allowed(parts, spec):
             problems.append(f"{rel}: not in the {spec.format} tree")
-        elif rel not in C.ROOT_FILES and rel.lower() != rel and parts[-1] != "README.md":
+        elif rel not in spec.root_files and rel.lower() != rel and parts[-1] != "README.md":
             problems.append(f"{rel}: not lower case")
     if spec is C.KB1:
         _numbered(root, "topics", "topic", None, problems)
@@ -339,7 +344,7 @@ def _dir_allowed(parts: list[str], spec: C.Spec = C.CURRENT) -> bool:
 
 def _file_allowed(parts: list[str], spec: C.Spec = C.CURRENT) -> bool:
     if len(parts) == 1:
-        return parts[0] in C.ROOT_FILES
+        return parts[0] in spec.root_files
     head = parts[0]
     if head in ("index", "glossary") and len(parts) == 2:
         return parts[1][:-3] in C.LETTERS and parts[1].endswith(".md")
@@ -644,11 +649,14 @@ def check_against_kb(kb: dict, mds: dict[str, MdFile], graph: dict[str, set[str]
                 differ(md, key, want)
         elif md.kind == "readme":
             differ(md, "kb", kb["kb"])
-            differ(md, "documents", [d["doc"] for d in kb["documents"]])
             if spec is C.KB1:
+                differ(md, "documents", [d["doc"] for d in kb["documents"]])
                 differ(md, "topics", [t["id"] for t in kb["topics"]])
             else:
                 differ(md, "areas", [a["id"] for a in kb.get("areas", [])])
+        elif md.kind == "sources_list":
+            differ(md, "kb", kb["kb"])
+            differ(md, "documents", len(kb["documents"]))
         elif md.kind == "source":
             doc = Path(rel).stem
             d = next((x for x in kb["documents"] if x["doc"] == doc), None)
@@ -670,6 +678,9 @@ def check_against_kb(kb: dict, mds: dict[str, MdFile], graph: dict[str, set[str]
     for d in kb["documents"]:
         if f"sources/{d['doc']}.md" not in mds:
             problems.append(f"sources/{d['doc']}.md: missing")
+        elif spec is C.KB2 and "SOURCES.md" not in {
+                src for src, ts in graph.items() if f"sources/{d['doc']}.md" in ts}:
+            problems.append(f"sources/{d['doc']}.md: not linked from SOURCES.md")
 
     linked_from = lambda target: {src for src, ts in graph.items() if target in ts}
     leaf_paths = {l["path"] for l in kb["leaves"]}
@@ -749,7 +760,7 @@ def form_of(root: Path) -> dict:
         kinds.setdefault(kind, set()).add(
             (tuple(h for h, _ in md.sections), tuple(md.front or ())))
     present = sorted(p.name for p in root.iterdir()
-                     if p.name in C.ROOT_FILES + spec.required_dirs + ["text"])
+                     if p.name in list(spec.root_files) + spec.required_dirs + ["text"])
     letters = {folder: sorted(p.stem for p in (root / folder).glob("*.md"))
                for folder in ("index", "glossary")}
     return {"format": spec.format, "root": present, "letters": letters,
