@@ -742,9 +742,7 @@ def render(docs: list[Document], areas: list[Area], payload: list[Payload],
         rel_areas = sorted({r.area for l in a.leaves for r in l.related if r.area != a.slug})
         files[f"{a.folder}/README.md"] = _doc_md("area", {
             "format": S.format, "id": a.slug, "title": _one_line(a.prose["title"]),
-            "topics": [t.id for t in a.topics],
-            "concepts": sorted({c for l in a.leaves for c in l.concepts}),
-            "related": rel_areas}, f"# {_one_line(a.prose['title'])}", [
+            "topics": [t.id for t in a.topics], "related": rel_areas}, f"# {_one_line(a.prose['title'])}", [
             ("Purpose", _prose(a.prose.get("purpose", ""))),
             ("Topics", _bullets([
                 f"- [{_one_line(t.prose['title'])}]({_rel(a.folder, t.folder + '/README.md')})"

@@ -638,10 +638,8 @@ def check_against_kb(kb: dict, mds: dict[str, MdFile], graph: dict[str, set[str]
             if area is None:
                 problems.append(f"{rel}: area not in kb.json")
                 continue
-            concepts = sorted({c for l in kb["leaves"] if area_key(l) == area["id"]
-                               for c in l["concepts"]})
             for key, want in (("id", area["id"]), ("title", area["title"]),
-                              ("topics", area["topics"]), ("concepts", concepts),
+                              ("topics", area["topics"]),
                               ("related", _related_groups(kb, area_key, area["id"]))):
                 differ(md, key, want)
         elif md.kind == "readme":

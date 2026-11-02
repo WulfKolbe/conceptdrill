@@ -114,7 +114,7 @@ absent.
 | `GLOSSARY.md` | `format`, `kb`, `letters` |
 | `index/<l>.md` | `format`, `kb`, `letter`, `entries` (int) |
 | `glossary/<l>.md` | `format`, `kb`, `letter`, `terms` (int) |
-| `areas/NN-<a>/README.md` | `format`, `id`, `title`, `topics`, `concepts`, `related` |
+| `areas/NN-<a>/README.md` | `format`, `id`, `title`, `topics`, `related` |
 | `areas/NN-<a>/topics/NN-<t>/README.md` | `format`, `id`, `title`, `leaves`, `concepts`, `related` |
 | `areas/NN-<a>/topics/NN-<t>/<s>.md` (leaf) | `format`, `id`, `title`, `topic`, `concepts`, `sources`, `payload`, `related` |
 | `sources/<doc>.md` | `format`, `doc`, `title`, `sections` (int) |
@@ -122,6 +122,9 @@ absent.
 - `documents`, `sources`: document names / section ids that exist in `kb.json`.
 - `areas`, `topics`, `leaves`, `related`, `topic`: area, topic or leaf ids that exist.
 - `payload`: payload ids that exist.
+- An area README names no `concepts`: the union over up to 96 leaves does not
+  fit its budget (ccl-21, one area of 66 leaves: 275 names, 1,836 tokens).
+  Topic READMEs, leaves and the index carry concepts.
 - **Ids nest.** An area id is its slug; a topic id is `<area slug>/<topic
   slug>`; a leaf id is `<area slug>/<topic slug>/<leaf slug>`.
 
@@ -226,9 +229,8 @@ The schemas fix shapes; `kb check` also enforces, each a violation when broken:
 6. Every frontmatter equals `kb.json`: a leaf's `title`, `topic`, `concepts`,
    `sources`, `payload`, `related`; a topic's `title`, `leaves`, `concepts`
    (the union of its leaves'), `related` (the topics of its leaves' related
-   leaves, other than itself); an area's `title`, `topics`, `concepts` (the
-   union of its topics'), `related` (the areas of its leaves' related leaves,
-   other than itself); the README's `documents` and `areas`; a source file's
+   leaves, other than itself); an area's `title`, `topics`, `related` (the
+   areas of its leaves' related leaves, other than itself); the README's `documents` and `areas`; a source file's
    `title` and `sections` (its section count).
 7. Each document's sections have orders 0..n-1 without a gap, and every
    section has its text file, whose sha256, word count and NUL count `kb.json`

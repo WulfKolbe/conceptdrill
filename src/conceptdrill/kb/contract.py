@@ -148,7 +148,9 @@ KB2 = Spec(
               "area": ["Purpose", "Topics", "How the topics differ", "Related areas"],
               **_COMMON_HEADINGS},
     frontmatter={"readme": ["format", "kb", "title", "documents", "areas"],
-                 "area": ["format", "id", "title", "topics", "concepts", "related"],
+                 # No `concepts`: an area's union overflowed its budget (one area of 66 leaves: 275
+                 # names, 1836 tokens); topics, leaves and the index carry them.
+                 "area": ["format", "id", "title", "topics", "related"],
                  **_COMMON_FRONT},
     budgets={**_COMMON_BUDGETS, "area": 1500},
     protocol="""\
