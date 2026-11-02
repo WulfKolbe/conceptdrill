@@ -1,11 +1,11 @@
-"""`kb build`: drilled documents in, a kb/1 knowledge base out (T-0119).
+"""`kb build`: drilled documents in, a kb/2 knowledge base out (T-0119, kb/2).
 
 Deterministic stages decide everything structural:
 
-    documents -> sections -> payload -> placement -> leaves -> topics
+    documents -> sections -> payload -> placement -> leaves -> topics -> areas
 
-and a `Writer` -- the only stage that may use a language model -- names leaves
-and topics and writes their prose from the cited sections alone. Payload never
+and a `Writer` -- the only stage that may use a language model -- names leaves,
+topics and areas and writes their prose from the cited sections alone. Payload never
 passes through the writer: equations, code and pseudocode are copied by code,
 byte for byte. The structure is the code's, so it cannot change with the
 model's mood; `kb check` runs last and a build that does not conform fails.
@@ -31,10 +31,15 @@ from ..hierarchy.glyphsections import MIN_WORDS, split_glyphs
 
 #: Two sections whose embeddings are at least this similar may share a leaf.
 LEAF_TAU = 0.75
-#: Bounds on the structure, so it never grows a shape kb/1 cannot hold.
+#: Bounds on the structure, so it never grows a shape kb/2 cannot hold
+#: (docs/kb-format/kb-2.md section 2). A set that needs more areas fails.
 MAX_SECTIONS_PER_LEAF = 6
-MAX_LEAVES_PER_TOPIC = 8
-MIN_TOPICS, MAX_TOPICS = 3, 12
+MAX_LEAVES_PER_TOPIC = C.KB2.max_leaves_per_topic
+MIN_TOPICS = 3
+MAX_TOPICS_PER_AREA = C.KB2.max_topics_per_area
+MAX_AREAS = C.KB2.max_areas
+#: The format this module writes.
+S = C.CURRENT
 #: A leaf's See also: at most this many neighbours, at least this similar.
 RELATED_MAX, RELATED_MIN = 2, 0.5
 #: How much of a section's text goes into its embedding.
@@ -68,8 +73,11 @@ class Writer(Protocol):
     def topic(self, leaves: list[dict]) -> dict:
         """{"title", "purpose", "differ"} from the topic's leaves."""
 
-    def kb(self, topics: list[dict]) -> dict:
-        """{"title", "purpose"} from the topics."""
+    def area(self, topics: list[dict]) -> dict:
+        """{"title", "purpose", "differ"} from the area's topics."""
+
+    def kb(self, areas: list[dict]) -> dict:
+        """{"title", "purpose"} from the areas."""
 
 
 class StubWriter:
@@ -82,7 +90,7 @@ class StubWriter:
     model = None
 
     def __init__(self) -> None:
-        self._n = {"leaf": 0, "topic": 0}
+        self._n = {"leaf": 0, "topic": 0, "area": 0}
 
     @property
     def usage(self) -> dict:
@@ -100,7 +108,12 @@ class StubWriter:
         return {"title": f"TOPIC-{self._n['topic']}", "purpose": "PROSE",
                 "differ": "PROSE"}
 
-    def kb(self, topics):
+    def area(self, topics):
+        self._n["area"] += 1
+        return {"title": f"AREA-{self._n['area']}", "purpose": "PROSE",
+                "differ": "PROSE"}
+
+    def kb(self, areas):
         return {"title": "KNOWLEDGE BASE", "purpose": "PROSE"}
 
 
@@ -431,6 +444,7 @@ class Leaf:
     title: str = ""
     prose: dict = field(default_factory=dict)
     related: list = field(default_factory=list)
+    area: str = ""
 
     @property
     def id(self) -> str:
@@ -447,6 +461,29 @@ class Topic:
     slug: str = ""
     folder: str = ""
     prose: dict = field(default_factory=dict)
+    area: str = ""
+
+    @property
+    def id(self) -> str:
+        return f"{self.area}/{self.slug}"
+
+    @property
+    def vector(self) -> np.ndarray:
+        centroid = np.vstack([l.vector for l in self.leaves]).mean(axis=0)
+        n = np.linalg.norm(centroid)
+        return centroid / n if n else centroid
+
+
+@dataclass
+class Area:
+    topics: list[Topic]
+    slug: str = ""
+    folder: str = ""
+    prose: dict = field(default_factory=dict)
+
+    @property
+    def leaves(self) -> list[Leaf]:
+        return [l for t in self.topics for l in t.leaves]
 
 
 def _sort_key(section: Section) -> tuple:
@@ -488,7 +525,7 @@ def attach_payload(leaves: list["Leaf"], payload: list[Payload]) -> None:
 
 
 def structure(sections: list[Section], payload: list[Payload],
-              embedder_name: str, embedding: Optional[dict] = None) -> list[Topic]:
+              embedder_name: str, embedding: Optional[dict] = None) -> list[Area]:
     usable = [s for s in sections if s.status == "cited"]
     if not usable:
         raise BuildError("no section has enough text or payload to cite")
@@ -510,14 +547,15 @@ def structure(sections: list[Section], payload: list[Payload],
     attach_payload(leaves, payload)
     leaves.sort(key=lambda l: _sort_key(l.sections[0]))
     lv = np.vstack([l.vector for l in leaves])
-    want = min(len(leaves), max(MIN_TOPICS, min(MAX_TOPICS, round(len(leaves) ** 0.5)),
+    # kb/2 drops kb/1's cap of 12 topics in all: areas hold them.
+    want = min(len(leaves), max(MIN_TOPICS, round(len(leaves) ** 0.5),
                                 -(-len(leaves) // MAX_LEAVES_PER_TOPIC)))
     tgroups = _agglomerate(lv, [1] * len(leaves), max_size=MAX_LEAVES_PER_TOPIC,
                            target=want)
     topics = [Topic(sorted((leaves[i] for i in g), key=lambda l: _sort_key(l.sections[0])))
               for g in tgroups]
     topics.sort(key=lambda t: (-len(t.leaves), _sort_key(t.leaves[0].sections[0])))
-    # See also: nearest leaves, by centroid cosine.
+    areas = group_areas(topics, len(leaves))
     sims = lv @ lv.T
     index = {id(l): i for i, l in enumerate(leaves)}
     for leaf in leaves:
@@ -525,7 +563,26 @@ def structure(sections: list[Section], payload: list[Payload],
         order = sorted((j for j in range(len(leaves)) if j != i),
                        key=lambda j: (-sims[i, j], j))
         leaf.related = [leaves[j] for j in order[:RELATED_MAX] if sims[i, j] >= RELATED_MIN]
-    return topics
+    return areas
+
+
+def group_areas(topics: list[Topic], n_leaves: int) -> list[Area]:
+    """Topics into areas: the same average linkage, over topic centroids, at
+    most MAX_TOPICS_PER_AREA per area, aiming at the smallest count that fits.
+    More than MAX_AREAS fails the build, naming the count; the tree never
+    changes shape to make room."""
+    want = max(1, -(-len(topics) // MAX_TOPICS_PER_AREA))
+    groups = _agglomerate(np.vstack([t.vector for t in topics]), [1] * len(topics),
+                          max_size=MAX_TOPICS_PER_AREA, target=want)
+    if len(groups) > MAX_AREAS:
+        raise BuildError(
+            f"the set needs {len(groups)} areas for {len(topics)} topics ({n_leaves} "
+            f"leaves); {S.format} holds at most {MAX_AREAS} areas of "
+            f"{MAX_TOPICS_PER_AREA} topics")
+    # Within an area topics keep their order (largest first); areas go largest first.
+    areas = [Area([topics[i] for i in sorted(g)]) for g in groups]
+    areas.sort(key=lambda a: (-len(a.leaves), _sort_key(a.topics[0].leaves[0].sections[0])))
+    return areas
 
 
 # --------------------------------------------------------------------------
@@ -542,39 +599,53 @@ def _unique(slug: str, taken: set[str]) -> str:
     return out
 
 
-def write_prose(topics: list[Topic], writer) -> dict:
-    taken_topics: set[str] = set()
-    for t_index, topic in enumerate(topics, 1):
-        taken_leaves: set[str] = set()
-        for leaf in topic.leaves:
-            # The writer sees the payload of the sections it cites. Payload a
-            # leaf carries for its chapter (attach_payload) is added by code and
-            # left out here, so carrying it changes no prompt and costs nothing.
-            own = {s.id for s in leaf.sections}
-            leaf.prose = writer.leaf(
-                [{"id": s.id, "title": s.title, "text": s.text} for s in leaf.sections],
-                [{"id": p.id, "kind": p.kind, "content": p.content}
-                 for p in leaf.payload if p.section in own])
-            leaf.title = _one_line(leaf.prose["title"]) or "Untitled"
-            leaf.slug = _unique(C.slugify(leaf.title), taken_leaves)
-        topic.prose = writer.topic([{"title": l.title, "summary": l.prose["summary"]}
-                                    for l in topic.leaves])
-        topic.slug = _unique(C.slugify(_one_line(topic.prose["title"])), taken_topics)
-        topic.folder = f"topics/{t_index:02d}-{topic.slug}"
-        for leaf in topic.leaves:
-            leaf.topic, leaf.folder = topic.slug, topic.folder
-    return writer.kb([{"title": _one_line(t.prose["title"]), "purpose": t.prose["purpose"]}
-                      for t in topics])
+def write_prose(areas: list[Area], writer) -> dict:
+    """Names and prose, area by area; then slugs, folders and ids, which nest:
+    area, `<area>/<topic>`, `<area>/<topic>/<leaf>`."""
+    taken_areas: set[str] = set()
+    for a_index, area in enumerate(areas, 1):
+        for topic in area.topics:
+            _write_topic(topic, writer)
+        area.prose = writer.area([{"title": _one_line(t.prose["title"]),
+                                   "purpose": t.prose["purpose"]} for t in area.topics])
+        area.slug = _unique(C.slugify(_one_line(area.prose["title"])), taken_areas)
+        area.folder = f"areas/{a_index:02d}-{area.slug}"
+        taken_topics: set[str] = set()
+        for t_index, topic in enumerate(area.topics, 1):
+            topic.slug = _unique(C.slugify(_one_line(topic.prose["title"])), taken_topics)
+            topic.area = area.slug
+            topic.folder = f"{area.folder}/topics/{t_index:02d}-{topic.slug}"
+            for leaf in topic.leaves:
+                leaf.topic, leaf.folder, leaf.area = topic.id, topic.folder, area.slug
+    return writer.kb([{"title": _one_line(a.prose["title"]), "purpose": a.prose["purpose"]}
+                      for a in areas])
+
+
+def _write_topic(topic: Topic, writer) -> None:
+    taken_leaves: set[str] = set()
+    for leaf in topic.leaves:
+        # The writer sees the payload of the sections it cites. Payload a
+        # leaf carries for its chapter (attach_payload) is added by code and
+        # left out here, so carrying it changes no prompt and costs nothing.
+        own = {s.id for s in leaf.sections}
+        leaf.prose = writer.leaf(
+            [{"id": s.id, "title": s.title, "text": s.text} for s in leaf.sections],
+            [{"id": p.id, "kind": p.kind, "content": p.content}
+             for p in leaf.payload if p.section in own])
+        leaf.title = _one_line(leaf.prose["title"]) or "Untitled"
+        leaf.slug = _unique(C.slugify(leaf.title), taken_leaves)
+    topic.prose = writer.topic([{"title": l.title, "summary": l.prose["summary"]}
+                                for l in topic.leaves])
 
 
 def _prose(text: str) -> str:
-    """Writer text made safe for a kb/1 section: no heading, no fence."""
+    """Writer text made safe for a kb section: no heading, no fence."""
     lines = [re.sub(r"^\s*(#+|```+)\s*", "", l) for l in str(text).strip().splitlines()]
     return "\n".join(lines).strip() or "None."
 
 
 def _front(kind: str, values: dict) -> str:
-    ordered = {k: values[k] for k in C.FRONTMATTER[kind]}
+    ordered = {k: values[k] for k in S.frontmatter[kind]}
     return "---\n" + yaml.safe_dump(ordered, sort_keys=False, allow_unicode=True,
                                     width=10 ** 6) + "---\n"
 
@@ -593,9 +664,10 @@ def _rel(from_dir: str, to: str) -> str:
     return os.path.relpath(to, from_dir or ".").replace("\\", "/")
 
 
-def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
+def render(docs: list[Document], areas: list[Area], payload: list[Payload],
            kb_prose: dict, name: str) -> dict[str, str]:
     files: dict[str, str] = {}
+    topics = [t for a in areas for t in a.topics]
     leaves = [l for t in topics for l in t.leaves]
     for t in topics:
         for l in t.leaves:
@@ -625,7 +697,7 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
         method = [f"{i}. {_one_line(step)}" for i, step in
                   enumerate(leaf.prose.get("method", []), 1) if _one_line(step)]
         pitfalls = [f"- {_one_line(p)}" for p in leaf.prose.get("pitfalls", []) if _one_line(p)]
-        front = {"format": C.FORMAT, "id": leaf.id, "title": leaf.title,
+        front = {"format": S.format, "id": leaf.id, "title": leaf.title,
                  "topic": leaf.topic, "concepts": concepts,
                  "sources": [s.id for s in leaf.sections],
                  "payload": [p.id for p in leaf.payload],
@@ -640,17 +712,17 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
                 ("Pitfalls", _bullets(pitfalls)),
                 ("Sources", _bullets(sources)),
                 ("See also", _bullets(see_also))])
-            if C.tokens(text) <= C.BUDGETS["leaf"]:
+            if C.tokens(text) <= S.budgets["leaf"]:
                 break
         files[leaf.path] = text
         leaf.concepts = concepts
 
     # topics
+    folder_of = {x.id: x for x in topics}
     for t in topics:
-        rel_topics = sorted({r.topic for l in t.leaves for r in l.related if r.topic != t.slug})
-        folder_of = {x.slug: x for x in topics}
+        rel_topics = sorted({r.topic for l in t.leaves for r in l.related if r.topic != t.id})
         files[f"{t.folder}/README.md"] = _doc_md("topic", {
-            "format": C.FORMAT, "id": t.slug, "title": _one_line(t.prose["title"]),
+            "format": S.format, "id": t.id, "title": _one_line(t.prose["title"]),
             "leaves": [l.id for l in t.leaves],
             "concepts": sorted({c for l in t.leaves for c in l.concepts}),
             "related": rel_topics}, f"# {_one_line(t.prose['title'])}", [
@@ -663,6 +735,24 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
                 f"- [{_one_line(folder_of[r].prose['title'])}]"
                 f"({_rel(t.folder, folder_of[r].folder + '/README.md')})"
                 for r in rel_topics]))])
+
+    # areas
+    area_of = {a.slug: a for a in areas}
+    for a in areas:
+        rel_areas = sorted({r.area for l in a.leaves for r in l.related if r.area != a.slug})
+        files[f"{a.folder}/README.md"] = _doc_md("area", {
+            "format": S.format, "id": a.slug, "title": _one_line(a.prose["title"]),
+            "topics": [t.id for t in a.topics],
+            "concepts": sorted({c for l in a.leaves for c in l.concepts}),
+            "related": rel_areas}, f"# {_one_line(a.prose['title'])}", [
+            ("Purpose", _prose(a.prose.get("purpose", ""))),
+            ("Topics", _bullets([
+                f"- [{_one_line(t.prose['title'])}]({_rel(a.folder, t.folder + '/README.md')})"
+                f" — {_one_line(t.prose.get('purpose', '')) or 'None.'}" for t in a.topics])),
+            ("How the topics differ", _prose(a.prose.get("differ", ""))),
+            ("Related areas", _bullets([
+                f"- [{_one_line(area_of[r].prose['title'])}]"
+                f"({_rel(a.folder, area_of[r].folder + '/README.md')})" for r in rel_areas]))])
 
     # sources and text
     for d in docs:
@@ -678,7 +768,7 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
                 unused.append(f"{head} — {s.reason}")
             files[s.text_file] = s.text
         files[f"sources/{d.doc}.md"] = _doc_md("source", {
-            "format": C.FORMAT, "doc": d.doc, "title": d.title,
+            "format": S.format, "doc": d.doc, "title": d.title,
             "sections": len(d.sections)}, f"# {d.title}",
             [("Sections", _bullets(cited)), ("Unused sections", _bullets(unused))])
 
@@ -699,20 +789,20 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
                 if C.letter_of(c) == letter]
         counts_i[letter] = len(mine)
         files[f"index/{letter}.md"] = _doc_md("index_letter", {
-            "format": C.FORMAT, "kb": name, "letter": letter, "entries": len(mine)},
+            "format": S.format, "kb": name, "letter": letter, "entries": len(mine)},
             C.letter_title("index_letter", letter), [("Index", _bullets(mine))])
         mine = [f"- **{t}** — {d or 'None.'} → [{l.title}](../{l.path})"
                 for t, d, l in terms if C.letter_of(t) == letter]
         counts_g[letter] = len(mine)
         files[f"glossary/{letter}.md"] = _doc_md("glossary_letter", {
-            "format": C.FORMAT, "kb": name, "letter": letter, "terms": len(mine)},
+            "format": S.format, "kb": name, "letter": letter, "terms": len(mine)},
             C.letter_title("glossary_letter", letter), [("Glossary", _bullets(mine))])
     shown = lambda l: "Other" if l == "other" else l.upper()
-    files["INDEX.md"] = _doc_md("index", {"format": C.FORMAT, "kb": name,
+    files["INDEX.md"] = _doc_md("index", {"format": S.format, "kb": name,
                                           "letters": C.LETTERS}, "# Index", [
         ("Letters", "\n".join(f"- [{shown(l)}](index/{l}.md) — {counts_i[l]} entries"
                               for l in C.LETTERS))])
-    files["GLOSSARY.md"] = _doc_md("glossary", {"format": C.FORMAT, "kb": name,
+    files["GLOSSARY.md"] = _doc_md("glossary", {"format": S.format, "kb": name,
                                                 "letters": C.LETTERS}, "# Glossary", [
         ("Letters", "\n".join(f"- [{shown(l)}](glossary/{l}.md) — {counts_g[l]} terms"
                               for l in C.LETTERS))])
@@ -720,19 +810,19 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
     # README
     kb_title = _one_line(kb_prose.get("title", "")) or name
     files["README.md"] = _doc_md("readme", {
-        "format": C.FORMAT, "kb": name, "title": kb_title,
-        "documents": [d.doc for d in docs], "topics": [t.slug for t in topics]},
+        "format": S.format, "kb": name, "title": kb_title,
+        "documents": [d.doc for d in docs], "areas": [a.slug for a in areas]},
         f"# {kb_title}", [
         ("Purpose", _prose(kb_prose.get("purpose", ""))),
-        ("Topics", _bullets([f"- [{_one_line(t.prose['title'])}]({t.folder}/README.md) — "
-                             f"{_one_line(t.prose.get('purpose', '')) or 'None.'}"
-                             for t in topics])),
-        ("How to read this knowledge base", C.PROTOCOL),
+        ("Areas", _bullets([f"- [{_one_line(a.prose['title'])}]({a.folder}/README.md) — "
+                            f"{_one_line(a.prose.get('purpose', '')) or 'None.'}"
+                            for a in areas])),
+        ("How to read this knowledge base", S.protocol),
         ("Sources", _bullets([f"- [{d.doc}](sources/{d.doc}.md) — {d.title}" for d in docs]))])
 
     # kb.json
     files["kb.json"] = json.dumps({
-        "format": C.FORMAT, "kb": name,
+        "format": S.format, "kb": name,
         "documents": [{"doc": d.doc, "folder": d.folder, "title": d.title,
                        "input": d.input, "split": d.split,
                        "glyphs": {"path": str(d.glyphs), "sha256": d.glyphs_sha},
@@ -751,8 +841,10 @@ def render(docs: list[Document], topics: list[Topic], payload: list[Payload],
                      "file": p.file,
                      "sha256": _sha(p.content.encode("utf-8")) if p.section else None,
                      "reason": None if p.section else p.reason} for p in payload],
-        "topics": [{"id": t.slug, "title": _one_line(t.prose["title"]), "folder": t.folder,
-                    "leaves": [l.id for l in t.leaves]} for t in topics],
+        "areas": [{"id": a.slug, "title": _one_line(a.prose["title"]), "folder": a.folder,
+                   "topics": [t.id for t in a.topics]} for a in areas],
+        "topics": [{"id": t.id, "title": _one_line(t.prose["title"]), "area": t.area,
+                    "folder": t.folder, "leaves": [l.id for l in t.leaves]} for t in topics],
         "leaves": [{"id": l.id, "title": l.title, "topic": l.topic, "path": l.path,
                     "concepts": l.concepts, "sources": [s.id for s in l.sections],
                     "payload": [p.id for p in l.payload],
@@ -792,12 +884,13 @@ def build_kb(folders: Sequence[str], *, name: str, library: Path, out_root: Path
         else:
             s.reason = f"only {s.words} words of text and no payload"
     embedding: dict = {}
-    topics = structure([s for d in docs for s in d.sections], payload, embedder, embedding)
-    kb_prose = write_prose(topics, writer)
-    files = render(docs, topics, payload, kb_prose, name)
+    areas = structure([s for d in docs for s in d.sections], payload, embedder, embedding)
+    kb_prose = write_prose(areas, writer)
+    files = render(docs, areas, payload, kb_prose, name)
     counts = {"path": target, "documents": len(docs), "skipped": skipped,
               "sections": sum(len(d.sections) for d in docs),
-              "leaves": sum(len(t.leaves) for t in topics), "topics": len(topics),
+              "leaves": sum(len(a.leaves) for a in areas),
+              "topics": sum(len(a.topics) for a in areas), "areas": len(areas),
               "payload": len(payload), "files": len(files) + 1}
     if dry:
         return counts
@@ -807,7 +900,7 @@ def build_kb(folders: Sequence[str], *, name: str, library: Path, out_root: Path
         if d.docmodel:
             inputs.append({"path": str(d.docmodel), "sha256": d.docmodel_sha})
     files["manifest.json"] = json.dumps({
-        "format": C.FORMAT, "kb": name, "command": command,
+        "format": S.format, "kb": name, "command": command,
         "conceptdrill_commit": commit, "inputs": inputs, "skipped": skipped,
         "embedding": embedding,
         "llm": {"stub": bool(writer.stub), "model": writer.model, "usage": writer.usage},

@@ -167,10 +167,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_copy.add_argument("--library", default=str(DEFAULT_LIBRARY))
 
     # -- kb (T-0119) -----------------------------------------------------
-    p_kb = sub.add_parser("kb", help="knowledge bases in the kb/1 format")
+    p_kb = sub.add_parser("kb", help="knowledge bases in the kb/2 format (kb/1 still checked)")
     kb_sub = p_kb.add_subparsers(dest="kb_command", required=True)
     p_kb_build = kb_sub.add_parser(
-        "build", help="drilled library documents -> a kb/1 knowledge base under "
+        "build", help="drilled library documents -> a kb/2 knowledge base under "
                       "<output-root>/kb/<name>/")
     p_kb_build.add_argument("docs", nargs="*", metavar="DOC",
                             help="document folder names in the library")
@@ -200,7 +200,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_kb_reach.add_argument("kb_dir")
     p_kb_reach.add_argument("--json", action="store_true", dest="as_json")
     p_kb_check = kb_sub.add_parser(
-        "check", help="does a folder conform to kb/1? exit 0 yes, 1 no")
+        "check", help="does a folder conform to its format (kb/2 or kb/1)? exit 0 yes, 1 no")
     p_kb_check.add_argument("kb_dir")
 
     return parser
@@ -529,9 +529,9 @@ def cmd_kb(args: argparse.Namespace) -> int:
     for n in report.notes:
         print(f"note: {n}")
     if report.ok:
-        print(f"kb/1: conforms ({report.files} files)")
+        print(f"{report.format}: conforms ({report.files} files)")
         return 0
-    print(f"kb/1: {len(report.violations)} violations")
+    print(f"{report.format}: {len(report.violations)} violations")
     return 1
 
 
@@ -589,7 +589,7 @@ def _kb_build(args: argparse.Namespace) -> int:
             print(f"conceptdrill: {exc}", file=sys.stderr)
             return 1
         print(f"kb {args.name}: {result['documents']} documents, {result['sections']} "
-              f"sections, {result['leaves']} leaves in {result['topics']} topics "
+              f"sections, {result['leaves']} leaves in {result['topics']} topics in {result['areas']} areas "
               f"(nothing written)")
         for model in dict.fromkeys([_writer_model(args), *PRICES]):
             e = estimate_cost(model, calls=counter.calls,
@@ -612,7 +612,7 @@ def _kb_build(args: argparse.Namespace) -> int:
         print(f"conceptdrill: {exc}", file=sys.stderr)
         return 1
     print(f"kb {args.name}: {result['documents']} documents, {result['sections']} "
-          f"sections, {result['leaves']} leaves in {result['topics']} topics, "
+          f"sections, {result['leaves']} leaves in {result['topics']} topics in {result['areas']} areas, "
           f"{result['payload']} payload items, {result['files']} files -> {result['path']}")
     for s in result["skipped"]:
         print(f"  skipped {s['folder']}: {s['reason']}")
@@ -622,9 +622,9 @@ def _kb_build(args: argparse.Namespace) -> int:
     for n in report.notes:
         print(f"note: {n}")
     if not report.ok:
-        print(f"kb/1: {len(report.violations)} violations")
+        print(f"{report.format}: {len(report.violations)} violations")
         return 1
-    print(f"kb/1: conforms ({report.files} files)")
+    print(f"{report.format}: conforms ({report.files} files)")
     return 0
 
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "conceptdrill:kb/1/manifest.json",
-  "title": "kb/1 manifest.json: what made this knowledge base",
+  "$id": "conceptdrill:kb/manifest.json",
+  "title": "kb/1 and kb/2 manifest.json: what made this knowledge base",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,7 +17,10 @@
   ],
   "properties": {
     "format": {
-      "const": "kb/1"
+      "enum": [
+        "kb/1",
+        "kb/2"
+      ]
     },
     "kb": {
       "type": "string",

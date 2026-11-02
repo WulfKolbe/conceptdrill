@@ -1,17 +1,20 @@
-"""kb/1, the knowledge-base format, as constants (docs/kb-format/kb-1.md).
+"""The knowledge-base formats, as constants: kb/1 (docs/kb-format/kb-1.md)
+and kb/2 (docs/kb-format/kb-2.md).
 
-This module holds the contract's mechanical parts so the generator and the
-checker read one copy. The spec stays the source: tests compare the heading
-table and the reading protocol here against `kb-1.md`. Nothing here knows what
-a knowledge base is about.
+This module holds each contract's mechanical parts so the generator and the
+checker read one copy. The specs stay the source: tests compare the heading
+tables and the reading protocols here against the documents. Nothing here
+knows what a knowledge base is about.
+
+`kb build` writes `CURRENT` (kb/2). `kb check` checks a tree against the spec
+its `format` names, so a kb/1 tree built before kb/2 stays checkable.
 """
 from __future__ import annotations
 
 import re
 import unicodedata
-from typing import Iterable
-
-FORMAT = "kb/1"
+from dataclasses import dataclass, field
+from typing import Iterable, Optional
 
 #: The 27 letter files under index/ and glossary/.
 LETTERS = [chr(c) for c in range(ord("a"), ord("z") + 1)] + ["other"]
@@ -21,42 +24,8 @@ SLUG_RE = re.compile(rf"^{SLUG}$")
 SLUG_MAX = 60
 DOC_SLUG_MAX = 56
 
-#: The files at the root, and the folders allowed beside them.
+#: The files at the root.
 ROOT_FILES = ["README.md", "INDEX.md", "GLOSSARY.md", "kb.json", "manifest.json"]
-ROOT_DIRS = ["index", "glossary", "topics", "payload", "text", "sources"]
-REQUIRED_DIRS = ["index", "glossary", "topics", "sources"]
-
-#: `##` headings in order, per file kind (kb-1 section 4).
-HEADINGS: dict[str, list[str]] = {
-    "readme": ["Purpose", "Topics", "How to read this knowledge base", "Sources"],
-    "index": ["Letters"],
-    "glossary": ["Letters"],
-    "index_letter": ["Index"],
-    "glossary_letter": ["Glossary"],
-    "topic": ["Purpose", "Leaves", "How the approaches differ", "Related topics"],
-    "leaf": ["Use when", "Summary", "Key concepts", "Method", "Payload",
-             "Pitfalls", "Sources", "See also"],
-    "source": ["Sections", "Unused sections"],
-}
-
-#: Frontmatter keys, exactly, per file kind (kb-1 section 3).
-FRONTMATTER: dict[str, list[str]] = {
-    "readme": ["format", "kb", "title", "documents", "topics"],
-    "index": ["format", "kb", "letters"],
-    "glossary": ["format", "kb", "letters"],
-    "index_letter": ["format", "kb", "letter", "entries"],
-    "glossary_letter": ["format", "kb", "letter", "terms"],
-    "topic": ["format", "id", "title", "leaves", "concepts", "related"],
-    "leaf": ["format", "id", "title", "topic", "concepts", "sources", "payload",
-             "related"],
-    "source": ["format", "doc", "title", "sections"],
-}
-
-#: Token budgets per file kind (kb-1 section 7), at words x TOKENS_PER_WORD.
-BUDGETS: dict[str, int] = {
-    "readme": 1500, "topic": 1500, "leaf": 2500, "index_letter": 4000,
-    "glossary_letter": 4000, "index": 500, "glossary": 500, "source": 4000,
-}
 
 #: The measured tokens-per-word of the project (summarize.TOKENS_PER_WORD).
 TOKENS_PER_WORD = 1.441
@@ -68,52 +37,145 @@ PAYLOAD_LABELS = ["verified", "unverified", "line numbers not separated",
 #: Inline a payload file's content under its leaf line up to this many lines.
 INLINE_MAX_LINES = 40
 
-#: kb-1 section 8, verbatim.
-PROTOCOL = """\
+_SID = rf"{SLUG}#[0-9]+"
+_PID = rf"{SLUG}#[^#\s`]+"
+_LABELS = "(?:" + "|".join(map(re.escape, PAYLOAD_LABELS)) + ")"
+_LETTER_LINK = r"(?:[A-Z]|Other)"
+_NN = r"[0-9]{2}"
+
+
+@dataclass(frozen=True)
+class Spec:
+    """One format's mechanical parts."""
+    format: str
+    root_dirs: list[str]
+    required_dirs: list[str]
+    headings: dict[str, list[str]]
+    frontmatter: dict[str, list[str]]
+    budgets: dict[str, int]
+    protocol: str
+    line_forms: dict[tuple[str, str], re.Pattern]
+    #: The leaf folder relative to the root, as a regex: where leaves live.
+    leaf_dir: str
+    schema: str
+    max_areas: Optional[int] = None
+    max_topics_per_area: Optional[int] = None
+    max_leaves_per_topic: int = 8
+    fences_allowed: frozenset = field(default_factory=lambda: frozenset({("leaf", "Payload")}))
+
+
+def _forms(up: str, leaf_dir: str, extra: dict) -> dict:
+    """The line forms both formats share; `up` climbs from a leaf to the root."""
+    u = re.escape(up)
+    forms = {
+        ("readme", "Sources"): rf"^- \[{SLUG}\]\(sources/{SLUG}\.md\) — .*$",
+        ("index", "Letters"): rf"^- \[{_LETTER_LINK}\]\(index/[a-z]+\.md\) — [0-9]+ entries$",
+        ("glossary", "Letters"): rf"^- \[{_LETTER_LINK}\]\(glossary/[a-z]+\.md\) — [0-9]+ terms$",
+        ("index_letter", "Index"): rf"^- .+ → \[.+\]\(\.\./{leaf_dir}/{SLUG}\.md\)$",
+        ("glossary_letter", "Glossary"):
+            rf"^- \*\*.+\*\* — .* → \[.+\]\(\.\./{leaf_dir}/{SLUG}\.md\)$",
+        ("topic", "Leaves"): rf"^- \[.+\]\({SLUG}\.md\) — .+$",
+        ("leaf", "Key concepts"): r"^- \S.*$",
+        ("leaf", "Payload"):
+            rf"^- `{_PID}` (?:equation|code|pseudocode) · {_LABELS}(?:, {_LABELS})* · "
+            rf"from `{_SID}` → \[file\]\({u}payload/{SLUG}/[^)\s]+\)$",
+        ("leaf", "Sources"):
+            rf"^- `{_SID}` .* → \[text, [0-9]+ words\]\({u}text/{SLUG}/[0-9]+\.txt\)"
+            rf" · \[{SLUG}\]\({u}sources/{SLUG}\.md\)$",
+        ("leaf", "See also"): r"^- \[.+\]\([^)\s]+\.md\)$",
+        ("source", "Sections"):
+            rf"^- `{_SID}` p\.[0-9]+ l\.[0-9]+–[0-9]+ .* → "
+            rf"\[text, [0-9]+ words\]\(\.\./text/{SLUG}/[0-9]+\.txt\) · .+$",
+        ("source", "Unused sections"):
+            rf"^- `{_SID}` p\.[0-9]+ l\.[0-9]+–[0-9]+ .* → "
+            rf"\[text, [0-9]+ words\]\(\.\./text/{SLUG}/[0-9]+\.txt\) — .+$",
+    }
+    forms.update(extra)
+    return {k: re.compile(v) for k, v in forms.items()}
+
+
+_LEAF = ["Use when", "Summary", "Key concepts", "Method", "Payload", "Pitfalls",
+         "Sources", "See also"]
+_COMMON_HEADINGS = {
+    "index": ["Letters"], "glossary": ["Letters"], "index_letter": ["Index"],
+    "glossary_letter": ["Glossary"],
+    "topic": ["Purpose", "Leaves", "How the approaches differ", "Related topics"],
+    "leaf": _LEAF, "source": ["Sections", "Unused sections"],
+}
+_COMMON_FRONT = {
+    "index": ["format", "kb", "letters"],
+    "glossary": ["format", "kb", "letters"],
+    "index_letter": ["format", "kb", "letter", "entries"],
+    "glossary_letter": ["format", "kb", "letter", "terms"],
+    "topic": ["format", "id", "title", "leaves", "concepts", "related"],
+    "leaf": ["format", "id", "title", "topic", "concepts", "sources", "payload", "related"],
+    "source": ["format", "doc", "title", "sections"],
+}
+_COMMON_BUDGETS = {"readme": 1500, "topic": 1500, "leaf": 2500, "index_letter": 4000,
+                   "glossary_letter": 4000, "index": 500, "glossary": 500, "source": 4000}
+
+_KB1_LEAF_DIR = rf"topics/{_NN}-{SLUG}"
+KB1 = Spec(
+    format="kb/1",
+    root_dirs=["index", "glossary", "topics", "payload", "text", "sources"],
+    required_dirs=["index", "glossary", "topics", "sources"],
+    headings={"readme": ["Purpose", "Topics", "How to read this knowledge base", "Sources"],
+              **_COMMON_HEADINGS},
+    frontmatter={"readme": ["format", "kb", "title", "documents", "topics"], **_COMMON_FRONT},
+    budgets=dict(_COMMON_BUDGETS),
+    protocol="""\
 1. Read this file and INDEX.md. Do not open other files yet.
 2. Pick the one topic, or the one index entry, that matches the question.
 3. Open that topic's README.md, then at most two of its leaves.
 4. Open a payload file only when the exact equation, code or pseudocode is needed.
 5. Follow See also or Related topics only if the answer is still missing.
 6. Open a section's text (text/<doc>/<order>.txt) only when the summary is not enough.
-7. Open sources/<doc>.md only to cite or check where a statement comes from."""
+7. Open sources/<doc>.md only to cite or check where a statement comes from.""",
+    line_forms=_forms("../../", _KB1_LEAF_DIR, {
+        ("readme", "Topics"): rf"^- \[.+\]\(topics/{_NN}-{SLUG}/README\.md\) — .+$",
+        ("topic", "Related topics"): rf"^- \[.+\]\(\.\./{_NN}-{SLUG}/README\.md\)$",
+    }),
+    leaf_dir=_KB1_LEAF_DIR,
+    schema="kb.schema.json",
+)
 
-_SID = rf"{SLUG}#[0-9]+"
-_PID = rf"{SLUG}#[^#\s`]+"
-_LABELS = "(?:" + "|".join(map(re.escape, PAYLOAD_LABELS)) + ")"
-_LETTER_LINK = r"(?:[A-Z]|Other)"
+_KB2_LEAF_DIR = rf"areas/{_NN}-{SLUG}/topics/{_NN}-{SLUG}"
+KB2 = Spec(
+    format="kb/2",
+    root_dirs=["index", "glossary", "areas", "payload", "text", "sources"],
+    required_dirs=["index", "glossary", "areas", "sources"],
+    headings={"readme": ["Purpose", "Areas", "How to read this knowledge base", "Sources"],
+              "area": ["Purpose", "Topics", "How the topics differ", "Related areas"],
+              **_COMMON_HEADINGS},
+    frontmatter={"readme": ["format", "kb", "title", "documents", "areas"],
+                 "area": ["format", "id", "title", "topics", "concepts", "related"],
+                 **_COMMON_FRONT},
+    budgets={**_COMMON_BUDGETS, "area": 1500},
+    protocol="""\
+1. Read this file and INDEX.md. Do not open other files yet.
+2. Pick the one area, or the one index entry, that matches the question.
+3. Open that area's README.md and pick its one matching topic.
+4. Open that topic's README.md, then at most two of its leaves.
+5. Open a payload file only when the exact equation, code or pseudocode is needed.
+6. Follow See also, Related topics or Related areas only if the answer is still missing.
+7. Open a section's text (text/<doc>/<order>.txt) only when the summary is not enough.
+8. Open sources/<doc>.md only to cite or check where a statement comes from.""",
+    line_forms=_forms("../../../../", _KB2_LEAF_DIR, {
+        ("readme", "Areas"): rf"^- \[.+\]\(areas/{_NN}-{SLUG}/README\.md\) — .+$",
+        ("area", "Topics"): rf"^- \[.+\]\(topics/{_NN}-{SLUG}/README\.md\) — .+$",
+        ("area", "Related areas"): rf"^- \[.+\]\(\.\./{_NN}-{SLUG}/README\.md\)$",
+        ("topic", "Related topics"):
+            rf"^- \[.+\]\(\.\./(?:\.\./\.\./{_NN}-{SLUG}/topics/)?{_NN}-{SLUG}/README\.md\)$",
+    }),
+    leaf_dir=_KB2_LEAF_DIR,
+    schema="kb-2.schema.json",
+    max_areas=12,
+    max_topics_per_area=12,
+)
 
-#: Line forms (kb-1 section 5): (kind, heading) -> the one regex every
-#: non-blank line there must match, unless the section is `None.`.
-LINE_FORMS: dict[tuple[str, str], re.Pattern] = {k: re.compile(v) for k, v in {
-    ("readme", "Topics"): rf"^- \[.+\]\(topics/[0-9]{{2}}-{SLUG}/README\.md\) — .+$",
-    ("readme", "Sources"): rf"^- \[{SLUG}\]\(sources/{SLUG}\.md\) — .*$",
-    ("index", "Letters"): rf"^- \[{_LETTER_LINK}\]\(index/[a-z]+\.md\) — [0-9]+ entries$",
-    ("glossary", "Letters"): rf"^- \[{_LETTER_LINK}\]\(glossary/[a-z]+\.md\) — [0-9]+ terms$",
-    ("index_letter", "Index"):
-        rf"^- .+ → \[.+\]\(\.\./topics/[0-9]{{2}}-{SLUG}/{SLUG}\.md\)$",
-    ("glossary_letter", "Glossary"):
-        rf"^- \*\*.+\*\* — .* → \[.+\]\(\.\./topics/[0-9]{{2}}-{SLUG}/{SLUG}\.md\)$",
-    ("topic", "Leaves"): rf"^- \[.+\]\({SLUG}\.md\) — .+$",
-    ("topic", "Related topics"): rf"^- \[.+\]\(\.\./[0-9]{{2}}-{SLUG}/README\.md\)$",
-    ("leaf", "Key concepts"): r"^- \S.*$",
-    ("leaf", "Payload"):
-        rf"^- `{_PID}` (?:equation|code|pseudocode) · {_LABELS}(?:, {_LABELS})* · "
-        rf"from `{_SID}` → \[file\]\(\.\./\.\./payload/{SLUG}/[^)\s]+\)$",
-    ("leaf", "Sources"):
-        rf"^- `{_SID}` .* → \[text, [0-9]+ words\]\(\.\./\.\./text/{SLUG}/[0-9]+\.txt\)"
-        rf" · \[{SLUG}\]\(\.\./\.\./sources/{SLUG}\.md\)$",
-    ("leaf", "See also"): r"^- \[.+\]\([^)\s]+\.md\)$",
-    ("source", "Sections"):
-        rf"^- `{_SID}` p\.[0-9]+ l\.[0-9]+–[0-9]+ .* → "
-        rf"\[text, [0-9]+ words\]\(\.\./text/{SLUG}/[0-9]+\.txt\) · .+$",
-    ("source", "Unused sections"):
-        rf"^- `{_SID}` p\.[0-9]+ l\.[0-9]+–[0-9]+ .* → "
-        rf"\[text, [0-9]+ words\]\(\.\./text/{SLUG}/[0-9]+\.txt\) — .+$",
-}.items()}
-
-#: Where a fenced block may appear: only under a leaf's Payload heading.
-FENCES_ALLOWED = {("leaf", "Payload")}
+SPECS = {"kb/1": KB1, "kb/2": KB2}
+#: What `kb build` writes.
+CURRENT = KB2
 
 
 def letter_title(kind: str, letter: str) -> str:

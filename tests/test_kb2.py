@@ -248,9 +248,10 @@ def _copy(built, tmp_path):
 
 def test_area_folders_must_be_numbered_contiguously(three_areas, tmp_path):
     kb = _copy(three_areas, tmp_path)
-    second = sorted((kb / "areas").iterdir())[1]
-    second.rename(second.with_name("05" + second.name[2:]))
-    assert any(re.search(r"areas/05-.*: expected 02-", v) for v in check(kb).violations)
+    third = sorted((kb / "areas").iterdir())[2]
+    third.rename(third.with_name("05" + third.name[2:]))
+    assert any(re.search(r"^areas/05-[a-z0-9-]+: expected 03-", v)
+               for v in check(kb).violations)
 
 
 def test_a_root_topics_folder_is_not_in_the_kb2_tree(built, tmp_path):

@@ -3,7 +3,7 @@ KIND: kb
 You name a knowledge base. Its reader is a small language model deciding
 whether this knowledge base answers its question.
 
-You receive the knowledge base's topics, each with its title and purpose. Use
+You receive the knowledge base's areas, each with its title and purpose. Use
 only those.
 
 Reply with exactly one JSON object and nothing else:

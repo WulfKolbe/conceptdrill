@@ -1,6 +1,6 @@
 """The writer: the one stage of `kb build` that calls a language model.
 
-It names leaves, topics and the knowledge base and writes their prose, from
+It names leaves, topics, areas and the knowledge base and writes their prose, from
 the cited sections only. It never sees payload content: payload is copied by
 code, so the model cannot paraphrase an equation or a line of code into the
 knowledge base. Every reply is cached by content (model, parameters, prompt,
@@ -93,7 +93,7 @@ def _valid(kind: str, reply: Optional[dict]) -> Optional[dict]:
                              for c in concepts[:6]],
                 "method": [clean(x) for x in lists["method"] if x.strip()],
                 "pitfalls": [clean(x) for x in lists["pitfalls"] if x.strip()]}
-    keys = ("title", "purpose", "differ") if kind == "topic" else ("title", "purpose")
+    keys = ("title", "purpose", "differ") if kind in ("topic", "area") else ("title", "purpose")
     if not all(_str(reply.get(k)) for k in keys):
         return None
     return {k: clean(reply[k]) for k in keys}
@@ -130,7 +130,8 @@ class LLMWriter:
 
     @staticmethod
     def _what(data: dict) -> str:
-        items = data.get("sections") or data.get("leaves") or data.get("topics") or []
+        items = (data.get("sections") or data.get("leaves") or data.get("topics")
+                 or data.get("areas") or [])
         return ", ".join(str(i.get("id", i.get("title", "?"))) for i in items)
 
     def _ask(self, kind: str, data: dict) -> dict:
@@ -168,8 +169,11 @@ class LLMWriter:
     def topic(self, leaves):
         return self._ask("topic", {"leaves": leaves})
 
-    def kb(self, topics):
-        return self._ask("kb", {"topics": topics})
+    def area(self, topics):
+        return self._ask("area", {"topics": topics})
+
+    def kb(self, areas):
+        return self._ask("kb", {"areas": areas})
 
     def flush(self) -> None:
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -210,8 +214,12 @@ class CountingWriter:
         self._count("topic", {"leaves": leaves})
         return {"title": f"topic {self._n}", "purpose": "x", "differ": "x"}
 
-    def kb(self, topics):
-        self._count("kb", {"topics": topics})
+    def area(self, topics):
+        self._count("area", {"topics": topics})
+        return {"title": f"area {self._n}", "purpose": "x", "differ": "x"}
+
+    def kb(self, areas):
+        self._count("kb", {"areas": areas})
         return {"title": "kb", "purpose": "x"}
 
 
