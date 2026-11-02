@@ -95,4 +95,36 @@ def reach(kb: dict) -> dict:
 
 
 def reach_dir(kb_dir: Path) -> dict:
-    return reach(json.loads((Path(kb_dir) / "kb.json").read_text(encoding="utf-8")))
+    kb = json.loads((Path(kb_dir) / "kb.json").read_text(encoding="utf-8"))
+    return {**reach(kb), "by_title": reach_by_title(kb)}
+
+
+def reach_by_title(kb: dict) -> dict:
+    """The second query source: the paper's title, independent of every
+    section title. A paper with placed payload counts as reached when some
+    index entry names its title and points at a leaf carrying any of its items.
+    """
+    leaves = {l["id"]: l for l in kb["leaves"]}
+    rows = []
+    for d in kb.get("documents", []):
+        items = {p["id"] for p in kb["payload"]
+                 if p.get("doc") == d["doc"] and p.get("status") == "placed"}
+        if not items:
+            continue
+        row = {"doc": d["doc"], "title": d["title"], "items": len(items),
+               "reachable": False, "reason": None, "via": []}
+        if not content_words(d["title"]):
+            row["reason"] = "the title names nothing"
+        else:
+            naming = [c for c in kb["concepts"] if names(c["name"], d["title"])]
+            via = [c for c in naming
+                   if items & set(leaves.get(c["leaf"], {}).get("payload", []))]
+            if via:
+                row["reachable"], row["via"] = True, [f"{c['name']} -> {c['leaf']}" for c in via]
+            else:
+                row["reason"] = ("no entry naming the paper points at a leaf with its payload"
+                                 if naming else "no index entry names the paper")
+        rows.append(row)
+    ok = sum(r["reachable"] for r in rows)
+    return {"documents": len(rows), "reachable": ok,
+            "share": ok / len(rows) if rows else None, "rows": rows}

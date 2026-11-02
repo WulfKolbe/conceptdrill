@@ -514,6 +514,10 @@ def cmd_kb(args: argparse.Namespace) -> int:
         print(f"reach: {r['reachable']} of {r['items']} payload items ({share})")
         for reason, n in sorted(r["reasons"].items(), key=lambda x: -x[1]):
             print(f"  {n:4d}  {reason}")
+        t = r["by_title"]
+        tshare = "n/a" if t["share"] is None else f"{t['share']:.2f}"
+        print(f"reach by paper title: {t['reachable']} of {t['documents']} papers "
+              f"with payload ({tshare})")
         for row in r["rows"]:
             mark = "ok " if row["reachable"] else "-- "
             print(f"  {mark}{row['id']} {row['kind']} '{row['method'][:50]}'"
