@@ -118,3 +118,85 @@ def test_estimate_cost_uses_the_models_prices():
     dear = estimate_cost("inclusionai/ling-3.1-flash", calls=10, prompt_tokens=10_000)
     assert 0 < cheap["usd"] < dear["usd"]
     assert cheap["completion_tokens"] == 10 * cheap["completion_per_call"]
+
+
+# --------------------------------------------------------------------------
+# Replay from the cache with no key (coordinator audit of 3b06215)
+# --------------------------------------------------------------------------
+
+def _build(tmp_path, name, *extra):
+    return cli.main(["kb", "build", FLORP, ZIB, "--name", name, "--library", str(LIB),
+                     "--output-root", str(tmp_path / "out"), "--llm", "novita",
+                     "--embedder", "hash", *extra])
+
+
+def _tree(kb):
+    return {p.relative_to(kb).as_posix(): p.read_bytes() for p in kb.rglob("*")
+            if p.is_file() and p.name != "manifest.json"}
+
+
+def _no_key(monkeypatch):
+    """No key anywhere, and any attempt to make a chat fails the test."""
+    from conceptdrill.hierarchy import novita
+    monkeypatch.delenv("NOVITA_API_KEY", raising=False)
+    monkeypatch.setattr(novita, "load_dotenv", lambda *a, **k: {})
+    def refuse(**kw):
+        raise AssertionError("a chat was made: this would have spent")
+    monkeypatch.setattr(novita, "make_openai_chat", refuse)
+
+
+def _filled_cache(tmp_path, monkeypatch):
+    from conceptdrill.hierarchy import novita
+    monkeypatch.setenv("CONCEPTDRILL_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("NOVITA_API_KEY", "k")
+    chat = FakeChat()
+    monkeypatch.setattr(novita, "make_openai_chat", lambda **kw: chat)
+    assert _build(tmp_path, "first") == 0
+    assert chat.calls
+    return tmp_path / "out" / "kb" / "first"
+
+
+def test_a_full_cache_replays_with_no_key(tmp_path, monkeypatch):
+    first = _filled_cache(tmp_path, monkeypatch)
+    _no_key(monkeypatch)
+    assert _build(tmp_path, "first", "--replace") == 0
+    replay = tmp_path / "out" / "kb" / "first"
+    manifest = json.loads((replay / "manifest.json").read_text())
+    assert manifest["llm"]["usage"]["calls"] == 0
+
+
+def test_the_replay_equals_the_cached_build(tmp_path, monkeypatch):
+    first = _filled_cache(tmp_path, monkeypatch)
+    before = _tree(first)
+    _no_key(monkeypatch)
+    assert _build(tmp_path, "second", "--cache-only") == 0
+    assert _tree(tmp_path / "out" / "kb" / "second") == {
+        k: v.replace(b"kb: first", b"kb: second").replace(b'"kb": "first"', b'"kb": "second"')
+        for k, v in before.items()}
+
+
+def test_cache_only_with_an_empty_cache_fails_and_names_the_miss(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("CONCEPTDRILL_CACHE_DIR", str(tmp_path / "empty"))
+    _no_key(monkeypatch)
+    assert _build(tmp_path, "x", "--cache-only") == 1
+    err = capsys.readouterr().err
+    assert "cache miss" in err and "leaf" in err and "florp-dynamics-v2#" in err
+    assert not (tmp_path / "out" / "kb" / "x").exists()
+
+
+def test_without_cache_only_a_miss_with_no_key_fails_before_spending(tmp_path, monkeypatch, capsys):
+    from conceptdrill.hierarchy import novita
+    monkeypatch.setenv("CONCEPTDRILL_CACHE_DIR", str(tmp_path / "empty"))
+    monkeypatch.delenv("NOVITA_API_KEY", raising=False)
+    monkeypatch.setattr(novita, "load_dotenv", lambda *a, **k: {})
+    assert _build(tmp_path, "y") == 1
+    assert "NOVITA_API_KEY" in capsys.readouterr().err
+
+
+def test_the_cache_key_parameters_are_the_chats(monkeypatch):
+    """The writer now knows its parameters before any chat exists; they must
+    be the chat's own, or a replay would miss every entry of a paid build."""
+    from conceptdrill.hierarchy import novita
+    from conceptdrill.kb.writer import chat_params
+    monkeypatch.setenv("NOVITA_API_KEY", "k")
+    assert chat_params("m") == novita.make_openai_chat(model="m").params
