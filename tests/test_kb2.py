@@ -160,8 +160,19 @@ def test_an_area_readme_has_its_fixed_form(built):
     path = built / area["folder"] / "README.md"
     assert headings(path) == ["Purpose", "Topics", "How the topics differ", "Related areas"]
     f = front(path)
-    assert list(f) == ["format", "id", "title", "topics", "concepts", "related"]
+    assert list(f) == ["format", "id", "title", "topics", "related"]
     assert f["topics"] == area["topics"]
+
+
+def test_an_area_names_no_concepts_in_its_frontmatter():
+    """Measured on ccl-21 (66 leaves, one area): the union of an area's
+    concepts was 275 frontmatter lines, 948 words, and the README 1836 tokens
+    over its 1500 budget. Concepts stay with topics, leaves and the index."""
+    assert "concepts" not in KB2.frontmatter["area"]
+    row = next(l for l in SPEC2.read_text().splitlines()
+               if l.startswith("| `areas/NN-<a>/README.md` |"))
+    keys = [k.strip(" `") for k in row.split("|")[2].split(",")]
+    assert keys == KB2.frontmatter["area"]
 
 
 def test_index_entries_point_into_the_area_tree(built):
