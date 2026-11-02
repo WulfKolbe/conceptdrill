@@ -1,0 +1,7 @@
+2.1 Zent Steps
+
+1: for each florp q do
+2: if q is marl then
+3: return zent
+
+florp4 quib11 zent5 marl12 dosk6 ventra0 plib7 yorn1 kast8 evrim2 tolu9 snarb3 florp10 quib4 zent11 marl5 dosk12 ventra6 plib0 yorn7 kast1 evrim8 tolu2 snarb9 florp3 quib10 zent4 marl11 dosk5 ventra12 plib6 yorn0 kast7 evrim1 tolu8 snarb2 florp9 quib3 zent10 marl4 dosk11 ventra5 plib12 yorn6 kast0

@@ -1,0 +1,446 @@
+{
+  "format": "kb/1",
+  "kb": "kb1-synthetic",
+  "documents": [
+    {
+      "doc": "florp-dynamics-v2",
+      "folder": "Florp Dynamics (v2)",
+      "title": "Florp Dynamics",
+      "glyphs": {
+        "path": "tests/fixtures/kb-synthetic/Florp Dynamics (v2)/Florp Dynamics (v2).glyphs.md",
+        "sha256": "98a1ee847e18b4bc2fdafb832a249c0e58058006a4a8404712b7c73a05d8095f"
+      },
+      "docmodel": {
+        "path": "tests/fixtures/kb-synthetic/Florp Dynamics (v2)/model.docmodel.json",
+        "sha256": "61928fe0330562a9e114318719fd3c077c722f32b994fde79173a318ddf35c6f"
+      }
+    },
+    {
+      "doc": "zib-zab",
+      "folder": "zib_zab",
+      "title": "Zib Zab Theory",
+      "glyphs": {
+        "path": "tests/fixtures/kb-synthetic/zib_zab/zib_zab.glyphs.md",
+        "sha256": "e585d50fe4e278bf577da67c22b8ef95560bc472ffe709be4ed610e3dc3a038c"
+      },
+      "docmodel": null
+    }
+  ],
+  "sections": [
+    {
+      "id": "florp-dynamics-v2#0",
+      "doc": "florp-dynamics-v2",
+      "order": 0,
+      "title": "Abstract",
+      "number": [],
+      "page": 1,
+      "line_start": 5,
+      "line_end": 5,
+      "status": "cited",
+      "cited_by": [
+        "topic-1/name-1"
+      ],
+      "reason": null,
+      "text_file": "text/florp-dynamics-v2/0.txt",
+      "text_sha256": "fa817f4b85ee3fae655b37e3d07179d04d3a9cb1c53eaf5b49dc23470c5fdaf6",
+      "words": 50,
+      "nul": 0
+    },
+    {
+      "id": "florp-dynamics-v2#1",
+      "doc": "florp-dynamics-v2",
+      "order": 1,
+      "title": "1. Introduction",
+      "number": [
+        1
+      ],
+      "page": 1,
+      "line_start": 7,
+      "line_end": 9,
+      "status": "cited",
+      "cited_by": [
+        "topic-1/name-1"
+      ],
+      "reason": null,
+      "text_file": "text/florp-dynamics-v2/1.txt",
+      "text_sha256": "1865b4dc61b6226be518dec283128f7852ae90a537da3f02a008e75b02e3a9e0",
+      "words": 62,
+      "nul": 0
+    },
+    {
+      "id": "florp-dynamics-v2#2",
+      "doc": "florp-dynamics-v2",
+      "order": 2,
+      "title": "2. Quibbling of Florps",
+      "number": [
+        2
+      ],
+      "page": 1,
+      "line_start": 11,
+      "line_end": 15,
+      "status": "cited",
+      "cited_by": [
+        "topic-2/name-3"
+      ],
+      "reason": null,
+      "text_file": "text/florp-dynamics-v2/2.txt",
+      "text_sha256": "ab7817aa89a7480818fd70901009f9217b59c15928af645b06cfc3777ce4d446",
+      "words": 76,
+      "nul": 0
+    },
+    {
+      "id": "florp-dynamics-v2#3",
+      "doc": "florp-dynamics-v2",
+      "order": 3,
+      "title": "2.1. Zent Steps",
+      "number": [
+        2,
+        1
+      ],
+      "page": 1,
+      "line_start": 17,
+      "line_end": 23,
+      "status": "cited",
+      "cited_by": [
+        "topic-2/name-3"
+      ],
+      "reason": null,
+      "text_file": "text/florp-dynamics-v2/3.txt",
+      "text_sha256": "682f79056be5f858ce774375da77feac11c19d82e389619f293567a89e08ddbe",
+      "words": 63,
+      "nul": 0
+    },
+    {
+      "id": "florp-dynamics-v2#4",
+      "doc": "florp-dynamics-v2",
+      "order": 4,
+      "title": "3. Results",
+      "number": [
+        3
+      ],
+      "page": 2,
+      "line_start": 27,
+      "line_end": 32,
+      "status": "cited",
+      "cited_by": [
+        "topic-2/name-4"
+      ],
+      "reason": null,
+      "text_file": "text/florp-dynamics-v2/4.txt",
+      "text_sha256": "18debeac87e656cb8dbb76b7729ad6f4ede80ad5e46b2e836b292c7734345bf0",
+      "words": 67,
+      "nul": 0
+    },
+    {
+      "id": "zib-zab#0",
+      "doc": "zib-zab",
+      "order": 0,
+      "title": "Abstract",
+      "number": [],
+      "page": 1,
+      "line_start": 5,
+      "line_end": 7,
+      "status": "cited",
+      "cited_by": [
+        "topic-3/name-5"
+      ],
+      "reason": null,
+      "text_file": "text/zib-zab/0.txt",
+      "text_sha256": "0ecbf04e9cf7fa4449cd640b1ceea6d1ccb8004f69f778c1fc5e0652a57f8546",
+      "words": 51,
+      "nul": 0
+    },
+    {
+      "id": "zib-zab#1",
+      "doc": "zib-zab",
+      "order": 1,
+      "title": "1. Zib Basics",
+      "number": [
+        1
+      ],
+      "page": 1,
+      "line_start": 9,
+      "line_end": 11,
+      "status": "cited",
+      "cited_by": [
+        "topic-1/name-2"
+      ],
+      "reason": null,
+      "text_file": "text/zib-zab/1.txt",
+      "text_sha256": "e40c6bdb4124e86f0c5a60a0a58b0fee95c47fb882c8dbac7b6207cc1625bb40",
+      "words": 63,
+      "nul": 0
+    },
+    {
+      "id": "zib-zab#2",
+      "doc": "zib-zab",
+      "order": 2,
+      "title": "2. Zab Extensions",
+      "number": [
+        2
+      ],
+      "page": 1,
+      "line_start": 13,
+      "line_end": 15,
+      "status": "cited",
+      "cited_by": [
+        "topic-1/name-1"
+      ],
+      "reason": null,
+      "text_file": "text/zib-zab/2.txt",
+      "text_sha256": "80e608131fad740d98ec7e0d5ae8e566b92e054169b220565e55fda0fb6f6992",
+      "words": 63,
+      "nul": 0
+    },
+    {
+      "id": "zib-zab#3",
+      "doc": "zib-zab",
+      "order": 3,
+      "title": "3. Tiny",
+      "number": [
+        3
+      ],
+      "page": 1,
+      "line_start": 17,
+      "line_end": 19,
+      "status": "unused",
+      "cited_by": [],
+      "reason": "only 3 words of text and no payload",
+      "text_file": "text/zib-zab/3.txt",
+      "text_sha256": "01d4236185c3cfd4e641747a6dfebdffe0382488f37a1f474472856469033d4b",
+      "words": 3,
+      "nul": 0
+    }
+  ],
+  "payload": [
+    {
+      "id": "florp-dynamics-v2#obj_eq1",
+      "doc": "florp-dynamics-v2",
+      "kind": "equation",
+      "members": [
+        "obj_eq1"
+      ],
+      "field": "latex",
+      "section": "florp-dynamics-v2#2",
+      "placed_by": "text",
+      "status": "placed",
+      "labels": [
+        "unverified"
+      ],
+      "file": "payload/florp-dynamics-v2/obj-eq1.tex",
+      "sha256": "062f163e1dd7ba54bd2c57fc02b8db605ca5351786e0f1ac2fee50f3e27c6bad",
+      "reason": null
+    },
+    {
+      "id": "florp-dynamics-v2#obj_li1",
+      "doc": "florp-dynamics-v2",
+      "kind": "pseudocode",
+      "members": [
+        "obj_li1",
+        "obj_li2",
+        "obj_li3"
+      ],
+      "field": "content",
+      "section": "florp-dynamics-v2#3",
+      "placed_by": "text",
+      "status": "placed",
+      "labels": [
+        "detected pseudocode"
+      ],
+      "file": "payload/florp-dynamics-v2/obj-li1.txt",
+      "sha256": "e32a6e89ad1f7950d0e3ffaada20192413993bcae74703ccc380a45470ffb642",
+      "reason": null
+    },
+    {
+      "id": "florp-dynamics-v2#obj_cl1",
+      "doc": "florp-dynamics-v2",
+      "kind": "code",
+      "members": [
+        "obj_cl1",
+        "obj_cl2"
+      ],
+      "field": "code",
+      "section": "florp-dynamics-v2#4",
+      "placed_by": "text",
+      "status": "placed",
+      "labels": [
+        "line numbers not separated"
+      ],
+      "file": "payload/florp-dynamics-v2/obj-cl1.txt",
+      "sha256": "df76317d58186da5b28f470fe15546a74dfbed361d57efcb58596da2479dfbe5",
+      "reason": null
+    }
+  ],
+  "topics": [
+    {
+      "id": "topic-1",
+      "title": "TOPIC-1",
+      "folder": "topics/01-topic-1",
+      "leaves": [
+        "topic-1/name-1",
+        "topic-1/name-2"
+      ]
+    },
+    {
+      "id": "topic-2",
+      "title": "TOPIC-2",
+      "folder": "topics/02-topic-2",
+      "leaves": [
+        "topic-2/name-3",
+        "topic-2/name-4"
+      ]
+    },
+    {
+      "id": "topic-3",
+      "title": "TOPIC-3",
+      "folder": "topics/03-topic-3",
+      "leaves": [
+        "topic-3/name-5"
+      ]
+    }
+  ],
+  "leaves": [
+    {
+      "id": "topic-1/name-1",
+      "title": "NAME-1",
+      "topic": "topic-1",
+      "path": "topics/01-topic-1/name-1.md",
+      "concepts": [
+        "CONCEPT-1"
+      ],
+      "sources": [
+        "florp-dynamics-v2#0",
+        "florp-dynamics-v2#1",
+        "zib-zab#2"
+      ],
+      "payload": [],
+      "related": [
+        "topic-1/name-2",
+        "topic-3/name-5"
+      ]
+    },
+    {
+      "id": "topic-1/name-2",
+      "title": "NAME-2",
+      "topic": "topic-1",
+      "path": "topics/01-topic-1/name-2.md",
+      "concepts": [
+        "CONCEPT-2"
+      ],
+      "sources": [
+        "zib-zab#1"
+      ],
+      "payload": [],
+      "related": [
+        "topic-1/name-1",
+        "topic-3/name-5"
+      ]
+    },
+    {
+      "id": "topic-2/name-3",
+      "title": "NAME-3",
+      "topic": "topic-2",
+      "path": "topics/02-topic-2/name-3.md",
+      "concepts": [
+        "CONCEPT-3"
+      ],
+      "sources": [
+        "florp-dynamics-v2#2",
+        "florp-dynamics-v2#3"
+      ],
+      "payload": [
+        "florp-dynamics-v2#obj_eq1",
+        "florp-dynamics-v2#obj_li1"
+      ],
+      "related": [
+        "topic-2/name-4",
+        "topic-1/name-1"
+      ]
+    },
+    {
+      "id": "topic-2/name-4",
+      "title": "NAME-4",
+      "topic": "topic-2",
+      "path": "topics/02-topic-2/name-4.md",
+      "concepts": [
+        "CONCEPT-4"
+      ],
+      "sources": [
+        "florp-dynamics-v2#4"
+      ],
+      "payload": [
+        "florp-dynamics-v2#obj_cl1"
+      ],
+      "related": [
+        "topic-2/name-3",
+        "topic-3/name-5"
+      ]
+    },
+    {
+      "id": "topic-3/name-5",
+      "title": "NAME-5",
+      "topic": "topic-3",
+      "path": "topics/03-topic-3/name-5.md",
+      "concepts": [
+        "CONCEPT-5"
+      ],
+      "sources": [
+        "zib-zab#0"
+      ],
+      "payload": [],
+      "related": [
+        "topic-1/name-2",
+        "topic-2/name-4"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "name": "CONCEPT-1",
+      "leaf": "topic-1/name-1"
+    },
+    {
+      "name": "CONCEPT-2",
+      "leaf": "topic-1/name-2"
+    },
+    {
+      "name": "CONCEPT-3",
+      "leaf": "topic-2/name-3"
+    },
+    {
+      "name": "CONCEPT-4",
+      "leaf": "topic-2/name-4"
+    },
+    {
+      "name": "CONCEPT-5",
+      "leaf": "topic-3/name-5"
+    }
+  ],
+  "terms": [
+    {
+      "term": "CONCEPT-1",
+      "definition": "PROSE",
+      "leaf": "topic-1/name-1"
+    },
+    {
+      "term": "CONCEPT-2",
+      "definition": "PROSE",
+      "leaf": "topic-1/name-2"
+    },
+    {
+      "term": "CONCEPT-3",
+      "definition": "PROSE",
+      "leaf": "topic-2/name-3"
+    },
+    {
+      "term": "CONCEPT-4",
+      "definition": "PROSE",
+      "leaf": "topic-2/name-4"
+    },
+    {
+      "term": "CONCEPT-5",
+      "definition": "PROSE",
+      "leaf": "topic-3/name-5"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "format": "kb/1",
+  "kb": "kb1-synthetic",
+  "command": "conceptdrill kb build 'Florp Dynamics (v2)' zib_zab --name kb1-synthetic --library tests/fixtures/kb-synthetic --output-root work/run-files/kb2-fixture --llm stub --embedder hash",
+  "conceptdrill_commit": "46f5da9",
+  "inputs": [
+    {
+      "path": "tests/fixtures/kb-synthetic/Florp Dynamics (v2)/Florp Dynamics (v2).glyphs.md",
+      "sha256": "98a1ee847e18b4bc2fdafb832a249c0e58058006a4a8404712b7c73a05d8095f"
+    },
+    {
+      "path": "tests/fixtures/kb-synthetic/Florp Dynamics (v2)/model.docmodel.json",
+      "sha256": "61928fe0330562a9e114318719fd3c077c722f32b994fde79173a318ddf35c6f"
+    },
+    {
+      "path": "tests/fixtures/kb-synthetic/zib_zab/zib_zab.glyphs.md",
+      "sha256": "e585d50fe4e278bf577da67c22b8ef95560bc472ffe709be4ed610e3dc3a038c"
+    }
+  ],
+  "skipped": [],
+  "embedding": {
+    "model": "hash",
+    "vectors": 8,
+    "sha256": "3166ff620cd406dc56a630495ab37202d5607c0d596982647bd38fa4210bd09d"
+  },
+  "llm": {
+    "stub": true,
+    "model": null,
+    "usage": {
+      "calls": 0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    }
+  },
+  "written_at": "2026-11-02T16:27:26+00:00"
+}

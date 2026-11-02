@@ -7,6 +7,7 @@ cached by content, so a rebuild costs nothing and a failed build resumes.
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
@@ -25,6 +26,8 @@ LEAF_REPLY = {"title": "Florp quibbling", "use_when": "When florps quibble.",
               "pitfalls": ["Marls drift."]}
 TOPIC_REPLY = {"title": "Florp matters", "purpose": "Everything florp.",
                "differ": "They differ in marls."}
+AREA_REPLY = {"title": "Florp lands", "purpose": "All florp topics.",
+              "differ": "They differ in zibs."}
 KB_REPLY = {"title": "A florp base", "purpose": "Florps and zibs."}
 
 
@@ -48,6 +51,8 @@ class FakeChat:
             return json.dumps(LEAF_REPLY)
         if "KIND: topic" in system:
             return json.dumps(TOPIC_REPLY)
+        if "KIND: area" in system:
+            return json.dumps(AREA_REPLY)
         return json.dumps(KB_REPLY)
 
 
@@ -98,7 +103,7 @@ def test_a_build_with_the_writer_conforms_and_records_its_usage(tmp_path, monkey
     llm = json.loads((kb / "manifest.json").read_text())["llm"]
     assert llm["stub"] is False and llm["model"] == "fake"
     assert llm["usage"]["calls"] == len(chat.calls) > 0
-    leaf = next((kb / "topics").rglob("florp-quibbling*.md"))
+    leaf = next((kb / "areas").rglob("florp-quibbling*.md"))
     text = leaf.read_text()
     assert "1. Count the florps." in text and "- Marls drift." in text
 
@@ -216,3 +221,42 @@ def test_payload_carried_for_the_chapter_is_not_in_the_writer_prompt(tmp_path, m
     write_prose([Topic([leaf])], LLMWriter(chat, model="fake", cache_path=tmp_path / "w.json"))
     leaf_prompt = next(u for sys_, u in chat.calls if "KIND: leaf" in sys_)
     assert "d#obj_a" not in leaf_prompt
+
+
+# --------------------------------------------------------------------------
+# kb/2: one call per area, and the kb call reads areas
+# --------------------------------------------------------------------------
+
+def test_an_area_reply_is_asked_with_the_area_prompt_and_needs_differ(tmp_path):
+    chat = FakeChat()
+    w = LLMWriter(chat, model="fake", cache_path=tmp_path / "w.json")
+    got = w.area([{"title": "Florp matters", "purpose": "Everything florp."}])
+    assert got == AREA_REPLY
+    system, user = chat.calls[0]
+    assert system.startswith("KIND: area") and "Florp matters" in user
+    bad = FakeChat(replies=[json.dumps(KB_REPLY), json.dumps(KB_REPLY)])
+    with pytest.raises(BuildError, match="area"):
+        LLMWriter(bad, model="fake", cache_path=tmp_path / "b.json").area(
+            [{"title": "x", "purpose": "y"}])
+
+
+def test_the_kb_call_reads_areas(tmp_path):
+    chat = FakeChat()
+    LLMWriter(chat, model="fake", cache_path=tmp_path / "w.json").kb(
+        [{"title": "Florp lands", "purpose": "All florp topics."}])
+    system, user = chat.calls[0]
+    assert system.startswith("KIND: kb") and json.loads(user) == {
+        "areas": [{"title": "Florp lands", "purpose": "All florp topics."}]}
+
+
+def test_the_estimate_counts_one_call_per_area(tmp_path, monkeypatch, capsys):
+    from conceptdrill.kb import build as B
+    monkeypatch.setattr(B, "MAX_TOPICS_PER_AREA", 1)
+    assert cli.main(["kb", "build", FLORP, ZIB, "--name", "est", "--library", str(LIB),
+                     "--output-root", str(tmp_path), "--llm", "novita",
+                     "--embedder", "hash", "--estimate"]) == 0
+    out = capsys.readouterr().out
+    m = re.search(r"(\d+) leaves in (\d+) topics in (\d+) areas", out)
+    leaves, topics, areas = map(int, m.groups())
+    assert areas == 3
+    assert re.search(rf": {leaves + topics + areas + 1} calls", out)

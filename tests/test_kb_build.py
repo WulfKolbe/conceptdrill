@@ -37,7 +37,7 @@ def kbjson(kb):
     return json.loads((kb / "kb.json").read_text())
 
 
-def test_the_stubbed_build_conforms_to_kb1(built):
+def test_the_stubbed_build_conforms(built):
     report = check(built)
     assert report.violations == []
 

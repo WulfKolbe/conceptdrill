@@ -1,5 +1,8 @@
 """`kb check`: the kb/1 contract, decided mechanically (T-0119, step A).
 
+These trees are kb/1 (a root `topics/`); kb/1 stays checkable under kb/2,
+which tests/test_kb2.py covers.
+
 Every test here builds a small BROKEN tree and asserts that the check names
 the break. A valid tree is never written by hand: the one valid tree comes
 from the generator, with its LLM stubbed (step B). Names here are nonsense on
@@ -14,9 +17,10 @@ from pathlib import Path
 import pytest
 
 from conceptdrill.kb import check as kbcheck
-from conceptdrill.kb.contract import HEADINGS, LETTERS, PROTOCOL
+from conceptdrill.kb.contract import KB1, LETTERS
 from conceptdrill.output import REPO_ROOT
 
+HEADINGS, PROTOCOL = KB1.headings, KB1.protocol
 SPEC = REPO_ROOT / "docs" / "kb-format" / "kb-1.md"
 
 
@@ -81,7 +85,7 @@ def test_an_empty_folder_is_not_a_knowledge_base(tmp_path):
 
 def test_an_extra_folder_is_named(tmp_path):
     (tmp_path / "notes").mkdir()
-    assert any_match(problems(tmp_path), r"notes: not in the kb/1 tree")
+    assert any_match(problems(tmp_path), r"notes: not in the kb/\d tree")
 
 
 def test_a_hidden_entry_is_named(tmp_path):
@@ -230,8 +234,8 @@ def test_the_cli_exits_1_and_lists_every_violation(tmp_path, capsys):
     (tmp_path / "notes").mkdir()
     assert cli.main(["kb", "check", str(tmp_path)]) == 1
     out = capsys.readouterr().out
-    assert "notes: not in the kb/1 tree" in out
-    assert re.search(r"kb/1: \d+ violations", out)
+    assert re.search(r"notes: not in the kb/\d tree", out)
+    assert re.search(r"kb/\d: \d+ violations", out)
 
 
 # --------------------------------------------------------------------------
