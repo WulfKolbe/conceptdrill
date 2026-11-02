@@ -113,7 +113,8 @@ def test_naming_a_paper_takes_two_shared_words_or_all_of_a_short_title():
     from conceptdrill.kb.reach import names_title
     assert not names_title("Quibbling of Florps — pseudocode", "Florp Dynamics")
     assert names_title("florp dynamics of marls", "Florp Dynamics")
-    assert not names_title("quorp flux", "Quorp Flux in Dense Marls")  # 2 of 4
+    # 2 of 4: the rule is "at least two" for a longer title, not "half".
+    assert names_title("quorp flux", "Quorp Flux in Dense Marls")
     assert names_title("dense quorp", "Quorp Flux in Dense Marls")
     assert not names_title("dense", "Quorp Flux in Dense Marls")
 

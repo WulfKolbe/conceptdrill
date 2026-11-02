@@ -59,6 +59,18 @@ def names(entry: str, method: str) -> bool:
     return len(want & set(_tokens(entry))) >= ceil(len(want) / 2)
 
 
+def names_title(entry: str, title: str) -> bool:
+    """Does the index entry name the paper? Stricter than `names`: a paper's
+    title is long and shares single words with much of its own field, so one
+    shared word proves nothing. All content words of a title of two or fewer;
+    at least two of a longer one (coordinator, T-0130)."""
+    want = content_words(title)
+    if not want:
+        return False
+    shared = len(want & set(_tokens(entry)))
+    return shared == len(want) if len(want) <= 2 else shared >= 2
+
+
 def reach(kb: dict) -> dict:
     sections = {s["id"]: s for s in kb["sections"]}
     leaves = {l["id"]: l for l in kb["leaves"]}
@@ -116,7 +128,7 @@ def reach_by_title(kb: dict) -> dict:
         if not content_words(d["title"]):
             row["reason"] = "the title names nothing"
         else:
-            naming = [c for c in kb["concepts"] if names(c["name"], d["title"])]
+            naming = [c for c in kb["concepts"] if names_title(c["name"], d["title"])]
             via = [c for c in naming
                    if items & set(leaves.get(c["leaf"], {}).get("payload", []))]
             if via:
