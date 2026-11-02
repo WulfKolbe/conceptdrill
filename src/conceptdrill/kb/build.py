@@ -379,28 +379,45 @@ def _agglomerate(vectors: np.ndarray, sizes: list[int], *, max_size: int,
 
     Merges while the best pair is at least `tau` similar (or while there are
     more than `target` clusters), never past `max_size` members.
+
+    A cluster-similarity matrix is kept and, on each merge, the merged row is
+    the member-count-weighted average of the two -- exactly the mean over
+    member pairs, without recomputing it (tests/test_kb_cluster.py holds the result
+    equal to the first, quadratic-per-merge version). The best pair is the
+    first maximum in row-major order of the upper triangle, which is the pair
+    the first version's scan chose.
     """
-    clusters = [[i] for i in range(len(vectors))]
-    weight = list(sizes)
-    sims = vectors @ vectors.T if len(vectors) else np.zeros((0, 0))
-    while len(clusters) > 1:
-        if target is not None and len(clusters) <= target:
+    n = len(vectors)
+    if n == 0:
+        return []
+    C = np.asarray(vectors @ vectors.T, dtype=np.float64).copy()
+    weight = np.asarray(sizes, dtype=np.int64).copy()
+    members = [[i] for i in range(n)]
+    active = np.ones(n, dtype=bool)
+    upper = np.triu(np.ones((n, n), dtype=bool), k=1)
+    count = n
+    while count > 1:
+        if target is not None and count <= target:
             break
-        best, pair = -np.inf, None
-        for a in range(len(clusters)):
-            for b in range(a + 1, len(clusters)):
-                if weight[a] + weight[b] > max_size:
-                    continue
-                s = float(np.mean(sims[np.ix_(clusters[a], clusters[b])]))
-                if s > best + 1e-12:
-                    best, pair = s, (a, b)
-        if pair is None or (tau is not None and best < tau):
+        ok = upper & active[:, None] & active[None, :] & \
+            (np.add.outer(weight, weight) <= max_size)
+        masked = np.where(ok, C, -np.inf)
+        flat = int(np.argmax(masked))
+        best = masked.flat[flat]
+        if not np.isfinite(best) or (tau is not None and best < tau):
             break
-        a, b = pair
-        clusters[a] = sorted(clusters[a] + clusters[b])
-        weight[a] += weight[b]
-        del clusters[b], weight[b]
-    return clusters
+        a, b = divmod(flat, n)
+        # The mean is over member pairs, one per member; `weight` only caps size.
+        na, nb = len(members[a]), len(members[b])
+        row = (na * C[a] + nb * C[b]) / (na + nb)
+        C[a, :] = row
+        C[:, a] = row
+        weight[a] = weight[a] + weight[b]
+        active[b] = False
+        members[a] = sorted(members[a] + members[b])
+        members[b] = []
+        count -= 1
+    return [members[i] for i in range(n) if active[i]]
 
 
 @dataclass
