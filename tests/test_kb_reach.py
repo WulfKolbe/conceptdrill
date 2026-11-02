@@ -123,3 +123,13 @@ def test_the_paper_title_measure_uses_the_stricter_rule():
     from conceptdrill.kb.reach import reach_by_title
     r = reach_by_title(_kb2(["quorp"], ["d#obj_1"], doc_title="Quorp Flux in Dense Marls"))
     assert r["reachable"] == 0
+
+
+def test_a_long_title_needs_half_its_words_and_at_least_two():
+    """Coordinator: max(2, ceil(half)) shared content words, or all of a title
+    of two or fewer. Eight content words need four; two do not name it."""
+    from conceptdrill.kb.reach import names_title
+    title = "Quorp Flux Dense Marls Zent Steps Florp Ventra"   # 8 content words
+    assert not names_title("quorp flux", title)
+    assert not names_title("quorp flux dense", title)
+    assert names_title("quorp flux dense marls", title)
