@@ -1,0 +1,65 @@
+{
+  "items": 6,
+  "reachable": 0,
+  "share": 0.0,
+  "reasons": {
+    "section title names no method": 4,
+    "no index entry names its method": 2
+  },
+  "rows": [
+    {
+      "id": "s41467-023-39995-0#obj_2dfa6009d47f",
+      "kind": "equation",
+      "section": "s41467-023-39995-0#4",
+      "method": "Page 5",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "s41586-022-04731-z#obj_3351eea449c4",
+      "kind": "equation",
+      "section": "s41586-022-04731-z#9",
+      "method": "Data availability",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "s41586-022-04731-z#obj_e75d1a9321ba",
+      "kind": "pseudocode",
+      "section": "s41586-022-04731-z#9",
+      "method": "Data availability",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "s42005-020-0326-2#obj_db29110a15e7",
+      "kind": "equation",
+      "section": "s42005-020-0326-2#2",
+      "method": "Page 3",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "s42005-020-0326-2#obj_c78471010807",
+      "kind": "equation",
+      "section": "s42005-020-0326-2#4",
+      "method": "Page 5",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "sciadv-aax7163#obj_02cff8ed3f48",
+      "kind": "equation",
+      "section": "sciadv-aax7163#1",
+      "method": "Page 2",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    }
+  ]
+}

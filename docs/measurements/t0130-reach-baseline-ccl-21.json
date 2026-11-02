@@ -1,0 +1,579 @@
+{
+  "items": 59,
+  "reachable": 17,
+  "share": 0.288135593220339,
+  "reasons": {
+    "no index entry names its method": 12,
+    "section title names no method": 13,
+    "no leaf carrying it is indexed under its method": 17
+  },
+  "rows": [
+    {
+      "id": "2009tiplabeling#obj_08d625b3ac68",
+      "kind": "equation",
+      "section": "2009tiplabeling#4",
+      "method": "DECISION TABLES AND DECISION TREES",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Optimal Decision Tree (ODTree) -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-for-ccl-decision-tables",
+        "OR-decision table -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-for-ccl-decision-tables"
+      ]
+    },
+    {
+      "id": "2009tiplabeling#obj_832b94f3abae",
+      "kind": "equation",
+      "section": "2009tiplabeling#5",
+      "method": "Modeling raster scan labeling with decision tables",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "2009tiplabeling#obj_604fb57bc473",
+      "kind": "equation",
+      "section": "2009tiplabeling#6",
+      "method": "Reducing the cost of conditions testing: decision trees",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "2009tiplabeling#obj_7121694d9624",
+      "kind": "equation",
+      "section": "2009tiplabeling#7",
+      "method": "Action selection in OR-decision tables",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Decision table -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-and-drag-compression"
+      ]
+    },
+    {
+      "id": "2016acivs#obj_98599c35cc06",
+      "kind": "code",
+      "section": "2016acivs#3",
+      "method": "Method",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2016icpr#obj_b32150ca7d7a",
+      "kind": "code",
+      "section": "2016icpr#3",
+      "method": "YACCLAB PROJECT",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2016icpr#obj_d38c449268f7",
+      "kind": "equation",
+      "section": "2016icpr#4",
+      "method": "AVAILABLE ALGORITHMS",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Labels solving algorithm -> yacclab-ccl-benchmarking-framework/yacclab-ccl-benchmarking-framework"
+      ]
+    },
+    {
+      "id": "2016icpr#obj_b4ac23539d5e",
+      "kind": "equation",
+      "section": "2016icpr#5",
+      "method": "CURRENT RESULTS",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "2018icpr#obj_af7b3cf9db9f",
+      "kind": "equation",
+      "section": "2018icpr#3",
+      "method": "MODELLING CCL WITH DECISION TREES",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Optimal Decision Tree (ODTree) -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-for-ccl-decision-tables"
+      ]
+    },
+    {
+      "id": "2018icpr#obj_19601ec0e8b1",
+      "kind": "equation",
+      "section": "2018icpr#4",
+      "method": "FROM DECISION TREES TO DRAGS",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Decision tree -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-and-drag-compression"
+      ]
+    },
+    {
+      "id": "2018icpr#obj_797e1a7411ae",
+      "kind": "equation",
+      "section": "2018icpr#5",
+      "method": "EXPERIMENTAL RESULTS",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2018icpr#obj_77799de51a4a",
+      "kind": "equation",
+      "section": "2018icpr#6",
+      "method": "CONCLUSION",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2018ipas-gpuccl#obj_f285f307fc8d",
+      "kind": "code",
+      "section": "2018ipas-gpuccl#5",
+      "method": "PROPOSED ALGORITHM",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2018jrtip#obj_3d9e85d41240",
+      "kind": "equation",
+      "section": "2018jrtip#3",
+      "method": "Synthetic Images",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2018jrtip#obj_f09781dc15d4",
+      "kind": "equation",
+      "section": "2018jrtip#5",
+      "method": "Document Images",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2018jrtip#obj_05e2c25f788e",
+      "kind": "code",
+      "section": "2018jrtip#7",
+      "method": "Surveillance Images",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2018jrtip#obj_04680d34bcee",
+      "kind": "equation",
+      "section": "2018jrtip#20",
+      "method": "Conclusions",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2019caip-labeling#obj_955a0958827e",
+      "kind": "equation",
+      "section": "2019caip-labeling#2",
+      "method": "Problem Deﬁnition",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "2019caip-labeling#obj_01b9a15a1b3d",
+      "kind": "equation",
+      "section": "2019caip-labeling#5",
+      "method": "Experimental Results",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2019caip-labeling#obj_d7ebca35510a",
+      "kind": "equation",
+      "section": "2019caip-labeling#6",
+      "method": "Conclusions",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2019tip-fosnncz#obj_bf58644d259a",
+      "kind": "equation",
+      "section": "2019tip-fosnncz#7",
+      "method": "Average Run-Time Results",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2019tip-fosnncz#obj_03fcc891540d",
+      "kind": "code",
+      "section": "2019tip-fosnncz#7",
+      "method": "Average Run-Time Results",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2019tip-fosnncz#obj_ac5aca4997f3",
+      "kind": "equation",
+      "section": "2019tip-fosnncz#9",
+      "method": "Synthetic Images",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2019tpds#obj_004ff211cf6f",
+      "kind": "equation",
+      "section": "2019tpds#3",
+      "method": "The Union-Find data structure",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Union-Find data structure -> gpu-union-find-for-connected-component-labeling/gpu-parallel-union-find-for-connected-component-labeling"
+      ]
+    },
+    {
+      "id": "2019tpds#obj_b140fadf7ea7",
+      "kind": "equation",
+      "section": "2019tpds#11",
+      "method": "PROPOSED ALGORITHMS",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2019tpds#obj_066f3045436e",
+      "kind": "code",
+      "section": "2019tpds#14",
+      "method": "YACCLAB",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2019tpds#obj_884a0177de94",
+      "kind": "equation",
+      "section": "2019tpds#17",
+      "method": "COMPARATIVE EVALUATION",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "2019tpds#obj_1d52a7d7ab51",
+      "kind": "equation",
+      "section": "2019tpds#18",
+      "method": "CONCLUSION",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2021icpr-labeling#obj_4a969481a45d",
+      "kind": "equation",
+      "section": "2021icpr-labeling#4",
+      "method": "Decision Tree Learning",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2021icpr-labeling#obj_03195a7d5e73",
+      "kind": "equation",
+      "section": "2021icpr-labeling#5",
+      "method": "OUTLINE OF THE PROPOSED ALGORITHM",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2021ivpr#obj_edd018e05a3e",
+      "kind": "equation",
+      "section": "2021ivpr#3",
+      "method": "PRELIMINARIES",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "2021ivpr#obj_bd5bba54d732",
+      "kind": "equation",
+      "section": "2021ivpr#4",
+      "method": "Run-Based Two-Scan (RBTS)",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Two-scan labeling -> connected-component-labeling-algorithms/bit-merge-run-scan-bmrs-for-connected-component-labeling"
+      ]
+    },
+    {
+      "id": "2021ivpr#obj_511afccd503a",
+      "kind": "equation",
+      "section": "2021ivpr#6",
+      "method": "EXPERIMENTAL RESULTS",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2021ivpr#obj_688be168b522",
+      "kind": "pseudocode",
+      "section": "2021ivpr#6",
+      "method": "EXPERIMENTAL RESULTS",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2021ivpr#obj_b72d61bdec3a",
+      "kind": "pseudocode",
+      "section": "2021ivpr#6",
+      "method": "EXPERIMENTAL RESULTS",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2021ivpr#obj_cf6058e0bcc9",
+      "kind": "equation",
+      "section": "2021ivpr#7",
+      "method": "CONCLUSION",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "2021tpami-copqhjy#obj_468d26f9993e",
+      "kind": "equation",
+      "section": "2021tpami-copqhjy#3",
+      "method": "Modeling Algorithms with Decision Tables",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "OR-decision table -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-for-ccl-decision-tables"
+      ]
+    },
+    {
+      "id": "2021tpami-copqhjy#obj_2302fa3543ac",
+      "kind": "code",
+      "section": "2021tpami-copqhjy#3",
+      "method": "Modeling Algorithms with Decision Tables",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "OR-decision table -> decision-tree-optimization-and-drag-compression-for-binary/optimal-decision-tree-construction-for-ccl-decision-tables"
+      ]
+    },
+    {
+      "id": "2021tpami-copqhjy#obj_2bef0be21a56",
+      "kind": "code",
+      "section": "2021tpami-copqhjy#8",
+      "method": "Connected Components Labeling",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Connected Component Labeling (CCL) -> connected-components-labeling-optimization/block-based-decision-tree-optimization-for-ccl"
+      ]
+    },
+    {
+      "id": "2021tpami-copqhjy#obj_2d0e41d16d89",
+      "kind": "equation",
+      "section": "2021tpami-copqhjy#9",
+      "method": "Contours Extraction",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "2021tpami-copqhjy#obj_f481e65ac0e9",
+      "kind": "equation",
+      "section": "2021tpami-copqhjy#10",
+      "method": "CONCLUSION",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "dasip2018-final#obj_aaa9cd94f2be",
+      "kind": "equation",
+      "section": "dasip2018-final#6",
+      "method": "CCL - Final labeling",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "dasip2018-final#obj_dd22a9358502",
+      "kind": "equation",
+      "section": "dasip2018-final#7",
+      "method": "CCA & Features Computation",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "distefano1999ccl#obj_53519dbc27dd",
+      "kind": "equation",
+      "section": "distefano1999ccl#2",
+      "method": "The connected components labeling problem and the classical approach",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "distefano1999ccl#obj_52ead02c1b80",
+      "kind": "code",
+      "section": "distefano1999ccl#3",
+      "method": "Basic structure of the proposed algorithm",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "distefano1999ccl#obj_7d06a8b58d0b",
+      "kind": "code",
+      "section": "distefano1999ccl#5",
+      "method": "Reducing the cost of class merging",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Equivalence class merging -> connected-component-labeling-algorithms/two-scan-connected-component-labeling-with-class-merging"
+      ]
+    },
+    {
+      "id": "ipta-79#obj_42f747eb3dfe",
+      "kind": "equation",
+      "section": "ipta-79#0",
+      "method": "Abstract",
+      "reachable": false,
+      "reason": "section title names no method",
+      "via": []
+    },
+    {
+      "id": "oliveira2010uf#obj_287b3bfdb823",
+      "kind": "equation",
+      "section": "oliveira2010uf#7",
+      "method": "Phase 3: Path compression",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Path compression -> gpu-union-find-for-connected-component-labeling/gpu-based-connected-component-labeling-with-union-find"
+      ]
+    },
+    {
+      "id": "oliveira2010uf#obj_5918a09cde21",
+      "kind": "equation",
+      "section": "oliveira2010uf#8",
+      "method": "NEIGHBOR PROPAGATION",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "oliveira2010uf#obj_4cea7fb1771f",
+      "kind": "equation",
+      "section": "oliveira2010uf#14",
+      "method": "Phase 1: Verify neighborhood",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Phase 1: Verify neighborhood -> gpu-union-find-for-connected-component-labeling/label-equivalence-algorithm-for-parallel-connected"
+      ]
+    },
+    {
+      "id": "oliveira2010uf#obj_a1cf07861c28",
+      "kind": "equation",
+      "section": "oliveira2010uf#16",
+      "method": "PERFORMANCE RESULTS AND ANALYSIS",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "stava2011ccl#obj_3ea24fb839eb",
+      "kind": "equation",
+      "section": "stava2011ccl#5",
+      "method": "Merging Scheme",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Hierarchical merging scheme -> gpu-union-find-for-connected-component-labeling/cuda-two-pass-connected-component-labeling"
+      ]
+    },
+    {
+      "id": "wu2009sauf#obj_b1409f4b161b",
+      "kind": "equation",
+      "section": "wu2009sauf#6",
+      "method": "The basic scanning procedure",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "wu2009sauf#obj_90619e40fdd8",
+      "kind": "equation",
+      "section": "wu2009sauf#7",
+      "method": "Scan plus connection table",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "connection table T -> connected-component-labeling-algorithms/scan-plus-connection-table-sct-for-connected-component"
+      ]
+    },
+    {
+      "id": "wu2009sauf#obj_efe8cb4fd3f1",
+      "kind": "equation",
+      "section": "wu2009sauf#8",
+      "method": "Decision tree",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Active trees -> connected-component-labeling-algorithms/decision-tree-optimized-two-pass-connected-component",
+        "Decision tree scan ordering -> connected-component-labeling-algorithms/decision-tree-optimized-two-pass-connected-component"
+      ]
+    },
+    {
+      "id": "wu2009sauf#obj_e9856e8e3109",
+      "kind": "code",
+      "section": "wu2009sauf#11",
+      "method": "Proposed union-ﬁnd",
+      "reachable": true,
+      "reason": null,
+      "via": [
+        "Union-Find -> connected-component-labeling-algorithms/array-based-union-find-for-connected-component-labeling"
+      ]
+    },
+    {
+      "id": "wu2009sauf#obj_d95e190cd9ec",
+      "kind": "pseudocode",
+      "section": "wu2009sauf#14",
+      "method": "Correctness of algorithms",
+      "reachable": false,
+      "reason": "no leaf carrying it is indexed under its method",
+      "via": []
+    },
+    {
+      "id": "wu2009sauf#obj_e2cdfba19cf4",
+      "kind": "equation",
+      "section": "wu2009sauf#16",
+      "method": "Average performance on random images",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    },
+    {
+      "id": "wu2009sauf#obj_aadeaa9f686b",
+      "kind": "equation",
+      "section": "wu2009sauf#20",
+      "method": "Verifying performance model for SAUF",
+      "reachable": false,
+      "reason": "no index entry names its method",
+      "via": []
+    }
+  ]
+}

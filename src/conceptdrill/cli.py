@@ -11,6 +11,7 @@ Subcommands::
     conceptdrill library-copy RUN_DIR [--library DIR]
     conceptdrill kb build DOC... --name NAME [--llm stub|novita] [--embedder E]
     conceptdrill kb check KB_DIR
+    conceptdrill kb reach KB_DIR [--json]
 
 The flat form from the spec is also accepted and dispatches to `explain`::
 
@@ -193,6 +194,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_kb_build.add_argument("--estimate", action="store_true",
                             help="run every stage, call no model, write nothing; "
                                  "print the writer's calls, tokens and cost")
+    p_kb_reach = kb_sub.add_parser(
+        "reach", help="share of payload items an index entry naming their method "
+                      "reaches through a leaf that carries them (a measure)")
+    p_kb_reach.add_argument("kb_dir")
+    p_kb_reach.add_argument("--json", action="store_true", dest="as_json")
     p_kb_check = kb_sub.add_parser(
         "check", help="does a folder conform to kb/1? exit 0 yes, 1 no")
     p_kb_check.add_argument("kb_dir")
@@ -498,6 +504,21 @@ def cmd_kb(args: argparse.Namespace) -> int:
     from .kb.check import check
     if args.kb_command == "build":
         return _kb_build(args)
+    if args.kb_command == "reach":
+        from .kb.reach import reach_dir
+        r = reach_dir(Path(args.kb_dir).expanduser())
+        if args.as_json:
+            print(json.dumps(r, indent=2, ensure_ascii=False))
+            return 0
+        share = "n/a" if r["share"] is None else f"{r['share']:.2f}"
+        print(f"reach: {r['reachable']} of {r['items']} payload items ({share})")
+        for reason, n in sorted(r["reasons"].items(), key=lambda x: -x[1]):
+            print(f"  {n:4d}  {reason}")
+        for row in r["rows"]:
+            mark = "ok " if row["reachable"] else "-- "
+            print(f"  {mark}{row['id']} {row['kind']} '{row['method'][:50]}'"
+                  + (f"  via {row['via'][0]}" if row["via"] else f"  ({row['reason']})"))
+        return 0
     report = check(Path(args.kb_dir).expanduser())
     for v in report.violations:
         print(v)
