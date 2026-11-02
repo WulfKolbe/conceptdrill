@@ -287,3 +287,50 @@ def test_an_area_readme_must_list_its_topics(built, tmp_path):
     readme.write_text(re.sub(r"(## Topics\n\n)- .*\n", r"\1", text, count=1))
     assert any(re.search(r"not linked from areas/01-[a-z0-9-]+/README\.md", v)
                for v in check(kb).violations)
+
+
+# --------------------------------------------------------------------------
+# SOURCES.md: the document list leaves the root README (owner, 2026-11-02)
+# --------------------------------------------------------------------------
+# The 87-paper set's root README was 1533 tokens over its 1500 budget: its
+# ## Sources list (733 words) and `documents` frontmatter (192 words), not
+# the areas. The list moves to a root file of its own, as INDEX.md does.
+
+def test_the_root_readme_points_at_sources_md_and_lists_no_documents(built):
+    f = front(built / "README.md")
+    assert list(f) == ["format", "kb", "title", "areas"]
+    text = (built / "README.md").read_text()
+    sources = text.split("## Sources\n\n", 1)[1].strip().splitlines()
+    assert sources == ["- [Sources](SOURCES.md) — 2 documents"]
+
+
+def test_sources_md_lists_every_document(built):
+    path = built / "SOURCES.md"
+    f = front(path)
+    assert f == {"format": "kb/2", "kb": "s", "documents": 2}
+    assert headings(path) == ["Documents"]
+    text = path.read_text()
+    assert "# Sources\n" in text
+    for d in kbjson(built)["documents"]:
+        assert f"- [{d['doc']}](sources/{d['doc']}.md) — {d['title']}" in text
+
+
+def test_a_source_file_not_listed_in_sources_md_is_named(built, tmp_path):
+    kb = _copy(built, tmp_path)
+    path = kb / "SOURCES.md"
+    path.write_text(re.sub(r"- \[zib-zab\].*\n", "", path.read_text())
+                    .replace("documents: 2", "documents: 1"))
+    found = check(kb).violations
+    assert any(re.search(r"sources/zib-zab\.md: not linked from SOURCES\.md", v) for v in found)
+    assert any(re.search(r"SOURCES\.md: .*documents", v) for v in found)
+
+
+def test_sources_md_is_in_the_spec_tables():
+    text = SPEC2.read_text()
+    table = text.split("## 4. Headings")[1].split("## 5.")[0]
+    row = next(l for l in table.splitlines() if l.startswith("| `SOURCES.md` |"))
+    assert [h.strip() for h in row.split("|")[2].split("·")] == KB2.headings["sources_list"]
+    front_row = next(l for l in text.splitlines() if l.startswith("| `README.md` | `format: kb/2`"))
+    assert [k.strip(" `").split(":")[0] for k in front_row.split("|")[2].split(",")] == \
+        KB2.frontmatter["readme"]
+    assert "SOURCES.md" in KB2.root_files and "SOURCES.md" not in KB1.root_files
