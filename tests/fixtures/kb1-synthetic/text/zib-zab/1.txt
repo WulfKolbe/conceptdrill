@@ -1,0 +1,3 @@
+1 Zib Basics
+
+florp7 quib1 zent8 marl2 dosk9 ventra3 plib10 yorn4 kast11 evrim5 tolu12 snarb6 florp0 quib7 zent1 marl8 dosk2 ventra9 plib3 yorn10 kast4 evrim11 tolu5 snarb12 florp6 quib0 zent7 marl1 dosk8 ventra2 plib9 yorn3 kast10 evrim4 tolu11 snarb5 florp12 quib6 zent0 marl7 dosk1 ventra8 plib2 yorn9 kast3 evrim10 tolu4 snarb11 florp5 quib12 zent6 marl0 dosk7 ventra1 plib8 yorn2 kast9 evrim3 tolu10 snarb4

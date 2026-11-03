@@ -1,0 +1,5 @@
+2 Quibbling of Florps
+
+florp3 quib10 zent4 marl11 dosk5 ventra12 plib6 yorn0 kast7 evrim1 tolu8 snarb2 florp9 quib3 zent10 marl4 dosk11 ventra5 plib12 yorn6 kast0 evrim7 tolu1 snarb8 florp2 quib9 zent3 marl10 dosk4 ventra11 plib5 yorn12 kast6 evrim0 tolu7 snarb1 florp8 quib2 zent9 marl3 dosk10 ventra4 plib11 yorn5 kast12 evrim6 tolu0 snarb7 florp1 quib8 zent2 marl9 dosk3 ventra10 plib4 yorn11 kast5 evrim12 tolu6 snarb0
+
+The florp rate obeys $q = z^{2} + 1$ at every marl.

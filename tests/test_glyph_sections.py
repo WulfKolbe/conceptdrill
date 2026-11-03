@@ -178,3 +178,12 @@ def test_markdown_headings_that_cover_little_of_the_text_give_way_to_pages():
     text = (f"---\n\n# Some Title\n\n{body}\n\n---\n\n### View the thing online\n\n"
             "a link\n\n### Permissions\n\nsome rights\n")
     assert [s["title"] for s in split_glyphs(text)] == ["Page 1", "Page 2"]
+
+
+def test_every_section_records_which_split_made_it():
+    """So a structureless input is visible: "page" means no heading was found."""
+    assert {s["split"] for s in split_glyphs(IEEE)} == {"numbered"}
+    md = ("---\n\n# T\n\n### Measuring the flux\n\nWe measured.\n\n"
+          "### Discussion of results\n\nIt went well.\n")
+    assert {s["split"] for s in split_glyphs(md)} == {"markdown"}
+    assert {s["split"] for s in split_glyphs("---\n\nplain words only\n")} == {"page"}

@@ -19,7 +19,11 @@ The machine-readable parts are JSON Schemas shipped with the package:
   (section 1a) and is what every path and id in the knowledge base uses.
 - **section** — one section of a document's `glyphs.md` split, id
   `<doc>#<order>`, `order` counting from 0. Its **text** is its glyphs.md lines
-  `line_start`..`line_end`, verbatim.
+  `line_start`..`line_end`, verbatim. A document without a glyphs.md is read
+  from its `<doc>.md` (pdfdrill's `md` projection); the same split applies.
+  `kb.json` records which (`input`: `glyphs` | `md`) and which rule made the
+  sections (`split`: `numbered` | `markdown` | `page`); `page` means the input
+  had no usable heading, which a reader should know.
 - **payload item** — a verbatim piece of a document: the display equations of
   one section (in flow order), one code listing (consecutive listing objects
   joined), or one detected pseudocode block. Id `<doc>#<first object id>`.

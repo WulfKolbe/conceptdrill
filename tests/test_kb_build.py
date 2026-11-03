@@ -37,7 +37,7 @@ def kbjson(kb):
     return json.loads((kb / "kb.json").read_text())
 
 
-def test_the_stubbed_build_conforms_to_kb1(built):
+def test_the_stubbed_build_conforms(built):
     report = check(built)
     assert report.violations == []
 
@@ -97,7 +97,7 @@ def test_a_document_without_glyphs_is_listed_and_skipped(tmp_path):
     assert code == 0
     manifest = json.loads((kb / "manifest.json").read_text())
     assert manifest["skipped"] == [{"folder": "nowhere",
-                                    "reason": "no nowhere.glyphs.md in the library"}]
+                                    "reason": "no nowhere.glyphs.md or nowhere.md in the library"}]
     assert check(kb).violations == []
 
 
@@ -211,3 +211,58 @@ def test_a_chapter_number_from_another_paper_is_another_chapter():
     leaves = [Leaf([mine], [], np.zeros(2)), Leaf([other], [], np.zeros(2))]
     attach_payload(leaves, [_item("d#2", "obj_d")])
     assert [p.id for p in leaves[1].payload] == []
+
+
+# --------------------------------------------------------------------------
+# A document's Markdown projection as input, when it has no glyphs.md
+# --------------------------------------------------------------------------
+
+def _md_library(tmp_path, with_glyphs=False):
+    import shutil
+    lib = tmp_path / "lib"
+    (lib / ZIB).mkdir(parents=True)
+    text = (LIB / ZIB / f"{ZIB}.glyphs.md").read_text()
+    (lib / ZIB / f"{ZIB}.md").write_text(text)
+    if with_glyphs:
+        shutil.copy(LIB / ZIB / f"{ZIB}.glyphs.md", lib / ZIB / f"{ZIB}.glyphs.md")
+    return lib
+
+
+def _build_lib(tmp_path, lib, *docs, name="m"):
+    return cli.main(["kb", "build", *docs, "--name", name, "--library", str(lib),
+                     "--output-root", str(tmp_path), "--llm", "stub", "--embedder", "hash"])
+
+
+def test_a_document_without_glyphs_is_read_from_its_markdown(tmp_path):
+    lib = _md_library(tmp_path)
+    assert _build_lib(tmp_path, lib, ZIB) == 0
+    kb = tmp_path / "kb" / "m"
+    doc = kbjson(kb)["documents"][0]
+    assert doc["input"] == "md" and doc["split"] == "numbered"
+    assert doc["glyphs"]["path"].endswith(f"{ZIB}.md")
+    assert check(kb).violations == []
+
+
+def test_glyphs_is_preferred_when_both_exist(tmp_path):
+    lib = _md_library(tmp_path, with_glyphs=True)
+    assert _build_lib(tmp_path, lib, ZIB) == 0
+    assert kbjson(tmp_path / "kb" / "m")["documents"][0]["input"] == "glyphs"
+
+
+def test_a_document_with_neither_is_skipped_and_says_so(tmp_path):
+    lib = _md_library(tmp_path)
+    (lib / "bare").mkdir()
+    assert _build_lib(tmp_path, lib, ZIB, "bare") == 0
+    manifest = json.loads((tmp_path / "kb" / "m" / "manifest.json").read_text())
+    assert manifest["skipped"] == [{"folder": "bare",
+                                    "reason": "no bare.glyphs.md or bare.md in the library"}]
+
+
+def test_docs_file_skips_comments_and_blank_lines(tmp_path):
+    lib = _md_library(tmp_path)
+    f = tmp_path / "set.txt"
+    f.write_text(f"# a comment line\n\n{ZIB}\n  # indented comment\n")
+    assert cli.main(["kb", "build", "--docs-file", str(f), "--name", "c", "--library",
+                     str(lib), "--output-root", str(tmp_path), "--llm", "stub",
+                     "--embedder", "hash"]) == 0
+    assert json.loads((tmp_path / "kb" / "c" / "manifest.json").read_text())["skipped"] == []

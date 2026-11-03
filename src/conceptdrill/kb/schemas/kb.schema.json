@@ -97,6 +97,19 @@
           "folder": {
             "type": "string",
             "minLength": 1
+          },
+          "input": {
+            "enum": [
+              "glyphs",
+              "md"
+            ]
+          },
+          "split": {
+            "enum": [
+              "numbered",
+              "markdown",
+              "page"
+            ]
           }
         }
       }
