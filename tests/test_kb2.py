@@ -334,3 +334,66 @@ def test_sources_md_is_in_the_spec_tables():
     assert [k.strip(" `").split(":")[0] for k in front_row.split("|")[2].split(",")] == \
         KB2.frontmatter["readme"]
     assert "SOURCES.md" in KB2.root_files and "SOURCES.md" not in KB1.root_files
+
+
+# --- letter pages: a letter over its budget continues in <l>-2.md, <l>-3.md ---
+# (ocr-87 with real replies: glossary/s.md 188 terms, 7663 tokens of 4000)
+
+@pytest.fixture
+def paged(tmp_path, monkeypatch):
+    """The budget one token under the largest glossary letter that holds two terms."""
+    from conceptdrill.kb.contract import tokens
+    code, whole = build(tmp_path / "probe", FLORP, ZIB, name="probe")
+    assert code == 0
+    sizes = [tokens(p.read_text()) for p in (whole / "glossary").glob("*.md")
+             if int(front(p)["terms"]) >= 2]
+    monkeypatch.setitem(KB2.budgets, "glossary_letter", max(sizes) - 1)
+    code, kb = build(tmp_path, FLORP, ZIB, name="paged")
+    assert code == 0
+    return kb
+
+
+def _pages(kb, folder):
+    return sorted(p.name for p in (kb / folder).glob("*.md"))
+
+
+def test_a_letter_over_its_budget_continues_on_numbered_pages(paged):
+    pages = [p for p in _pages(paged, "glossary") if "-" in p]
+    assert pages, _pages(paged, "glossary")
+    for p in pages:
+        letter, n = p[:-3].split("-")
+        assert (paged / "glossary" / f"{letter}.md").is_file()
+        for k in range(2, int(n)):
+            assert (paged / "glossary" / f"{letter}-{k}.md").is_file()
+
+
+def test_every_page_is_linked_and_titled_and_the_tree_conforms(paged):
+    r = check(paged)
+    assert r.violations == [], r.violations[:5]
+    g = (paged / "GLOSSARY.md").read_text()
+    for p in _pages(paged, "glossary"):
+        assert f"(glossary/{p})" in g, p
+    page = next(p for p in _pages(paged, "glossary") if "-" in p)
+    letter, n = page[:-3].split("-")
+    head = [l for l in (paged / "glossary" / page).read_text().splitlines() if l.startswith("# ")]
+    assert head == [f"# Glossary: {letter.upper()}, page {n}"]
+
+
+def test_paging_loses_no_term(paged, tmp_path):
+    def terms(kb):
+        return sum(int(front(p)["terms"]) for p in (kb / "glossary").glob("*.md"))
+    whole = next((tmp_path / "probe").rglob("kb.json")).parent     # built before the budget fell
+    assert not [p for p in (whole / "glossary").glob("*-*.md")]
+    assert any("-" in p.name for p in (paged / "glossary").glob("*.md"))
+    assert terms(paged) == terms(whole)
+
+
+def test_a_page_without_its_predecessor_is_a_violation(paged):
+    page = next(p for p in _pages(paged, "glossary") if "-" in p)
+    letter = page.split("-")[0]
+    (paged / "glossary" / page).rename(paged / "glossary" / f"{letter}-9.md")
+    assert any(f"glossary/{letter}-9.md" in v for v in check(paged).violations)
+
+
+def test_kb1_has_no_letter_pages():
+    assert not KB1.letter_pages and KB2.letter_pages

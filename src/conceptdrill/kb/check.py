@@ -270,6 +270,12 @@ def check_tree(root: Path, problems: list[str], spec: C.Spec = C.CURRENT) -> lis
         for letter in C.LETTERS:
             if not (root / folder / f"{letter}.md").is_file():
                 problems.append(f"{folder}/{letter}.md: missing")
+        if spec.letter_pages and (root / folder).is_dir():
+            for p in sorted((root / folder).glob("*-*.md")):
+                letter, n = C.letter_page(p.stem)
+                before = letter if n == 2 else f"{letter}-{n - 1}"
+                if n >= 2 and not (root / folder / f"{before}.md").is_file():
+                    problems.append(f"{folder}/{p.name}: page {n} without page {n - 1}")
     for path in sorted(root.rglob("*")):
         rel = path.relative_to(root).as_posix()
         parts = rel.split("/")
@@ -347,7 +353,14 @@ def _file_allowed(parts: list[str], spec: C.Spec = C.CURRENT) -> bool:
         return parts[0] in spec.root_files
     head = parts[0]
     if head in ("index", "glossary") and len(parts) == 2:
-        return parts[1][:-3] in C.LETTERS and parts[1].endswith(".md")
+        if not parts[1].endswith(".md"):
+            return False
+        stem = parts[1][:-3]
+        letter, n = C.letter_page(stem)
+        if stem == letter:
+            return letter in C.LETTERS
+        return (spec.letter_pages and letter in C.LETTERS
+                and bool(re.fullmatch(r"[a-z]+-[1-9][0-9]*", stem)) and n >= 2)
     if head == "sources" and len(parts) == 2:
         return bool(re.match(rf"^{C.SLUG}\.md$", parts[1]))
     if head == "topics" and len(parts) == 3 and spec is C.KB1:

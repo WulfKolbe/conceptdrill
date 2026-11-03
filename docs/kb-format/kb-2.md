@@ -72,9 +72,9 @@ Exactly these entries, nothing else:
 ├── kb.json
 ├── manifest.json
 ├── index/
-│   └── a.md … z.md, other.md         27 files, always all of them
+│   └── a.md … z.md, other.md         27 files, always all of them; + <l>-2.md … (7a)
 ├── glossary/
-│   └── a.md … z.md, other.md         27 files, always all of them
+│   └── a.md … z.md, other.md         27 files, always all of them; + <l>-2.md … (7a)
 ├── areas/
 │   └── NN-<slug>/                    NN = 01, 02, … contiguous; 1 to 12 areas
 │       ├── README.md
@@ -138,7 +138,8 @@ absent.
 
 After the frontmatter: one `# <title>` line, equal to the frontmatter
 `title` (`INDEX.md`: `# Index`; `GLOSSARY.md`: `# Glossary`; letter files:
-`# Index: <L>` / `# Glossary: <L>`, with `other` written `Other`; `SOURCES.md`: `# Sources`), then exactly these `##` headings, in this order, each
+`# Index: <L>` / `# Glossary: <L>`, with `other` written `Other`, and a
+continuation page `<l>-<n>.md` titled `# Glossary: <L>, page <n>`; `SOURCES.md`: `# Sources`), then exactly these `##` headings, in this order, each
 present once. A heading with nothing to say holds the single line `None.`
 No other `#` or `##` heading appears; `###` and below are free inside a section.
 
@@ -167,7 +168,7 @@ These sections hold only lines of the given form (plus blank lines), or `None.`:
 | README · Areas | `- [<area title>](areas/NN-<a>/README.md) — <one line>` |
 | README · Sources | `- [Sources](SOURCES.md) — <n> documents` (the one line) |
 | SOURCES · Documents | `- [<doc>](sources/<doc>.md) — <document title>` |
-| INDEX · Letters, GLOSSARY · Letters | `- [<L>](index/<l>.md) — <n> entries` (glossary: `glossary/<l>.md`, `terms`) |
+| INDEX · Letters, GLOSSARY · Letters | `- [<L>](index/<l>.md) — <n> entries` (glossary: `glossary/<l>.md`, `terms`); one line per page, a continuation page as `- [<L>, page <n>](index/<l>-<n>.md) — <n> entries` |
 | index/`<l>` · Index | `- <concept> → [<leaf title>](../areas/NN-<a>/topics/NN-<t>/<s>.md)` |
 | glossary/`<l>` · Glossary | `- **<term>** — <definition> → [<leaf title>](../areas/NN-<a>/topics/NN-<t>/<s>.md)` |
 | area README · Topics | `- [<topic title>](topics/NN-<t>/README.md) — <one line>` |
@@ -252,6 +253,14 @@ When an input (`glyphs`, `docmodel`) still exists with its recorded sha256,
 `kb check` also re-derives from it: the section split (ids and text bytes) and
 every payload file's bytes. When it is gone or changed, that is reported as a
 note, not a violation: the knowledge base stays valid as built.
+
+**Letter pages.** A letter file whose lines exceed its budget continues in
+`<l>-2.md`, `<l>-3.md`, … The split falls between lines, in sorted order;
+every page keeps the letter file's frontmatter keys (`letter` is the letter,
+the count is the page's own), and page `n` exists only if page `n-1` does.
+`INDEX.md` / `GLOSSARY.md` list every page. Measured: ocr-87 with real writer
+replies (338 leaves) put 188 terms, 7,663 tokens, into `glossary/s.md`; seven
+glossary letters were over 4,000. kb/1 has no pages.
 
 ## 8. The reading protocol (fixed text)
 
