@@ -341,8 +341,13 @@ def test_sources_md_is_in_the_spec_tables():
 
 @pytest.fixture
 def paged(tmp_path, monkeypatch):
-    monkeypatch.setitem(KB2.budgets, "glossary_letter", 120)
-    monkeypatch.setitem(KB2.budgets, "index_letter", 120)
+    """The budget one token under the largest glossary letter that holds two terms."""
+    from conceptdrill.kb.contract import tokens
+    code, whole = build(tmp_path / "probe", FLORP, ZIB, name="probe")
+    assert code == 0
+    sizes = [tokens(p.read_text()) for p in (whole / "glossary").glob("*.md")
+             if int(front(p)["terms"]) >= 2]
+    monkeypatch.setitem(KB2.budgets, "glossary_letter", max(sizes) - 1)
     code, kb = build(tmp_path, FLORP, ZIB, name="paged")
     assert code == 0
     return kb
@@ -377,8 +382,10 @@ def test_every_page_is_linked_and_titled_and_the_tree_conforms(paged):
 def test_paging_loses_no_term(paged, tmp_path):
     def terms(kb):
         return sum(int(front(p)["terms"]) for p in (kb / "glossary").glob("*.md"))
-    code, whole = build(tmp_path / "whole", FLORP, ZIB, name="whole")
-    assert code == 0 and terms(paged) == terms(whole)
+    whole = next((tmp_path / "probe").rglob("kb.json")).parent     # built before the budget fell
+    assert not [p for p in (whole / "glossary").glob("*-*.md")]
+    assert any("-" in p.name for p in (paged / "glossary").glob("*.md"))
+    assert terms(paged) == terms(whole)
 
 
 def test_a_page_without_its_predecessor_is_a_violation(paged):

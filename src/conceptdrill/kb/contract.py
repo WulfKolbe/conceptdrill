@@ -63,6 +63,8 @@ class Spec:
     max_leaves_per_topic: int = 8
     root_files: tuple = tuple(ROOT_FILES)
     fences_allowed: frozenset = field(default_factory=lambda: frozenset({("leaf", "Payload")}))
+    #: A letter file over its budget continues in <l>-2.md, <l>-3.md, ...
+    letter_pages: bool = False
 
 
 def _forms(up: str, leaf_dir: str, extra: dict) -> dict:
@@ -169,6 +171,10 @@ KB2 = Spec(
 8. Open SOURCES.md or sources/<doc>.md only to cite or check where a statement comes from.""",
     line_forms=_forms("../../../../", _KB2_LEAF_DIR, {
         ("readme", "Sources"): r"^- \[Sources\]\(SOURCES\.md\) — [0-9]+ documents?$",
+        ("index", "Letters"): rf"^- \[{_LETTER_LINK}(?:, page [0-9]+)?\]"
+                              rf"\(index/[a-z]+(?:-[0-9]+)?\.md\) — [0-9]+ entries$",
+        ("glossary", "Letters"): rf"^- \[{_LETTER_LINK}(?:, page [0-9]+)?\]"
+                                 rf"\(glossary/[a-z]+(?:-[0-9]+)?\.md\) — [0-9]+ terms$",
         ("sources_list", "Documents"): rf"^- \[{SLUG}\]\(sources/{SLUG}\.md\) — .*$",
         ("readme", "Areas"): rf"^- \[.+\]\(areas/{_NN}-{SLUG}/README\.md\) — .+$",
         ("area", "Topics"): rf"^- \[.+\]\(topics/{_NN}-{SLUG}/README\.md\) — .+$",
@@ -180,6 +186,8 @@ KB2 = Spec(
     schema="kb-2.schema.json",
     max_areas=12,
     max_topics_per_area=12,
+    # ocr-87 with real replies: glossary/s.md held 188 terms, 7663 tokens of 4000.
+    letter_pages=True,
     root_files=tuple(ROOT_FILES[:3] + ["SOURCES.md"] + ROOT_FILES[3:]),
 )
 
@@ -188,9 +196,21 @@ SPECS = {"kb/1": KB1, "kb/2": KB2}
 CURRENT = KB2
 
 
+def letter_page(stem: str) -> tuple[str, int]:
+    """`s` -> ("s", 1), `s-2` -> ("s", 2)."""
+    letter, _, n = stem.partition("-")
+    return letter, int(n) if n.isdigit() else 1
+
+
+def letter_label(stem: str) -> str:
+    letter, n = letter_page(stem)
+    shown = "Other" if letter == "other" else letter.upper()
+    return shown if n == 1 else f"{shown}, page {n}"
+
+
 def letter_title(kind: str, letter: str) -> str:
     word = "Index" if kind == "index_letter" else "Glossary"
-    return f"# {word}: {'Other' if letter == 'other' else letter.upper()}"
+    return f"# {word}: {letter_label(letter)}"
 
 
 def letter_of(text: str) -> str:

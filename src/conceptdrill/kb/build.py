@@ -815,29 +815,40 @@ def render(docs: list[Document], areas: list[Area], payload: list[Payload],
     terms = sorted(((_one_line(c["name"]), _one_line(c.get("definition", "")), l)
                     for l in leaves for c in l.prose.get("concepts", [])
                     if _one_line(c["name"])), key=lambda e: (e[0].casefold(), e[2].id))
-    counts_i, counts_g = {}, {}
+    pages = {"index": [], "glossary": []}            # (stem, count) per page, in order
     for letter in C.LETTERS:
-        mine = [f"- {c} → [{l.title}](../{l.path})" for c, l in entries
-                if C.letter_of(c) == letter]
-        counts_i[letter] = len(mine)
-        files[f"index/{letter}.md"] = _doc_md("index_letter", {
-            "format": S.format, "kb": name, "letter": letter, "entries": len(mine)},
-            C.letter_title("index_letter", letter), [("Index", _bullets(mine))])
-        mine = [f"- **{t}** — {d or 'None.'} → [{l.title}](../{l.path})"
-                for t, d, l in terms if C.letter_of(t) == letter]
-        counts_g[letter] = len(mine)
-        files[f"glossary/{letter}.md"] = _doc_md("glossary_letter", {
-            "format": S.format, "kb": name, "letter": letter, "terms": len(mine)},
-            C.letter_title("glossary_letter", letter), [("Glossary", _bullets(mine))])
-    shown = lambda l: "Other" if l == "other" else l.upper()
+        for folder, kind, key, mine in (
+                ("index", "index_letter", "entries",
+                 [f"- {c} → [{l.title}](../{l.path})" for c, l in entries
+                  if C.letter_of(c) == letter]),
+                ("glossary", "glossary_letter", "terms",
+                 [f"- **{t}** — {d or 'None.'} → [{l.title}](../{l.path})"
+                  for t, d, l in terms if C.letter_of(t) == letter])):
+            def page(stem, lines, kind=kind, key=key, heading=folder.capitalize()):
+                return _doc_md(kind, {"format": S.format, "kb": name, "letter": letter,
+                                      key: len(lines)},
+                               C.letter_title(kind, stem), [(heading, _bullets(lines))])
+            chunks = [mine]
+            if S.letter_pages:
+                chunks, cur = [], []
+                for line in mine:
+                    if cur and C.tokens(page(letter, cur + [line])) > S.budgets[kind]:
+                        chunks.append(cur)
+                        cur = []
+                    cur.append(line)
+                chunks.append(cur)
+            for n, lines in enumerate(chunks, 1):
+                stem = letter if n == 1 else f"{letter}-{n}"
+                files[f"{folder}/{stem}.md"] = page(stem, lines)
+                pages[folder].append((stem, len(lines)))
     files["INDEX.md"] = _doc_md("index", {"format": S.format, "kb": name,
                                           "letters": C.LETTERS}, "# Index", [
-        ("Letters", "\n".join(f"- [{shown(l)}](index/{l}.md) — {counts_i[l]} entries"
-                              for l in C.LETTERS))])
+        ("Letters", "\n".join(f"- [{C.letter_label(s)}](index/{s}.md) — {n} entries"
+                              for s, n in pages["index"]))])
     files["GLOSSARY.md"] = _doc_md("glossary", {"format": S.format, "kb": name,
                                                 "letters": C.LETTERS}, "# Glossary", [
-        ("Letters", "\n".join(f"- [{shown(l)}](glossary/{l}.md) — {counts_g[l]} terms"
-                              for l in C.LETTERS))])
+        ("Letters", "\n".join(f"- [{C.letter_label(s)}](glossary/{s}.md) — {n} terms"
+                              for s, n in pages["glossary"]))])
 
     # README
     kb_title = _one_line(kb_prose.get("title", "")) or name
