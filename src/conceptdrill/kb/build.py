@@ -171,12 +171,46 @@ def _one_line(text: str) -> str:
     return " ".join(str(text).split())
 
 
-def _title_of(text: str, folder: str) -> str:
+#: Section headings a paper's outline uses; a first heading like this names the
+#: section, not the document (OCR Markdown often has no title heading at all).
+_GENERIC_HEADING = re.compile(
+    r"^(?:[0-9]+\.?|[IVX]+\.)?\s*(?:abstract|introduction|references|bibliography|"
+    r"contents|table of contents|acknowledge?ments?|appendix|preface)\.?$", re.I)
+
+
+def _clean_title(raw: str) -> str:
+    return _one_line(re.sub(r"!\[[^\]]*\]\([^)]*\)|<!--.*?-->", " ", raw))
+
+
+def _title_of(text: str, folder: str, docmodel: Optional[Path] = None) -> str:
+    """The first `# ` heading unless it is a generic section name; else the
+    docmodel's meta.title unless it carries LaTeX; else the first plain line
+    before any heading; else the folder name."""
     for line in text.splitlines():
         if line.startswith("# "):
-            title = _one_line(re.sub(r"!\[[^\]]*\]\([^)]*\)|<!--.*?-->", " ", line[2:]))
+            title = _clean_title(line[2:])
             if title:
+                if not _GENERIC_HEADING.match(title):
+                    return title
+                break
+    if docmodel is not None and docmodel.is_file():
+        try:
+            meta = json.loads(docmodel.read_text(encoding="utf-8")).get("meta") or {}
+        except (ValueError, OSError):
+            meta = {}
+        title = _one_line(meta.get("title") or "") if isinstance(meta, dict) else ""
+        if title and "\\" not in title:
+            return title
+    for line in text.splitlines():
+        if line.startswith("#"):
+            break
+        title = _clean_title(line)
+        if title:
+            if (not title.startswith(("\\", "$", "<", "%", "-", "*", "Fig", "Table"))
+                    and not _GENERIC_HEADING.match(title) and not title.endswith(".")
+                    and len(title.split()) <= 25):
                 return title
+            break                        # only the first plain line may be a title
     return folder
 
 
@@ -215,7 +249,7 @@ def load_documents(folders: Sequence[str], library: Path) -> tuple[list[Document
                 doc=doc, order=order, title=_one_line(s["title"]), number=s["number"],
                 page=s["page"], line_start=s["line_start"], line_end=s["line_end"],
                 text=body, embed_text=f"{s['title']}\n{s['text'][:EMBED_CHARS]}"))
-        docs.append(Document(folder, doc, _title_of(text, folder), glyphs, _sha(raw),
+        docs.append(Document(folder, doc, _title_of(text, folder, dm), glyphs, _sha(raw),
                              dm if dm.is_file() else None,
                              _sha(dm.read_bytes()) if dm.is_file() else None,
                              sections, kind, split[0]["split"] if split else "page"))

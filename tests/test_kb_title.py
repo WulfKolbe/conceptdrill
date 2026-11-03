@@ -41,3 +41,9 @@ def test_a_heading_wins_over_the_docmodel_title(tmp_path):
     dm = tmp_path / "model.docmodel.json"
     dm.write_text(json.dumps({"meta": {"title": "Other"}}))
     assert _title_of("# Zent Steps\n", "f", dm) == "Zent Steps"
+
+
+def test_only_a_title_like_first_plain_line_counts():
+    for first in ("1. INTRODUCTION", "- INTRODUCTION feature", "Fig. 2. Decorators",
+                  "We consider difference schemes for the equation."):
+        assert _title_of(f"{first}\nZent Florp\n## Abstract\n", "fold") == "fold", first
